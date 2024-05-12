@@ -45,15 +45,15 @@ scene.add(pointlight1)
 /**
  * Sizes
  */
+var adjust = 30
 const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: window.innerWidth-adjust,
+    height: window.innerHeight-adjust
 }
 
 window.addEventListener('resize', () =>
 {
     // Update sizes
-    let adjust = 30
     sizes.width = window.innerWidth-adjust
     sizes.height = window.innerHeight-adjust
 
@@ -70,7 +70,7 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const fov = 65
+const fov = 75
 const fovRad= (fov/2)*(Math.PI/180)
 const dist = (sizes.height/2)/Math.tan(fovRad)
 
@@ -90,7 +90,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 renderer.shadowMap.enabled = true
 
-const controls = new OrbitControls( camera, renderer.domElement )
+//controls
+const controls = new OrbitControls( camera, canvas)
+controls.enableDamping = true
 
 
 /**
