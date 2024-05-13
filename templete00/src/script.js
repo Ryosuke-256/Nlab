@@ -25,7 +25,7 @@ box1_mesh.castShadow = true
 scene.add(box1_mesh)
 
 //sphere1
-const sphere1_geometry = new THREE.SphereGeometry(10,3,3)
+const sphere1_geometry = new THREE.SphereGeometry(5,10,10)
 const sphere1_material = new THREE.MeshBasicMaterial({color:0x000000})
 const sphere1_mesh = new THREE.Mesh(sphere1_geometry,sphere1_material)
 sphere1_mesh.position.set(0,0,0)
@@ -45,12 +45,11 @@ scene.add(pointlight1)
 /**
  * Sizes
  */
-var adjust = 30
+var adjust = 0
 const sizes = {
     width: window.innerWidth-adjust,
     height: window.innerHeight-adjust
 }
-
 window.addEventListener('resize', () =>
 {
     // Update sizes
@@ -59,6 +58,7 @@ window.addEventListener('resize', () =>
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
+    camera.position.set(0,0,dist(fov))
     camera.updateProjectionMatrix()
 
     // Update renderer
@@ -66,16 +66,29 @@ window.addEventListener('resize', () =>
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
+//fullscreen
+window.addEventListener("dblclick",() =>
+{
+    if(!document.fullscreenElement){
+        canvas.requestFullscreen()
+    }
+    else{
+        document.exitFullscreen()
+    }
+})
+
 /**
  * Camera
  */
 // Base camera
 const fov = 75
-const fovRad= (fov/2)*(Math.PI/180)
-const dist = (sizes.height/2)/Math.tan(fovRad)
-
-const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1, dist*10)
-camera.position.set(0,0,dist)
+const dist =(fov) =>{
+    const fovRad= (fov/2)*(Math.PI/180)
+    const dist = (sizes.height/2)/Math.tan(fovRad)
+    return dist
+}
+const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1, dist(fov)*10)
+camera.position.set(0,0,dist(fov))
 scene.add(camera)
 
 /**
