@@ -41,7 +41,7 @@ scene.add(cursor1_mesh)
 /**
  * 背景とライト 
 */
-//./image内のファイルのパスを取得
+/**./image内のファイルのパスを取得
 const folderPath = './image';
 
 let filePaths = [];
@@ -63,6 +63,7 @@ async function fetchFilesInFolder(folderPath) {
 fetchFilesInFolder(folderPath).then(() => {
     console.log(filePaths);
 });
+*/
 
 // HDRファイルのロード
 const loader1 = new RGBELoader()
