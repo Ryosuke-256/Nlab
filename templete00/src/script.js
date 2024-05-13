@@ -24,12 +24,12 @@ const box1_mesh=new THREE.Mesh(box1_geometry,box1_material)
 box1_mesh.castShadow = true
 scene.add(box1_mesh)
 
-//sphere1
-const sphere1_geometry = new THREE.SphereGeometry(5,10,10)
-const sphere1_material = new THREE.MeshBasicMaterial({color:0x000000})
-const sphere1_mesh = new THREE.Mesh(sphere1_geometry,sphere1_material)
-sphere1_mesh.position.set(0,0,0)
-scene.add(sphere1_mesh)
+//cursor
+const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
+const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
+const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
 
 //平行光源
 const directionalLight =new THREE.DirectionalLight(0xffffff,0.5)
@@ -136,7 +136,7 @@ window.addEventListener('mousemove',e =>
     pointlight1.position.y=mouse_webGL.y;
 
     //カーソルの座標
-    sphere1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
+    cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
 
 //WebGL_normal関連
 

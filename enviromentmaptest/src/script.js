@@ -3,9 +3,6 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
-//image
-//import background1 from '../image/symmetrical_garden_02_2k.hdr'
-//import background2 from "../image/chapel_day_2k.hdr"
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -20,6 +17,7 @@ const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THRE
 const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
 plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-200,0)
+plane1_mesh.receiveShadow = true
 scene.add(plane1_mesh)
 
 //sphere1
@@ -30,23 +28,64 @@ const normalMapTexture = textureLoader.load("./texture/seaworn_stonetile/seaworn
 const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5, normalMap:normalMapTexture})
 const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
 sphere1_mesh.position.set(0,0,0)
+sphere1_mesh.castShadow = true
 scene.add(sphere1_mesh)
 
-/**background & Light
-new RGBELoader().load(background1,function(texture){
-    texture.mapping = THREE.EquirectangularReflectionMapping
-    scene.background = texture
-    scene.enviroement = texture
-})
-*/
+//cursor
+const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
+const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
+const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
 
-//scene.background = new THREE.Color(0.2,0.2,0.2)
-
-/**平行光源
-const directionalLight =new THREE.DirectionalLight(0xffffff)
-directionalLight.position.set(1,1,1)
-scene.add(directionalLight)
+/**
+ * 背景とライト 
 */
+//./image内のファイルのパスを取得
+const folderPath = './image';
+
+let filePaths = [];
+
+async function fetchFilesInFolder(folderPath) {
+    const response = await fetch(folderPath);
+    const data = await response.text();
+    const parser = new DOMParser();
+    const htmlDocument = parser.parseFromString(data, 'text/html');
+    const links = htmlDocument.querySelectorAll('a[href]');
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        // 絶対パスを取得するか、相対パスの場合はフォルダパスを追加する
+        const fullPath = new URL(href, folderPath).href;
+        filePaths.push(fullPath);
+    });
+}
+
+fetchFilesInFolder(folderPath).then(() => {
+    console.log(filePaths);
+});
+
+// HDRファイルのロード
+const loader1 = new RGBELoader()
+const loadhdr = () =>{
+    loader1.load(
+        './image/cobblestone_street_night_2k.hdr', 
+        (texture) => {
+        texture.encoding = THREE.RGBEEncoding
+    
+        texture.mapping = THREE.EquirectangularReflectionMapping
+        scene.background = texture
+        scene.environment = texture
+        }
+    )
+}
+
+loadhdr()
+
+//点光源
+const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
+pointlight1.position.set(0,0,0)
+pointlight1.castShadow = true
+scene.add(pointlight1)
 
 /**
  * Sizes
@@ -95,23 +134,38 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
 renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
 renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
+renderer.shadowMap.enabled = true // 影
 
 /**
- * 背景とライト 
-*/
-// HDRファイルのロード
-const loader = new RGBELoader()
-loader.load(
-    './image/chapel_day_2k.hdr', 
-    (texture) => {
-    texture.encoding = THREE.RGBEEncoding
+ * マウス
+ */
+const mouse_webGL = new THREE.Vector2()
+const mouse_webGL_normal = new THREE.Vector2()
+const mouse_window_normal =new THREE.Vector2()
 
-    texture.mapping = THREE.EquirectangularReflectionMapping
-    scene.background = texture;
-    scene.environment = texture
-    }
-)
+//マウス動いた時の処理
+window.addEventListener('mousemove',e =>
+{
+    //WebGLマウス座標
+    mouse_webGL.x=e.clientX-(sizes.width/2)
+    mouse_webGL.y=-e.clientY+(sizes.height/2)
 
+    //WebGLマウス座標の正規化
+    mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)
+    mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)
+
+    //Windowマウス座標の正規化
+    mouse_window_normal.x=(e.clientX/sizes.width)*2-1
+    mouse_window_normal.y=-(e.clientY/sizes.height)*2+1
+
+//WebGL関連
+    //ライトの座標
+    pointlight1.position.x=mouse_webGL.x;
+    pointlight1.position.y=mouse_webGL.y;
+
+    //カーソルの座標
+    cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
+})
 
 /**
  * その他 
