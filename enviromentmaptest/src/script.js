@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
+const base_path = 'image\\'
+const hdr_images_path = ['chapel_day_2k.hdr','cobblestone_street_night_2k.hdr','symmetrical_garden_02_2k.hdr']
+const hdr_files = []
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -41,46 +44,52 @@ scene.add(cursor1_mesh)
 /**
  * 背景とライト 
 */
-/**./image内のファイルのパスを取得
-const folderPath = './image';
-
-let filePaths = [];
-
-async function fetchFilesInFolder(folderPath) {
-    const response = await fetch(folderPath);
-    const data = await response.text();
-    const parser = new DOMParser();
-    const htmlDocument = parser.parseFromString(data, 'text/html');
-    const links = htmlDocument.querySelectorAll('a[href]');
-    links.forEach(link => {
-        const href = link.getAttribute('href');
-        // 絶対パスを取得するか、相対パスの場合はフォルダパスを追加する
-        const fullPath = new URL(href, folderPath).href;
-        filePaths.push(fullPath);
-    });
-}
-
-fetchFilesInFolder(folderPath).then(() => {
-    console.log(filePaths);
-});
-*/
-
 // HDRファイルのロード
-const loader1 = new RGBELoader()
-const loadhdr = () =>{
-    loader1.load(
-        './image/cobblestone_street_night_2k.hdr', 
-        (texture) => {
-        texture.encoding = THREE.RGBEEncoding
+//ロードしてあるHDRファイルを背景とライトに適応
+function initEnvMap(index){
     
-        texture.mapping = THREE.EquirectangularReflectionMapping
-        scene.background = texture
-        scene.environment = texture
+    hdr_files[index].encoding = THREE.RGBEEncoding
+                
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
+}
+//ロードマネージャ
+const loadingManager = new THREE.LoadingManager(
+    // everything has been loaded
+    () =>
+    {
+        console.log('Finished loading everything')
+        initEnvMap(0)
+    },
+    // Progress
+    (itemUrl, itemsLoaded, itemsTotal) =>
+    {
+        console.log('Files loaded: ' + itemsLoaded + '/' + itemsTotal)
+    }
+)
+//全てをロード
+const loader1 = new RGBELoader(loadingManager)
+hdr_images_path.forEach(element => {
+    loader1.load(
+        base_path + element, 
+        (texture) => {
+            hdr_files.push(texture)
         }
     )
-}
+});
 
-loadhdr()
+//背景変更
+var index = 0
+document.addEventListener('keydown', (e) =>{
+    if(e.keyCode == 37 && index > 0) {
+        index -= 1
+    }
+    if(e.keyCode == 39 && index < hdr_files.length-1) {
+        index += 1
+    }
+    initEnvMap(index)
+})
 
 //点光源
 const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
@@ -95,6 +104,7 @@ const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
+
 window.addEventListener('resize', () =>
 {
     // Update sizes

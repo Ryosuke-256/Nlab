@@ -3,44 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Folder File Paths</title>
+    <title>Example</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <button id="getFilePathsButton">Get File Paths</button>
-    <ul id="fileList"></ul>
-
-    <script>
-        const folderPath = '/path/to/your/folder'; // フォルダのパスを指定
-        const getFilePathsButton = document.getElementById('getFilePathsButton');
-        const fileListElement = document.getElementById('fileList');
-
-        getFilePathsButton.addEventListener('click', async function() {
-            const response = await fetch(folderPath);
-            const data = await response.text();
-            const parser = new DOMParser();
-            const htmlDocument = parser.parseFromString(data, 'text/html');
-            const links = htmlDocument.querySelectorAll('a[href]');
-            const filePaths = [];
-
-            links.forEach(link => {
-                const href = link.getAttribute('href');
-                const fullPath = new URL(href, folderPath).href;
-                filePaths.push(fullPath);
-            });
-
-            displayFilePaths(filePaths);
-        });
-
-        // ファイルのパスを表示する関数
-        function displayFilePaths(filePaths) {
-            fileListElement.innerHTML = ''; // 以前のリストをクリア
-
-            filePaths.forEach(filePath => {
-                const listItem = document.createElement('li');
-                listItem.textContent = filePath;
-                fileListElement.appendChild(listItem);
-            });
-        }
-    </script>
+    <canvas class="webgl"></canvas>
+    <script type="module" src="./script.js"></script>
 </body>
 </html>
