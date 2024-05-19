@@ -20,9 +20,13 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 /**geometry */
+//texture_load
+const textureLoader = new THREE.TextureLoader()
+const normalMapTexture_1 = textureLoader.load("./texture/seaworn_stonetile/seaworn_stone_tiles_nor_dx_1k.jpg")
+
 //plane1
 const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
-const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness:0.5})
+const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness:0.5, normalMap:normalMapTexture_1})
 const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
 plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-200,0)
@@ -31,10 +35,7 @@ scene.add(plane1_mesh)
 
 //sphere1
 const sphere1_geometry=new THREE.SphereGeometry(100,30,30)
-//texture設定
-const textureLoader = new THREE.TextureLoader()
-const normalMapTexture = textureLoader.load("./texture/seaworn_stonetile/seaworn_stone_tiles_nor_dx_1k.jpg")
-const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5, normalMap:normalMapTexture})
+const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5})
 const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
 sphere1_mesh.position.set(0,0,0)
 sphere1_mesh.castShadow = true
@@ -51,12 +52,25 @@ scene.add(cursor1_mesh)
  * 背景とライト 
 */
 // HDRファイルのロード
-
 //init_master
 function init_master(index){
+    index_env = index
+    index_map = index
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
+}
+//init_env
+function init_env(index){
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+}
+//init_map 
+function init_map(index){
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.environment = hdr_files[index]
 }
 //ロードマネージャ
@@ -82,19 +96,51 @@ hdr_images_path.forEach(element => {
             hdr_files.push(texture)
         }
     )
-});
-
-//背景_master
-var index_master = 0
-document.addEventListener('keydown', (e) =>{
-    if(e.keyCode == 65 && index_master > 0) {
-        index_master -= 1
-    }
-    if(e.keyCode == 68 && index_master < hdr_files.length-1) {
-        index_master += 1
-    }
-    init_master(index_master)
 })
+
+//変数定義
+var index_master = 0
+var index_env = 0
+var index_map = 0
+//eventlistener
+document.addEventListener('keydown', (e) =>{
+    //master
+    //press ←
+    if(e.keyCode == 37 && index_master > 0) {
+        index_master -= 1
+        init_master(index_master)
+    }
+    //press →
+    if(e.keyCode == 39 && index_master < hdr_files.length-1) {
+        index_master += 1
+        init_master(index_master)
+    }
+
+    //enviroment
+    //press Q
+    if(e.keyCode == 81 && index_env > 0){
+        index_env -= 1
+        init_env(index_env)
+    }
+    //press E
+    if(e.keyCode == 69 && index_env < hdr_files.length-1){
+        index_env += 1
+        init_env(index_env)
+    }
+
+    //ligthing
+    //press A
+    if(e.keyCode == 65 && index_map > 0){
+        index_map -= 1
+        init_map(index_map)
+    }
+    //press D
+    if(e.keyCode == 68 && index_map < hdr_files.length-1){
+        index_map += 1
+        init_map(index_map)
+    }
+})
+
 
 //点光源
 const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
