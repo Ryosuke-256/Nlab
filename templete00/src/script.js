@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { texture } from 'three/examples/jsm/nodes/Nodes.js'
 
-// Canvas
+// Canvas 
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
