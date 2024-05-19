@@ -1,16 +1,20 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { texture } from 'three/examples/jsm/nodes/Nodes.js'
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0.2,0.2,0.2)
+//scene.background = new THREE.Color(0.2,0.2,0.2)
 
 //plane1
 const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
-const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness: 0.0})
+const textureLoader = new THREE.TextureLoader()
+const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
+const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness: 0.0,normalMap:normalMapTexture})
 const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
 plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-100,0)
@@ -30,6 +34,18 @@ const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
 const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
 cursor1_mesh.position.set(0,0,0)
 scene.add(cursor1_mesh)
+
+//背景
+const loader1 = new RGBELoader();
+loader1.load(
+    "./image/chapel_day_2k.hdr",
+    (texture)=>{
+        texture.encoding = THREE.RGBEEncoding
+        texture.mapping = THREE.EquirectangularReflectionMapping
+        scene.background = texture
+        scene.environment = texture
+    }
+)
 
 //平行光源
 const directionalLight =new THREE.DirectionalLight(0xffffff,0.5)
@@ -101,7 +117,11 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-renderer.shadowMap.enabled = true
+renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
+renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
+renderer.shadowMap.enabled = true // 影
+
 
 //controls
 const controls = new OrbitControls( camera, canvas)

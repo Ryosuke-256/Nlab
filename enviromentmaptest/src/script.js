@@ -4,7 +4,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
 const base_path = 'image\\'
-const hdr_images_path = ['chapel_day_2k.hdr','cobblestone_street_night_2k.hdr','symmetrical_garden_02_2k.hdr']
+const hdr_images_path = [
+    'chapel_day_2k.hdr',
+    'cobblestone_street_night_2k.hdr',
+    'symmetrical_garden_02_2k.hdr',
+    'brown_photostudio_02_2k.hdr',
+    'golden_bay_2k.hdr'
+]
 const hdr_files = []
 
 // Canvas
