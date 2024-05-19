@@ -51,11 +51,10 @@ scene.add(cursor1_mesh)
  * 背景とライト 
 */
 // HDRファイルのロード
-//ロードしてあるHDRファイルを背景とライトに適応
-function initEnvMap(index){
-    
+
+//init_master
+function init_master(index){
     hdr_files[index].encoding = THREE.RGBEEncoding
-                
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
@@ -66,7 +65,7 @@ const loadingManager = new THREE.LoadingManager(
     () =>
     {
         console.log('Finished loading everything')
-        initEnvMap(0)
+        init_master(0)
     },
     // Progress
     (itemUrl, itemsLoaded, itemsTotal) =>
@@ -85,16 +84,16 @@ hdr_images_path.forEach(element => {
     )
 });
 
-//背景変更
-var index = 0
+//背景_master
+var index_master = 0
 document.addEventListener('keydown', (e) =>{
-    if(e.keyCode == 37 && index > 0) {
-        index -= 1
+    if(e.keyCode == 65 && index_master > 0) {
+        index_master -= 1
     }
-    if(e.keyCode == 39 && index < hdr_files.length-1) {
-        index += 1
+    if(e.keyCode == 68 && index_master < hdr_files.length-1) {
+        index_master += 1
     }
-    initEnvMap(index)
+    init_master(index_master)
 })
 
 //点光源
