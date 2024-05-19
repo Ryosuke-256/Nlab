@@ -5,11 +5,10 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
 const base_path = 'image\\'
 const hdr_images_path = [
+    'symmetrical_garden_02_2k.hdr',
     'chapel_day_2k.hdr',
     'cobblestone_street_night_2k.hdr',
-    'symmetrical_garden_02_2k.hdr',
     'brown_photostudio_02_2k.hdr',
-    'golden_bay_2k.hdr'
 ]
 const hdr_files = []
 
@@ -44,7 +43,6 @@ function init_map(index){
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.environment = hdr_files[index]
 }
-//hdr_files
 //ロードマネージャ
 const loadingManager = new THREE.LoadingManager(
     // everything has been loaded
@@ -70,6 +68,71 @@ hdr_images_path.forEach(element => {
     )
 })
 
+//点光源
+const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
+pointlight1.position.set(0,0,0)
+pointlight1.castShadow = true
+scene.add(pointlight1)
+
+/**
+ * geometry
+ *  */
+//texture_load
+const textureLoader = new THREE.TextureLoader()
+const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
+
+//plane1
+const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
+const plane1_material =new THREE.MeshStandardMaterial({
+    color:0xffffff,side: THREE.DoubleSide, roughness:1.0, metalness: 0.0,
+    normalMap:normalMapTexture
+})
+const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
+plane1_mesh.rotation.set(Math.PI/2,0,0)
+plane1_mesh.position.set(0,-100,0)
+plane1_mesh.receiveShadow = true
+scene.add(plane1_mesh)
+
+//sphere1
+const sphere1_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere1_material =new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    anisotropy:0.5,attenuationDistance:10, //異方性
+    clearcoat:1,clearcoatRoughness:0.2, //クリアコート
+    dispersion:1,ior:2.3,reflectivity: 0, // 金属性
+    sheen:1,sheenRoughness:1,specularIntensity:1 //光沢
+})
+const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
+sphere1_mesh.position.set(0,0,0)
+sphere1_mesh.castShadow = true
+scene.add(sphere1_mesh)
+
+//sphere2
+const sphere2_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere2_material =new THREE.MeshStandardMaterial({color:0xff0000,roughness:1.0, metalness: 0.0})
+const sphere2_mesh=new THREE.Mesh(sphere2_geometry,sphere2_material)
+sphere2_mesh.position.set(-200,0,0)
+sphere2_mesh.castShadow = true
+scene.add(sphere2_mesh)
+
+//sphere3
+const sphere3_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere3_material =new THREE.MeshPhongMaterial({color:0xff0000})
+const sphere3_mesh=new THREE.Mesh(sphere3_geometry,sphere3_material)
+sphere3_mesh.position.set(200,0,0)
+sphere3_mesh.castShadow = true
+scene.add(sphere3_mesh)
+
+//cursor
+const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
+const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
+const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
+
+/**
+ * EventListener
+ */
 //変数定義
 var index_master = 0
 var index_env = 0
@@ -88,7 +151,7 @@ document.addEventListener('keydown', (e) =>{
         init_master(index_master)
     }
 
-    //enviroment
+    //backimage
     //press Q
     if(e.keyCode == 81 && index_env > 0){
         index_env -= 1
@@ -112,59 +175,6 @@ document.addEventListener('keydown', (e) =>{
         init_map(index_map)
     }
 })
-
-//点光源
-const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
-pointlight1.position.set(0,0,0)
-pointlight1.castShadow = true
-scene.add(pointlight1)
-
-/**
- * geometry
- *  */
-//texture_load
-const textureLoader = new THREE.TextureLoader()
-const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
-
-//plane1
-const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
-const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness: 0.0,normalMap:normalMapTexture})
-const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
-plane1_mesh.rotation.set(Math.PI/2,0,0)
-plane1_mesh.position.set(0,-100,0)
-plane1_mesh.receiveShadow = true
-scene.add(plane1_mesh)
-
-//sphere1
-const sphere1_geometry=new THREE.SphereGeometry(100,30,30)
-const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5})
-const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
-sphere1_mesh.position.set(0,0,0)
-sphere1_mesh.castShadow = true
-scene.add(sphere1_mesh)
-
-//sphere2
-const sphere2_geometry=new THREE.SphereGeometry(100,30,30)
-const sphere2_material =new THREE.MeshLambertMaterial({color:0xff0000})
-const sphere2_mesh=new THREE.Mesh(sphere2_geometry,sphere2_material)
-sphere2_mesh.position.set(-200,0,0)
-sphere2_mesh.castShadow = true
-scene.add(sphere2_mesh)
-
-//sphere3
-const sphere3_geometry=new THREE.SphereGeometry(100,30,30)
-const sphere3_material =new THREE.MeshPhongMaterial({color:0xff0000})
-const sphere3_mesh=new THREE.Mesh(sphere3_geometry,sphere3_material)
-sphere3_mesh.position.set(200,0,0)
-sphere3_mesh.castShadow = true
-scene.add(sphere3_mesh)
-
-//cursor
-const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
-const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
-const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
-cursor1_mesh.position.set(0,0,0)
-scene.add(cursor1_mesh)
 
 
 /**
