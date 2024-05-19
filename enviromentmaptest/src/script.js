@@ -19,35 +19,6 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
-/**geometry */
-//texture_load
-const textureLoader = new THREE.TextureLoader()
-const normalMapTexture_1 = textureLoader.load("./texture/seaworn_stonetile/seaworn_stone_tiles_nor_dx_1k.jpg")
-
-//plane1
-const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
-const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness:0.5, normalMap:normalMapTexture_1})
-const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
-plane1_mesh.rotation.set(Math.PI/2,0,0)
-plane1_mesh.position.set(0,-200,0)
-plane1_mesh.receiveShadow = true
-scene.add(plane1_mesh)
-
-//sphere1
-const sphere1_geometry=new THREE.SphereGeometry(100,30,30)
-const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5})
-const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
-sphere1_mesh.position.set(0,0,0)
-sphere1_mesh.castShadow = true
-scene.add(sphere1_mesh)
-
-//cursor
-const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
-const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
-const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
-cursor1_mesh.position.set(0,0,0)
-scene.add(cursor1_mesh)
-
 /**
  * 背景とライト 
 */
@@ -73,6 +44,7 @@ function init_map(index){
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.environment = hdr_files[index]
 }
+//hdr_files
 //ロードマネージャ
 const loadingManager = new THREE.LoadingManager(
     // everything has been loaded
@@ -141,7 +113,6 @@ document.addEventListener('keydown', (e) =>{
     }
 })
 
-
 //点光源
 const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
 pointlight1.position.set(0,0,0)
@@ -149,38 +120,101 @@ pointlight1.castShadow = true
 scene.add(pointlight1)
 
 /**
+ * geometry
+ *  */
+//texture_load
+const textureLoader = new THREE.TextureLoader()
+const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
+
+//plane1
+const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
+const plane1_material =new THREE.MeshStandardMaterial({color:0xffffff,side: THREE.DoubleSide, roughness:0.0, metalness: 0.0,normalMap:normalMapTexture})
+const plane1_mesh=new THREE.Mesh(plane1_geometry,plane1_material)
+plane1_mesh.rotation.set(Math.PI/2,0,0)
+plane1_mesh.position.set(0,-100,0)
+plane1_mesh.receiveShadow = true
+scene.add(plane1_mesh)
+
+//sphere1
+const sphere1_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.5})
+const sphere1_mesh=new THREE.Mesh(sphere1_geometry,sphere1_material)
+sphere1_mesh.position.set(0,0,0)
+sphere1_mesh.castShadow = true
+scene.add(sphere1_mesh)
+
+//sphere2
+const sphere2_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere2_material =new THREE.MeshLambertMaterial({color:0xff0000})
+const sphere2_mesh=new THREE.Mesh(sphere2_geometry,sphere2_material)
+sphere2_mesh.position.set(-200,0,0)
+sphere2_mesh.castShadow = true
+scene.add(sphere2_mesh)
+
+//sphere3
+const sphere3_geometry=new THREE.SphereGeometry(100,30,30)
+const sphere3_material =new THREE.MeshPhongMaterial({color:0xff0000})
+const sphere3_mesh=new THREE.Mesh(sphere3_geometry,sphere3_material)
+sphere3_mesh.position.set(200,0,0)
+sphere3_mesh.castShadow = true
+scene.add(sphere3_mesh)
+
+//cursor
+const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
+const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
+const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
+
+
+/**
  * Sizes
 */
+var adjust = 0
 const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: window.innerWidth-adjust,
+    height: window.innerHeight-adjust
 }
 
 window.addEventListener('resize', () =>
+    {
+        // Update sizes
+        sizes.width = window.innerWidth-adjust
+        sizes.height = window.innerHeight-adjust
+    
+        // Update camera
+        camera.aspect = sizes.width / sizes.height
+        camera.position.set(0,0,dist(fov))
+        camera.updateProjectionMatrix()
+    
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+//fullscreen
+window.addEventListener("dblclick",() =>
 {
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    if(!document.fullscreenElement){
+        canvas.requestFullscreen()
+    }
+    else{
+        document.exitFullscreen()
+    }
 })
 
 /**
  * Camera
  */
 // Base camera
-const fov = 65
-const fovRad= (fov/2)*(Math.PI/180)
-const dist = (sizes.height/2)/Math.tan(fovRad)
-
-const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1, dist*10)
-camera.position.set(0,0,dist)
+const fov = 75
+const dist =(fov) =>{
+    const fovRad= (fov/2)*(Math.PI/180)
+    const dist = (sizes.height/2)/Math.tan(fovRad)
+    return dist
+}
+const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1, dist(fov)*10)
+camera.position.set(0,0,dist(fov))
 scene.add(camera)
 
 /**
