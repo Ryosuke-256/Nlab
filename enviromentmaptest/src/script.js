@@ -2,6 +2,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
 const base_path = 'image\\'
 const hdr_images_path = [
@@ -69,10 +70,11 @@ hdr_images_path.forEach(element => {
 })
 
 //点光源
-const pointlight1 = new THREE.PointLight(0xffffff,200,0,1)
+const pointlight1 = new THREE.PointLight(0xffffff,300,0,1)
 pointlight1.position.set(0,0,0)
 pointlight1.castShadow = true
 scene.add(pointlight1)
+
 
 /**
  * geometry
@@ -109,7 +111,7 @@ scene.add(sphere1_mesh)
 
 //sphere2
 const sphere2_geometry=new THREE.SphereGeometry(100,30,30)
-const sphere2_material =new THREE.MeshStandardMaterial({color:0xff0000,roughness:1.0, metalness: 0.0})
+const sphere2_material =new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.1, metalness: 1.0})
 const sphere2_mesh=new THREE.Mesh(sphere2_geometry,sphere2_material)
 sphere2_mesh.position.set(-200,0,0)
 sphere2_mesh.castShadow = true
@@ -129,6 +131,24 @@ const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
 const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
 cursor1_mesh.position.set(0,0,0)
 scene.add(cursor1_mesh)
+
+/**models
+//load3D
+const loader = new THREE.OBJLoader()
+loader.load(
+    "./models/normal/dragon.obj",(object)=>{
+    console.log('success')
+    console.log(object)
+},(progress) =>{
+    console.log('progress')
+    console.log(progress)    
+},(error) =>{
+    console.log('error')
+    console.log(error)
+}) 
+*/
+
+
 
 /**
  * EventListener

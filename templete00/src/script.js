@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { texture } from 'three/examples/jsm/nodes/Nodes.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -20,13 +22,14 @@ plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-100,0)
 plane1_mesh.receiveShadow = true
 scene.add(plane1_mesh)
-
+/**
 //box1
 const box1_geometry=new THREE.BoxGeometry(100,100,100)
 const box1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.0})
 const box1_mesh=new THREE.Mesh(box1_geometry,box1_material)
 box1_mesh.castShadow = true
 scene.add(box1_mesh)
+*/
 
 //cursor
 const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
@@ -34,6 +37,42 @@ const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
 const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
 cursor1_mesh.position.set(0,0,0)
 scene.add(cursor1_mesh)
+
+/**
+ * models
+ */
+/**
+//load3D
+const loader = new OBJLoader()
+loader.load(
+    "./models/normal/dragon.obj",
+    (object)=>{
+    console.log('success')
+    console.log(object)
+    scene.add(object.scene.children[0])
+})
+
+const loader = new OBJLoader();
+
+// OBJファイルのパスを指定
+loader.load("./models/normal/dragon.obj", (object)=>{
+    scene.add(object);
+},undefined,(error)=>{
+    console.error(error)
+})
+*/
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.load(
+    "./models/gltf/teapot1.1.gltf",
+    (gltf) =>{
+        while(gltf.scene.children.length){
+            scene.add(gltf.scene.children[0])
+        }
+        console.log(gltf)
+    }
+)
+
 
 //背景
 const loader1 = new RGBELoader();
@@ -176,7 +215,7 @@ const animate = () =>
     //second
     const sec = performance.now()/1000
 
-    box1_mesh.rotation.y=sec*(Math.PI/4)
+    //box1_mesh.rotation.y=sec*(Math.PI/4)
     // Call tick again on the next frame
     window.requestAnimationFrame(animate)
 }
