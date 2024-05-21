@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
-import { texture } from 'three/examples/jsm/nodes/Nodes.js'
+import { metalness, texture } from 'three/examples/jsm/nodes/Nodes.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
@@ -22,14 +22,14 @@ plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-100,0)
 plane1_mesh.receiveShadow = true
 scene.add(plane1_mesh)
-/**
+
 //box1
 const box1_geometry=new THREE.BoxGeometry(100,100,100)
 const box1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.0})
 const box1_mesh=new THREE.Mesh(box1_geometry,box1_material)
 box1_mesh.castShadow = true
 scene.add(box1_mesh)
-*/
+
 
 //cursor
 const cursor1_geometry = new THREE.SphereGeometry(5,10,10)
@@ -41,38 +41,48 @@ scene.add(cursor1_mesh)
 /**
  * models
  */
-/**
-//load3D
-const loader = new OBJLoader()
-loader.load(
-    "./models/normal/dragon.obj",
-    (object)=>{
-    console.log('success')
-    console.log(object)
-    scene.add(object.scene.children[0])
-})
-
-const loader = new OBJLoader();
-
-// OBJファイルのパスを指定
-loader.load("./models/normal/dragon.obj", (object)=>{
-    scene.add(object);
-},undefined,(error)=>{
-    console.error(error)
-})
-*/
-
+//gltf loader
+var object_gltf = null
 const gltfLoader = new GLTFLoader()
 gltfLoader.load(
     "./models/gltf/teapot1.1.gltf",
     (gltf) =>{
-        while(gltf.scene.children.length){
-            scene.add(gltf.scene.children[0])
-        }
-        console.log(gltf)
+        object_gltf = gltf.scene.children[0] //children[0]はいらないときもあるので要確認
+
+        object_gltf.scale.set(30,30,30)
+        object_gltf.position.set(-200,0,0)
+        object_gltf.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
+        object_gltf.castShadow = true
+        scene.add(object_gltf)
+        console.log(object_gltf)
+    },(xhr)=>{
+        console.log((xhr.loaded/xhr.total*100)+'% loaded')
+    },(error)=>{
+        console.log('An error happened',error)
     }
 )
 
+//obj loader
+var object_obj = null
+const objLoader = new OBJLoader()
+objLoader.load(
+    "./models/normal/dragon.obj",
+    (obj) =>{
+        object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
+
+        const coe = 100
+        object_obj.scale.set(coe,coe,coe)
+        object_obj.position.set(200,0,0)
+        object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
+        object_obj.castShadow = true
+        scene.add(object_obj)
+        console.log(object_obj)
+    },(xhr)=>{
+        console.log((xhr.loaded/xhr.total*100)+'% loaded')
+    },(error)=>{
+        console.log('An error happened',error)
+    }
+)
 
 //背景
 const loader1 = new RGBELoader();
@@ -215,7 +225,13 @@ const animate = () =>
     //second
     const sec = performance.now()/1000
 
-    //box1_mesh.rotation.y=sec*(Math.PI/4)
+    box1_mesh.rotation.y=sec*(Math.PI/4)
+    if(object_gltf!=null){
+        object_gltf.rotation.z=sec*(Math.PI/4)
+    }
+    if(object_obj!=null){
+        object_obj.rotation.y=sec*(Math.PI/4)
+    }
     // Call tick again on the next frame
     window.requestAnimationFrame(animate)
 }

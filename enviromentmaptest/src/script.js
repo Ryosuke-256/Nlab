@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
+//imagefiles
 const base_path = 'image\\'
 const hdr_images_path = [
     'symmetrical_garden_02_2k.hdr',
@@ -12,6 +13,16 @@ const hdr_images_path = [
     'brown_photostudio_02_2k.hdr',
 ]
 const hdr_files = []
+
+//modelfiles
+const model_base_path = 'model/normal\\'
+const model_path = [
+    'board_ang0_size03.obj',
+    'board_ang30_size03.obj',
+    'bunny.obj',
+    'sphere.obj',
+    'teapot.obj',
+]
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -147,8 +158,6 @@ loader.load(
     console.log(error)
 }) 
 */
-
-
 
 /**
  * EventListener
