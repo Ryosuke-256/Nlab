@@ -1,9 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -15,6 +12,60 @@ const scene = new THREE.Scene()
 /**
  * Geometry
  */
+//material setting
+const material_default_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:0, roughness:0, //Standard
+    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
+    clearcoat:0,clearcoatRoughness:0, //クリアコート
+    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+})
+const material_normal_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:0, roughness:0.25, //Standard
+    anisotropy:1,attenuationDistance:10, //異方性 (金属)
+    clearcoat:0.75,clearcoatRoughness:0.5, //クリアコート
+    iridescence:0.5, iridescenceIOR:1,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:1,ior:2.3,reflectivity: 0, // 反射率 (非金属)
+    sheen:1,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+})
+const material_Translucent_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:10, //いろいろ
+    metalness:0, roughness:0.5, //Standard
+    anisotropy:1,attenuationDistance:10, //異方性 (金属)
+    clearcoat:0.1,clearcoatRoughness:0.2, //クリアコート
+    iridescence:0.2, iridescenceIOR:1,iridescenceThicknessRange:[100,800], //虹彩効果
+    transmission:0.05, //透明度 (非金属)
+    dispersion:1,ior:1,reflectivity:0.5, // 反射率 (非金属)
+    sheen:1,sheenRoughness:0.1,specularIntensity:1 //光沢 (非金属)
+})
+const material_metal_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:1, roughness:0.2, //Standard
+    anisotropy:0,attenuationDistance:1000, //異方性 (金属)
+    clearcoat:1,clearcoatRoughness:0.1, //クリアコート
+    iridescence:0, iridescenceIOR:0.99,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:1,ior:2.3,reflectivity: 0, // 反射率(非金属)
+    sheen:0.1,sheenRoughness:1,specularIntensity:1 //光沢(非金属)
+})
+const material_mat_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:0, roughness:0.8, //Standard
+    anisotropy:1,attenuationDistance:10, //異方性 (金属)
+    clearcoat:0.75,clearcoatRoughness:0.75, //クリアコート
+    iridescence:0, iridescenceIOR:1,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:0.1,ior:1,reflectivity: 0.5, // 反射率 (非金属)
+    sheen:0.5,sheenRoughness:1,specularIntensity:0.5 //光沢 (非金属)
+})
+const material_list = [material_default_1,material_normal_1,material_Translucent_1,material_metal_1,material_mat_1]
+
+
 //plane1
 const plane1_geometry = new THREE.PlaneGeometry(1000,1000,10,10)
 const textureLoader = new THREE.TextureLoader()
@@ -27,9 +78,8 @@ plane1_mesh.receiveShadow = true
 scene.add(plane1_mesh)
 
 //box1
-const box1_geometry=new THREE.BoxGeometry(100,100,100)
-const box1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.0})
-const box1_mesh=new THREE.Mesh(box1_geometry,box1_material)
+const box1_geometry=new THREE.SphereGeometry(100,100,100)
+const box1_mesh=new THREE.Mesh(box1_geometry,material_default_1)
 box1_mesh.castShadow = true
 scene.add(box1_mesh)
 
@@ -40,53 +90,6 @@ const cursor1_material = new THREE.MeshBasicMaterial({color:0x000000})
 const cursor1_mesh = new THREE.Mesh(cursor1_geometry,cursor1_material)
 cursor1_mesh.position.set(0,0,0)
 scene.add(cursor1_mesh)
-
-/**
- * models
- */
-//gltf loader
-var object_gltf = null
-const gltfLoader = new GLTFLoader()
-gltfLoader.load(
-    "./models/gltf/teapot.gltf",
-    (gltf) =>{
-        object_gltf = gltf.scene.children[0] //children[0]はいらないときもあるので要確認
-
-        const coe =50
-        object_gltf.scale.set(coe,coe,coe)
-        object_gltf.position.set(-200,0,0)
-        object_gltf.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
-        object_gltf.castShadow = true
-        scene.add(object_gltf)
-        console.log(object_gltf)
-    },(xhr)=>{
-        console.log((xhr.loaded/xhr.total*100)+'% loaded')
-    },(error)=>{
-        console.log('An error happened',error)
-    }
-)
-
-//obj loader
-var object_obj = null
-const objLoader = new OBJLoader()
-objLoader.load(
-    "./models/normal/dragon.obj",
-    (obj) =>{
-        object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
-
-        const coe = 50
-        object_obj.scale.set(coe,coe,coe)
-        object_obj.position.set(200,0,0)
-        object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
-        object_obj.castShadow = true
-        scene.add(object_obj)
-        console.log(object_obj)
-    },(xhr)=>{
-        console.log((xhr.loaded/xhr.total*100)+'% loaded')
-    },(error)=>{
-        console.log('An error happened',error)
-    }
-)
 
 /**
  * Background and Lighting
@@ -232,12 +235,6 @@ const animate = () =>
     const sec = performance.now()/1000
 
     box1_mesh.rotation.y=sec*(Math.PI/4)
-    if(object_gltf!=null){
-        object_gltf.rotation.z=sec*(Math.PI/4)
-    }
-    if(object_obj!=null){
-        object_obj.rotation.y=sec*(Math.PI/4)
-    }
     // Call tick again on the next frame
     window.requestAnimationFrame(animate)
 }
