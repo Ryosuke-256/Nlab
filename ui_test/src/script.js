@@ -2,6 +2,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
+import { attribute, element, metalness, roughness } from 'three/examples/jsm/nodes/Nodes.js';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { BoxLineGeometry } from 'three/examples/jsm/geometries/BoxLineGeometry.js';
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -67,6 +70,9 @@ scene.add(camera)
 //宣言
 let container,imageBlock,textBlock,text
 let container2
+let container3
+
+let container_list = []
 //laoder
 const ui_imageloader = new THREE.TextureLoader()
 function makePanel1(){
@@ -112,25 +118,111 @@ function makePanel1(){
         imageBlock.set({backgroundTexture:texture})
     })
 
-    container.position.set(-1.1,0,0)
+    container_list.push(container)
     scene.add(container)
 }
 function makePanel2(){
     container2 = new ThreeMeshUI.Block({
         width:1,height:0.8,fontSize:0.055,
+        backgroundColor:new THREE.Color(0,0,0),
         justifyContent:"center",textAlign:"center",
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png'
     })
     container2.position.set(0,0,0)
     container2.rotation.x = -0.55
-     scene.add(container2)
 
-     container2.add(
+
+    container2.add(
         new ThreeMeshUI.Text({
-            content:"Block.borderRadius\n\nBlock.borderWidth\n\nBlock.borderColor\n\nBlock.borderOpacity"
+           content:"Block.borderRadius\n\nBlock.borderWidth\n\nBlock.borderColor\n\nBlock.borderOpacity"
         })
      )
+
+    container_list.push(container2)
+    scene.add(container2)
+}
+
+function makePanel3(){
+    container3 = new ThreeMeshUI.Block({
+        fontSize:0.7,padding:0.02,borderRadius:0.11,
+        justifyContent:"center",
+        contentDirection:"row-reverse",
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    container3.position.set(0,0.6,-1.2)
+    container3.rotation.x = -0.55
+    scene.add(container3)
+
+    //Buttons
+
+    const buttonOptions = {
+        width:0.4,height:0.15,offset:0.05,margin:0.02,borderRadius:0.75,
+        justifyContent:"center"
+    }
+
+    const hoveredStateAtrributes = {
+        state:"hovered",
+        attributes:{
+            offset:0.035,
+            backgroundColor:new THREE.Color(0x999999),
+            backgroundOpacity:1,
+            fontColor:new THREE.Color(0xffffff)
+        }
+    }
+
+    const idleStateAttributes = {
+        state:"idle",
+        attributes:{
+            offset:0.035,
+            backgroundColor:new THREE.Color(0x666666),
+            backgroundOpacity:0.3,
+            fontColor:new THREE.Color(0xffffff)
+        }
+    }
+
+    const buttonNext = new ThreeMeshUI.Block( buttonOptions )
+    const buttonPrevious = new ThreeMeshUI.Block( buttonOptions )
+
+    buttonNext.add(
+        new ThreeMeshUI.Text({content:"next"})
+    )
+    buttonPrevious.add(
+        new ThreeMeshUI.Text({content:"previous"})
+    )
+
+    const selectedAttributes = {
+        offset:0.02,
+        backgroundColor:new THREE.Color(0x777777),
+        fontColor: new THREE.Color(0x222222)
+    }
+
+    buttonNext.setupState({
+        state:"selected",
+        attributes:selectedAttributes,
+        onSet:() => {
+            currentmesh = (currentmesh+1)%3
+            showMesh(currentmesh)
+        }
+    })
+    buttonNext.setupState(hoveredStateAtrributes)
+    buttonNext.setupState(idleStateAttributes)
+
+    buttonPrevious.setupState({
+        state:"selected",
+        attributes:selectedAttributes,
+        onSet:() => {
+            currentmesh -=1
+            if (currentmesh<0 ) currentmesh = 2
+            showMesh(currentmesh)
+        }
+    })
+    buttonPrevious.setupState(hoveredStateAtrributes)
+    buttonPrevious.setupState(idleStateAttributes)
+
+    container3.add(buttonNext,buttonPrevious)
+    objsToTest.push(buttonNext,buttonPrevious)
 }
 
 //実行
@@ -150,13 +242,37 @@ plane1_mesh.position.set(0,-1,0)
 plane1_mesh.receiveShadow = true
 scene.add(plane1_mesh)
 
+//mesh group
+let meshcontainer , meshes , currentmesh
+meshcontainer = new THREE.Group();
+meshcontainer.position.set(0,0,0)
+meshcontainer.castShadow = true
+scene.add(meshcontainer)
+
 //box1
-const box1_geometry=new THREE.SphereGeometry(0.5,50,50)
-const box1_material =new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.0})
-const box1_mesh=new THREE.Mesh(box1_geometry,box1_material)
-box1_mesh.position.set(0,2,0)
-box1_mesh.castShadow = true
-scene.add(box1_mesh)
+const box1 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5,0.5,0.5),
+    new THREE.MeshStandardMaterial({color:0xff0000, roughness:0.0, metalness: 0.0})
+)
+
+//sphere1
+const sphere1 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5,30,30),
+    new THREE.MeshStandardMaterial({color:0x00ff00,roughness:0.0,metalness:0.0})
+)
+
+//touras1
+const torus1 = new THREE.Mesh(
+    new THREE.TorusKnotGeometry(1,0.4,64,8),
+    new THREE.MeshStandardMaterial({color:0x0000ff,roughness:0.0,metalness:0.0})
+)
+
+box1.visible = sphere1.visible = torus1.visible = false
+meshcontainer.add(box1,sphere1,torus1)
+meshes = [box1,sphere1,torus1]
+currentmesh = 0
+
+showMesh(currentmesh)
 
 
 //cursor
@@ -282,15 +398,20 @@ const animate = () =>
     const sec = performance.now()/1000
 
     //geometry animation
+    meshcontainer.rotation.set(Math.PI*sec/4,Math.PI*sec/4,0)
 
     //UI
-    if(container2!=null){
-        container2.set({
-            borderRadius:[0,0.2+0.2*Math.sin(sec),0,0],
-            borderwidth:0.05-0.06*Math.sin(sec),
-            borderColor:new THREE.Color(0.5+0.5*Math.sin(sec),0.5,1),
-            borderOpacity:1
-        })
+    //animation
+    container2.set({
+        borderRadius:[0,0.2+0.2*Math.sin(sec),0,0],
+        borderWidth:0.05-0.06*Math.sin(sec),
+        borderColor:new THREE.Color(0.5+5*Math.sin(sec),0.5,1),
+        borderOpacity:1
+    })
+    //transform set
+    if(container_list.every(element => element !== null)){
+        container.position.set(-2,0,-1)
+        container2.position.set(-1,0,-1)
     }
 
     ThreeMeshUI.update()
@@ -300,3 +421,9 @@ const animate = () =>
 }
 
 animate()
+
+function showMesh(id){
+    meshes.forEach((mesh,i) => {
+        mesh.visible = i === id ? true : false
+    })
+}
