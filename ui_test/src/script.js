@@ -216,7 +216,7 @@ function init(){
 
     //touras1
     const torus1 = new THREE.Mesh(
-        new THREE.TorusKnotGeometry(0.3,0.4,64,8),
+        new THREE.TorusKnotGeometry(0.3,0.1,128,32),
         new THREE.MeshStandardMaterial({color:0x0000ff,roughness:0.0,metalness:0.0})
     )
 
@@ -437,12 +437,17 @@ function makePanel3(){
 //updatebuttons
 function updateButoons(){
     let intersect
-
+/**
     if(renderer.xr.isPresenting){
         vrControl.setFromController(0,raycaster.ray)
         intersect = raycast()
         if (intersect) vrControl.setPointerAt(0,intersect.point)
     }else if(mouse.x !== null && mouse.y !== null){
+        raycaster.setFromCamera(mouse,camera)
+        intersect = raycast()
+    }
+*/
+    if(mouse.x !== null && mouse.y !== null){
         raycaster.setFromCamera(mouse,camera)
         intersect = raycast()
     }

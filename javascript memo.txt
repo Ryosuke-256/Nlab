@@ -57,3 +57,6 @@ package.jsonに以下のように書く
 npm install
 ・Github
 https://github.com/felixmariotto/three-mesh-ui
+
+thre-mesh-uiが基本VR用なのでマウスでシミュレーションするときはそれ用のプログラムを組む!
+ryacast()
