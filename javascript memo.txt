@@ -60,3 +60,38 @@ https://github.com/felixmariotto/three-mesh-ui
 
 thre-mesh-uiが基本VR用なのでマウスでシミュレーションするときはそれ用のプログラムを組む!
 ryacast()
+
+array.reduce(callback)
+・隣り合う２つの配列要素に対して左から右へ同時に関数を適用し、単一の値にする
+・例：配列の中身を１つずつ足していって合計を求める
+https://qiita.com/chihiro/items/1047e40514a778c08baa
+
+UIインタラクションmemo
+・UIパネルを作り、インタラクションによる状態変化を設定 three-mesh-ui
+↓
+・raycasterで選択点(カーソル)の情報と、カーソルに重なるオブジェクトの情報を得る raycaster()
+↓
+・カーソルが重なっているオブジェクトに与える処理をkey変数をトリガーに設定 (例：selectedState) if()
+↓
+・Eventlistenerで各処理に対してkey変数を変化、もしくは与える addEventlistener
+
+onafterupdate
+・Uiの更新後に呼ばれるcallback関数
+・対象はtextやblocksなどなんでも
+
+setInterval(関数,処理間隔(ミリs))
+・第一引数の関数を第二引数の間隔で実行する
+
+
+
+
+
+
+
+
+
+
+
+
+
+

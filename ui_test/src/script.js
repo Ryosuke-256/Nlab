@@ -46,6 +46,9 @@ let selectState = false
 const raycaster = new THREE.Raycaster()
 const mouse = new THREE.Vector2()
 mouse.x = mouse.y = null 
+//ui panel4
+let container4
+let block_1
 
 //ui panel list
 let container_list = []
@@ -239,6 +242,7 @@ function init(){
     makePanel1()
     makePanel2()
     makePanel3()
+    makePanel4()
 
     /**Object */
 
@@ -374,10 +378,10 @@ function makePanel3(){
     const hoveredStateAtrributes = {
         state:"hovered",
         attributes:{
-            offset:0.035,
+            offset:0.045,
             backgroundColor: new THREE.Color( 0x888888 ),
 			backgroundOpacity: 1,
-			fontColor: new THREE.Color( 0xffffff )
+			fontColor: new THREE.Color( 0x00ffff )
         }
     }
 
@@ -404,6 +408,7 @@ function makePanel3(){
     const selectedAttributes = {
         offset:0.02,
         backgroundColor:new THREE.Color(0x777777),
+        backgroundOpacity: 1,
         fontColor: new THREE.Color(0x222222)
     }
 
@@ -466,6 +471,68 @@ function updateButoons(){
     })
 }
 
+//onafterupdate
+function makePanel4(){
+    let count = 0
+
+    container4 = new ThreeMeshUI.Block({
+        backgroundColor:new THREE.Color(0x000000),
+        width:1.2,height:0.5,justifyContent:"center",
+        fontFamily:'./assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png'
+    })
+    
+    block_1 = new ThreeMeshUI.Block({
+        backgroundColor:new THREE.Color(0xff0000),
+        width:1.2,height:0.5,
+        justifyContent:"center",
+        fontFamily:'./assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png'
+    })
+    //block_1.layers.set(0)
+    
+    scene.add(container4,block_1)
+
+    container4.onAfterUpdate = function () {
+		this.frame.layers.set( count % 2 );
+        
+	}
+    block_1.onAfterUpdate = function () {
+		this.frame.layers.set( (count+1) % 2 );
+        
+	}
+/**
+    container4.onAfterUpdate = () =>{
+        this.frame.layers.set( count % 2)
+    }
+    container4.onAfterUpdate = function () {
+		this.frame.layers.set( count % 2 );
+        
+	};
+*/
+    const counter = new ThreeMeshUI.Text({
+        content:'0',fontSize:0.1
+    })
+    container4.add(
+        new ThreeMeshUI.Text({
+            content:'onAfterUpdate get called after any update.\n\n',
+            fontSize:0.055
+        }),counter
+    )
+    block_1.add(
+        new ThreeMeshUI.Text({
+            content:'onAfterUpdate get called after any update.\n\n',
+            fontSize:0.055
+        }),counter
+    )
+
+    setInterval(()=>{
+        count ++
+        counter.set({content:String(count)})
+    },1000)
+}
+
+//選択点に最も近いオブジェクトを返す
 function raycast() {
     return objsToTest.reduce((closestIntersection,obj)=>{
         const intersection = raycaster.intersectObject(obj,true)
@@ -521,6 +588,8 @@ function animate(){
 
     //geometry animation
     meshcontainer.rotation.set(Math.PI*sec/4,Math.PI*sec/4,0)
+    meshcontainer.position.set(0,0.5,-1)
+    meshcontainer.scale.set(0.5,0.5,0.5)
 
     //UI
     //animation
@@ -534,7 +603,7 @@ function animate(){
     if(container_list.every(element => element !== null)){
         container.position.set(-2,0,-1)
         container2.position.set(-1,0,-1)
-        container3.position.set(0,0,1)
+        container3.position.set(0,0,-1)
     }
 
     ThreeMeshUI.update()
