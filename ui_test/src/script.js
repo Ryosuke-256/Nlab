@@ -15,9 +15,6 @@ import ShadowedLight from 'three-mesh-ui/examples/utils/ShadowedLight.js'
 //base
 let canvas, scene, camera, renderer, controls, vrControl
 
-//object
-let meshcontainer , meshes , currentmesh
-
 //mouse follow
 let pointlight1, cursor1_mesh
 
@@ -46,9 +43,12 @@ let selectState = false
 const raycaster = new THREE.Raycaster()
 const mouse = new THREE.Vector2()
 mouse.x = mouse.y = null 
+let meshcontainer , meshes , currentmesh
 //ui panel4
 let container4
-let block_1
+//ui panel5
+let container5,texts
+let pageCounter = 0
 
 //ui panel list
 let container_list = []
@@ -127,6 +127,14 @@ window.addEventListener('pointerup',()=>{
 })
 window.addEventListener('touchstart',(e)=>{
     selectState
+})
+
+//uipanel5
+document.addEventListener('keydown',(e)=>{
+    if(e.keyCode == 32) {
+        pageCounter += 1
+        showText(pageCounter % 3)
+    }
 })
 
 /**eventlistner */
@@ -228,7 +236,7 @@ function init(){
     meshes = [box1,sphere1,torus1]
     currentmesh = 0
 
-    showMesh(currentmesh)
+    showMesh(pageCounter)
 
     //cursor
     cursor1_mesh = new THREE.Mesh(
@@ -243,6 +251,7 @@ function init(){
     makePanel2()
     makePanel3()
     makePanel4()
+    makePanel5()
 
     /**Object */
 
@@ -276,12 +285,6 @@ function init(){
 
     //loop animation
     renderer.setAnimationLoop(animate)
-}
-
-function showMesh(id){
-    meshes.forEach((mesh,i) => {
-        mesh.visible = i === id ? true : false
-    })
 }
 
 //UIpanel1
@@ -439,6 +442,12 @@ function makePanel3(){
     objsToTest.push(buttonNext,buttonPrevious)
 }
 
+function showMesh(id){
+    meshes.forEach((mesh,i) => {
+        mesh.visible = i === id ? true : false
+    })
+}
+
 //updatebuttons
 function updateButoons(){
     let intersect
@@ -482,16 +491,16 @@ function makePanel4(){
         fontTexture: './assets/Roboto-msdf.png'
     })
     
-    block_1 = new ThreeMeshUI.Block({
+    const block_1 = new ThreeMeshUI.Block({
         backgroundColor:new THREE.Color(0xff0000),
         width:1.2,height:0.5,
         justifyContent:"center",
         fontFamily:'./assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png'
     })
-    //block_1.layers.set(0)
     
-    scene.add(container4,block_1)
+    container4.add(block_1)
+    scene.add(container4)
 
     container4.onAfterUpdate = function () {
 		this.frame.layers.set( count % 2 );
@@ -501,35 +510,74 @@ function makePanel4(){
 		this.frame.layers.set( (count+1) % 2 );
         
 	}
-/**
-    container4.onAfterUpdate = () =>{
-        this.frame.layers.set( count % 2)
-    }
-    container4.onAfterUpdate = function () {
-		this.frame.layers.set( count % 2 );
-        
-	};
-*/
+
     const counter = new ThreeMeshUI.Text({
-        content:'0',fontSize:0.1
+        content:'0',fontSize:0.1,offset:0.05
     })
     container4.add(
         new ThreeMeshUI.Text({
+            offset:0.03,
             content:'onAfterUpdate get called after any update.\n\n',
             fontSize:0.055
         }),counter
     )
-    block_1.add(
-        new ThreeMeshUI.Text({
-            content:'onAfterUpdate get called after any update.\n\n',
-            fontSize:0.055
-        }),counter
-    )
+    block_1.add(counter)
 
+    container_list.push(container4)
     setInterval(()=>{
         count ++
         counter.set({content:String(count)})
     },1000)
+}
+
+//pagemekuri
+function makePanel5(){
+    container5 = new ThreeMeshUI.Block({
+        width:0.9,height:1.6,padding:0.05,
+        justifyContent:'center',textAlign:'left',
+        backgroundColor:new THREE.Color(0xffffff),
+        fontFamily:'./assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png'
+    })
+    scene.add(container5)
+
+    const block_5_1 = new ThreeMeshUI.Block({
+        width:1,height:1.7,offset:-0.05,
+        backgroundColor:new THREE.Color(0x888888)
+    })
+    container5.add(block_5_1)
+
+    const text_1 = new ThreeMeshUI.Text({
+        content:"Hello! Please push space!\n",
+        offset:0.05,fontColor:new THREE.Color(0x000000),
+        fontSize:0.075
+    })
+
+    const text_2 = new ThreeMeshUI.Text({
+        content:"Here you are! It's next page!\nI have a surprise for you!\nPlease push space!\n",
+        offset:0.05,fontColor:new THREE.Color(0x000000),
+        fontSize:0.075
+    })
+
+    const text_3 = new ThreeMeshUI.Text({
+        content:"Poop\n",
+        offset:0.05,fontColor:new THREE.Color(0x000000),
+        fontSize:0.3
+    })
+
+    container5.add(text_1,text_2,text_3)
+    container_list.push(container5)
+
+    text_1.visible=text_2.visible=text_3.visible = false
+    texts = [text_1,text_2,text_3]
+
+    showText(pageCounter)
+}
+
+function showText(id){
+    texts.forEach((text,i) => {
+        text.visible = i === id ? true : false
+    })
 }
 
 //選択点に最も近いオブジェクトを返す
@@ -604,6 +652,8 @@ function animate(){
         container.position.set(-2,0,-1)
         container2.position.set(-1,0,-1)
         container3.position.set(0,0,-1)
+        container4.position.set(1.1,0,-1)
+        container5.position.set(2,0,-1)
     }
 
     ThreeMeshUI.update()
