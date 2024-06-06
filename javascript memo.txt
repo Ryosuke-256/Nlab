@@ -54,6 +54,11 @@ package.jsonに以下のように書く
     "three-mesh-ui": "^6.5.4"
   }
 
+ライブラリを入れるときは
+npm install --save newlibraly
+そうするとpackage.jsonのdependenciesに書き込まれ、ついでにnpm installしてくれる
+
+
 npm install
 ・Github
 https://github.com/felixmariotto/three-mesh-ui

@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import html2canvas from 'html2canvas'
 
 /**
  * 宣言
@@ -31,6 +32,10 @@ let position_ratio = 250
 const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window_normal =new THREE.Vector2()
+
+html2canvas(document.body).then(function(canvas){
+    document.body.appendChild(canvas9)
+})
 
 /**
  * eventlister
@@ -114,7 +119,8 @@ function init(){
      */
     renderer = new THREE.WebGLRenderer({
         canvas: canvas,
-        antialias: true
+        antialias: true,
+        preserveDrawingBuffer: true
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -151,7 +157,7 @@ function init(){
     box1_mesh=new THREE.Mesh(
         new THREE.SphereGeometry(0.3,50,50),
         new THREE.MeshStandardMaterial({
-            color:0xff0000, roughness:0.1, metalness: 1.0
+            color:0xff0000, roughness:0.0, metalness: 0.0
         })
     )
     box1_mesh.castShadow = true
