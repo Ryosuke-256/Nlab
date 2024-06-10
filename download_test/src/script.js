@@ -33,9 +33,24 @@ const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window_normal =new THREE.Vector2()
 
-html2canvas(document.body).then(function(canvas){
-    document.body.appendChild(canvas9)
-})
+/**
+window.onload = function(){
+    html2canvas(document.getElementById("threejs"),{
+        onrendered:function(canvas){
+        var imgData = canvas.toDataURL()
+        document.getElementById("result").src = imgData
+        }
+    })
+
+    html2canvas(document.body,{
+        onrendered:function(canvas){
+            var imgData=canvas.toDataURL()
+            document.getElementById("ss").href=imgData
+        }
+    })
+}
+*/
+
 
 /**
  * eventlister
@@ -68,6 +83,22 @@ document.addEventListener("keydown",(e)=>{
     }
     if(e.keyCode == 54) {
         camera.position.set(0,-dist(fov),0)
+    }
+    if(e.keyCode == 80) {
+        var imgData, imgNode;
+        //Listen to 'P' key
+        if(e.which !== 80) return;
+        try {
+            imgData = renderer.domElement.toDataURL();
+        }
+        catch(e) {
+            console.log("Browser does not support taking screenshot of 3d context");
+            return;
+        }
+        //imgNode = document.createElement("img");
+        //imgNode.src = imgData;
+        document.getElementById("ss").href = imgData;
+        document.getElementById("ss").click()
     }
 })
 
@@ -129,6 +160,8 @@ function init(){
     renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
     renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
     renderer.shadowMap.enabled = true // 影
+
+    renderer.domElement.toDataURL("image/png")
     /**renderer */
 
     //controls

@@ -87,7 +87,10 @@ onafterupdate
 setInterval(関数,処理間隔(ミリs))
 ・第一引数の関数を第二引数の間隔で実行する
 
-
+screenshot
+Three.jsはレンダラーを標準装備しているのでhtml2canvasの必要がない
+imgData = renderer.domElement.toDataURL()
+これでok
 
 
 
