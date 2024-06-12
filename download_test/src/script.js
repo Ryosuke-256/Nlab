@@ -12,7 +12,8 @@ import html2canvas from 'html2canvas'
 let canvas, scene, camera, renderer, controls
 
 //size
-const sizes = {width: window.innerWidth,height: window.innerHeight}
+//const sizes = {width: window.innerWidth,height: window.innerHeight}
+const sizes = {width: 256,height: 256}
 
 //mouse follow
 let pointlight1, cursor1_mesh
@@ -95,10 +96,11 @@ document.addEventListener("keydown",(e)=>{
             console.log("Browser does not support taking screenshot of 3d context");
             return;
         }
-        //imgNode = document.createElement("img");
-        //imgNode.src = imgData;
+        imgNode = document.createElement("img");
+        imgNode.src = imgData;
         document.getElementById("ss").href = imgData;
-        document.getElementById("ss").click()
+        //document.getElementById("ss").click()
+        document.body.appendChild(imgNode)
     }
 })
 
