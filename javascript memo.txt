@@ -92,7 +92,25 @@ Three.jsはレンダラーを標準装備しているのでhtml2canvasの必要�
 imgData = renderer.domElement.toDataURL()
 これでok
 
+一定間隔ごとに処理を行いたい場合
+1.setTimeout(function,second)
+呼び出されたあと一回だけfunctionを実行
+2.setInterval(function,second)
+呼び出されたたらずっとfunctionを実行
+別途中断する必要がある
++α
+ループの中でループとかやるときは非同期処理にした方がいい
 
+非同期処理 async function
+基本形
+return new Promise(resolve => callback(resolve))
+応用
+await : 指定した関数のPromiseの結果が返されるまでasync function内の処理を一時停止する
+結果が返されればasync function内の処理を再開する
+
+Blobとは
+・様々なタイプのデータを扱える
+・Blobが作成された後、その内容を変更することはできない
 
 
 

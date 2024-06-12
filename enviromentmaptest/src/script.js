@@ -101,7 +101,7 @@ document.addEventListener("keydown",(e)=>{
     }
 })
 
-//eventlistener
+//change loaded
 document.addEventListener('keydown', (e) =>{
     //master
     //press ←
