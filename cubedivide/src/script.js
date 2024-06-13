@@ -4,6 +4,8 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
+import { gsap } from "gsap";
+
 /**
  * 宣言
  */
@@ -12,14 +14,6 @@ let canvas, scene, camera, renderer, controls
 
 //size
 const sizes = {width: window.innerWidth,height: window.innerHeight}
-
-//mouse follow
-let pointlight1, cursor1_mesh
-
-//animate object
-let box1_mesh
-var object_gltf = null
-var object_obj = null
 
 //camera
 let fov
@@ -31,6 +25,12 @@ let position_ratio = 250
 const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window_normal =new THREE.Vector2()
+
+//object
+let edge_box = 0.3
+let boxes_group = new THREE.Group()
+let boxes_list = []
+let box0_mesh,box0_geometry
 
 /**
  * eventlister
@@ -125,50 +125,48 @@ function init(){
     /**
      * Object
      */
-    const sphere1 = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2,100,100),
-        new THREE.MeshStandardMaterial({
-            color:0xff0000, roughness:0.1, metalness: 0.8
-        })
-    )
-    //scene.add(sphere1)
-
-    const box0_geometry = new THREE.BoxGeometry(0.5,0.5,0.5)
-    const box0 = new THREE.Mesh(
+    box0_geometry = new THREE.BoxGeometry(0.5,0.5,0.5)
+    box0_mesh = new THREE.Mesh(
         box0_geometry,
         new THREE.MeshBasicMaterial({
             color:0x00ff00,wireframe:true
         })
     )
-    scene.add(box0)
+    scene.add(box0_mesh)
 
-    const positions = box0_geometry.attributes.position.array;
-    const box0_vertices = []
-    
-    console.log(positions.length)
+    //頂点情報ゲット
+    let vertices = box0_mesh.geometry.attributes.position.array
+    let box0_vertices_be = []
 
-    for (let i = 0; i < positions.length; i+=3){
-        const vertex = new THREE.Vector3(positions[i],positions[i+1],positions[i+2])
-        box0_vertices.push(vertex)
+    for (let i = 0; i < vertices.length; i+=3){
+        const vertex = [vertices[i],vertices[i+1],vertices[i+2]]
+        box0_vertices_be.push(vertex)
     }
-
-    console.log(box0_vertices.length)
-
-    const boxs = []
-    for(let i = 0; i < box0_vertices; i++){
+    
+    let box0_vertices = Array.from(new Set(box0_vertices_be.map(JSON.stringify)),JSON.parse)
+    
+    //各頂点にboxを配置
+    for(let i = 0; i < box0_vertices.length; i++){
         const box = new THREE.Mesh(
-            new THREE.BoxGeometry(0.5,0.5,0.5),
+            new THREE.BoxGeometry(edge_box,edge_box,edge_box),
             new THREE.MeshStandardMaterial({
-                color:0x123456,roughness:0.2,metalness:0.3
+                color:0x123456,roughness:0.5,metalness:0.3,transparent:true,opacity:0.4
             })
         )
-        boxs.push(box)
+        boxes_group.add(box)
+        boxes_list.push(box)
         box.position.set(box0_vertices[i][0],box0_vertices[i][1],box0_vertices[i][2])
-        scene.add(box)
     }
 
+    scene.add(boxes_group)
+
+    console.log(boxes_list[0])
+
+    let bairitsu = 1
+    //const  = arrayOfArrays.map(innerArray => innerArray.map(element => element * bairitsu));
+
     /**
-     * models
+     * GSAP Animation
      */
 
     /**
@@ -178,9 +176,13 @@ function init(){
     scene.background=new THREE.Color(0x333333)
 
     //平行光源
-    const directionalLight =new THREE.DirectionalLight(0xffffff,10)
+    const directionalLight =new THREE.DirectionalLight(0xffffff,4)
     directionalLight.position.set(1,1,1)
     scene.add(directionalLight)
+
+    //点光源
+    const pointlight = new THREE.PointLight(0xffffff,5)
+    camera.add(pointlight)
 
 
     renderer.setAnimationLoop(animate)
@@ -225,6 +227,13 @@ function animate(){
 
     //second
     const sec = performance.now()/1000
+
+    //object
+    box0_mesh.rotation.y = sec*(Math.PI/8)
+    boxes_group.rotation.y = sec*(Math.PI/8)
+
+    boxes_list[0].rotation.y = sec*(Math.PI/8)
+    gsap.to(boxes_list[1].rotation, { duration: 1, y: Math.PI, ease: "power1.inOut", repeat: -1 });
 
     // Call tick again on the next frame
     //window.requestAnimationFrame(animate)

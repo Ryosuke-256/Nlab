@@ -112,7 +112,24 @@ Blobとは
 ・様々なタイプのデータを扱える
 ・Blobが作成された後、その内容を変更することはできない
 
+配列取り扱い
+・配列内のすべての要素に同じ処理を加えるとき
+// 元の配列
+const originalArray = [1, 2, 3, 4, 5];
+// 各要素を2倍にする
+const doubledArray = originalArray.map(element => element * 2);
++α 配列内配列
+// 配列の配列
+const arrayOfArrays = [[1, 2], [3, 4], [5, 6]];
+// 各要素を2倍にする
+const doubledArrayOfArrays = arrayOfArrays.map(innerArray => innerArray.map(element => element * 2));
 
+Group
+const group = new THREE.Group()
+・アニメーションの直前くらいで scene.add(group)
+・各種アニメーション可能
+group.children[0]
+グループの中を抽出可能
 
 
 
