@@ -419,6 +419,7 @@ composer = new EffectComposer(renderer);
 composer.addPass(renderPass);
 composer.addPass(effectGrayScale); 
 
+//loop activate
 renderer.setAnimationLoop(animate)
 
 

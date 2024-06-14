@@ -4,6 +4,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { sin } from 'three/examples/jsm/nodes/Nodes.js'
 
 /**
  * 宣言
@@ -256,6 +257,8 @@ function animate(){
     //second
     const sec = performance.now()/1000
 
+    theta = 4
+    //camera.position.x = sec*THREE.MathUtils.radToDeg()
     controls.update()
     // Render
     renderer.render(scene, camera)
