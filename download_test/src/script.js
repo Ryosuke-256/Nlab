@@ -156,7 +156,40 @@ async function loopwithdelay(){
         //material change
         for (j=0; j < material_list.length; j++){
             init_material(j);
-            renderer.render(scene, camera)
+            /**
+             * Post processing
+             */
+            const grayScaleShader = {
+                uniforms: {
+                    "tDiffuse": { value: null }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D tDiffuse;
+                    varying vec2 vUv;
+                    void main() {
+                        vec4 color = texture2D(tDiffuse, vUv);
+                        float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+                        gl_FragColor = vec4(vec3(gray), color.a);
+                    }
+                `
+            };
+            // Applying the shader as a post-processing effect
+            const renderPass = new RenderPass(scene, camera);
+            const effectGrayScale = new ShaderPass(grayScaleShader);
+            effectGrayScale.renderToScreen = true;
+
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderPass);
+            composer.addPass(effectGrayScale); 
+            /**Post processing*/
+            renderer.render(scene, camera)            
             //download
             imgData_2 = renderer.domElement.toDataURL();
             alldownloadlink.href = imgData_2;
@@ -276,13 +309,13 @@ const material_Translucent_1 = new THREE.MeshPhysicalMaterial({
 })
 const material_metal_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
-    metalness:1, roughness:0.2, //Standard
-    anisotropy:0,attenuationDistance:1000, //異方性 (金属)
-    clearcoat:1,clearcoatRoughness:0.1, //クリアコート
+    metalness:1, roughness:0.001, //Standard
+    anisotropy:0,attenuationDistance:0, //異方性 (金属)
+    clearcoat:0.7,clearcoatRoughness:0, //クリアコート
     iridescence:0, iridescenceIOR:0.99,iridescenceThicknessRange:[100,400], //虹彩効果
     transmission:0, //透明度 (非金属)
     dispersion:1,ior:2.3,reflectivity: 0, // 反射率(非金属)
-    sheen:0.1,sheenRoughness:1,specularIntensity:1 //光沢(非金属)
+    sheen:1,sheenRoughness:1,specularIntensity:1 //光沢(非金属)
 })
 const material_mat_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
@@ -310,7 +343,7 @@ const plane1_mesh=new THREE.Mesh(
 plane1_mesh.rotation.set(Math.PI/2,0,0)
 plane1_mesh.position.set(0,-1,0)
 plane1_mesh.receiveShadow = true
-scene.add(plane1_mesh)
+//scene.add(plane1_mesh)
 
 //box1
 box1_mesh=new THREE.Mesh(
@@ -318,7 +351,7 @@ box1_mesh=new THREE.Mesh(
     material_list[index_material]
 )
 box1_mesh.castShadow = true
-scene.add(box1_mesh)
+//scene.add(box1_mesh)
 
 //cursor
 cursor1_mesh = new THREE.Mesh(
@@ -330,17 +363,17 @@ scene.add(cursor1_mesh)
 /**
  * models
  */
-/**
+
 //obj loader
 const objLoader = new OBJLoader()
 objLoader.load(
-    "./models/normal/teapot.obj",
+    "./models/normal/bunny.obj",
     (obj) =>{
         object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
 
         const coe = 0.25
         object_obj.scale.set(coe,coe,coe)
-        object_obj.position.set(1,0,0)
+        object_obj.position.set(0,0,0)
         object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
         object_obj.castShadow = true
         scene.add(object_obj)
@@ -351,7 +384,7 @@ objLoader.load(
         console.log('An error happened',error)
     }
 )
-*/
+
 
 /**
  * Background and Lighting
@@ -418,6 +451,7 @@ effectGrayScale.renderToScreen = true;
 composer = new EffectComposer(renderer);
 composer.addPass(renderPass);
 composer.addPass(effectGrayScale); 
+/**Post processing*/
 
 renderer.setAnimationLoop(animate)
 
@@ -438,6 +472,7 @@ function init_master(index){
 //material load
 function init_material(index){
     box1_mesh.material = material_list[index]
+    object_obj.material = material_list[index]
 }
 
 //camera distance
@@ -482,8 +517,7 @@ function animate(){
     //second
     const sec = performance.now()/1000
 
-    box1_mesh.rotation.y=sec*(Math.PI/4)
-
+    //box1_mesh.rotation.y=sec*(Math.PI/4)
 
     composer.render()
 
