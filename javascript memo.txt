@@ -131,10 +131,28 @@ const group = new THREE.Group()
 group.children[0]
 グループの中を抽出可能
 
+webページを公開
+・ターミナルでnpm run build
+・vercelのインストール npm install -g vercel
+・package.jsonのscriptに追加："deploy":"vercel --prod"
+・npm run deploy
+・Githubでlogin
+・Set up and deploy "filename"? : yes
+・Which scope do you want to deploy to? : なんでもいい
+・Link to existing project? : no
+・What’s your project’s name? : filename
+・In which directory is your code located? : ./
+・Want to modify these settings? : no
+・完了
+アップデート
+・npm run deploy
 
+GSAP memo
+・アニメーションは本文に記述 (loopの中には書かない)
 
+・プロパティはリアルタイムで更新されている
 
-
+keydownは単押し判定から長押し判定になるまで0.5sの遅延がある
 
 
 

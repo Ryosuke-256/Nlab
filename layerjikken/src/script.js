@@ -129,7 +129,7 @@ function init(){
     /**
      * Object
      */
-    const colors = [0xff0000,0x00ff00,0x0000ff]
+    const colors = [0xe8404e,0x41bbdb,0xf9bd00]
 
     for (let i = 0;i < 100; i++){
         const layer = (i % 3);
@@ -162,6 +162,9 @@ function init(){
             color:0xff0000, roughness:0.1, metalness: 0.8
         })
     )
+    sphere1.layers.enable(0)
+    sphere1.layers.enable(1)
+    sphere1.layers.enable(2)
     scene.add(sphere1)
 
     const layers = {
@@ -258,7 +261,9 @@ function animate(){
     const sec = performance.now()/1000
 
     theta = 4
-    //camera.position.x = sec*THREE.MathUtils.radToDeg()
+    camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( sec * 10 * theta ) );
+    camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( sec * 5 * theta ) );
+    camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( sec * 3 * theta ) );
     controls.update()
     // Render
     renderer.render(scene, camera)
