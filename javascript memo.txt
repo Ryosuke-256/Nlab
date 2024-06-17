@@ -154,5 +154,27 @@ GSAP memo
 
 keydownは単押し判定から長押し判定になるまで0.5sの遅延がある
 
+postprocessing
+・import
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+or
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+・initialization
+const composer = new EffectComposer( renderer ) : composer内でエフェクトなどを混ぜる
+const renderPass = new RenderPass( scene, camera )：元のレンダリング結果を格納
+composer.addPass( renderPass ) : composerに元画像を追加
+
+const glitchPass = new GlitchPass()：エフェクトを作成
+composer.addPass( glitchPass )：composerにエフェクトを追加 
+composerは追加した順に描画される→エフェクトは後
+
+const outputPass = new OutputPass()：
+composer.addPass( outputPass );
+
+composer.render()：composerの結果をレンダリング(rendererに格納される)
+
+
 
 

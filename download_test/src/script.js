@@ -3,9 +3,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { element } from 'three/examples/jsm/nodes/Nodes.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+//for postprocessing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+
 
 /**
  * initializing
@@ -21,7 +25,7 @@ const hdr_images_path = [
 const hdr_files = []
 
 //base
-let canvas, scene, camera, renderer, controls
+let canvas, scene, camera, renderer, controls,composer
 
 //size
 //const sizes = {width: window.innerWidth,height: window.innerHeight}
@@ -54,8 +58,7 @@ let index_material = 0;
 
 //material
 let material_list
-
-let composer
+/**initialization */
 
 /**
  * eventlister
@@ -123,6 +126,9 @@ document.addEventListener("keydown",(e) =>{
         //Listen to 'P' key
         if(e.which !== 80) return;
         try {
+            renderer.render(scene, camera)
+ 
+            composer.render()
             imgData = renderer.domElement.toDataURL();
         }
         catch(e) {
@@ -156,41 +162,10 @@ async function loopwithdelay(){
         //material change
         for (j=0; j < material_list.length; j++){
             init_material(j);
-            /**
-             * Post processing
-             */
-            const grayScaleShader = {
-                uniforms: {
-                    "tDiffuse": { value: null }
-                },
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform sampler2D tDiffuse;
-                    varying vec2 vUv;
-                    void main() {
-                        vec4 color = texture2D(tDiffuse, vUv);
-                        float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-                        gl_FragColor = vec4(vec3(gray), color.a);
-                    }
-                `
-            };
-            // Applying the shader as a post-processing effect
-            const renderPass = new RenderPass(scene, camera);
-            const effectGrayScale = new ShaderPass(grayScaleShader);
-            effectGrayScale.renderToScreen = true;
-
-            composer = new EffectComposer(renderer);
-            composer.addPass(renderPass);
-            composer.addPass(effectGrayScale); 
-            /**Post processing*/
-            renderer.render(scene, camera)            
+            renderer.render(scene, camera)
+            composer.render()
             //download
+
             imgData_2 = renderer.domElement.toDataURL();
             alldownloadlink.href = imgData_2;
             alldownloadlink.download = hdr_images_path[i] + "_material" + (j+1) + ".png"
@@ -277,6 +252,16 @@ controls = new OrbitControls( camera, canvas)
  * Object
  */
 //material setting
+const material_custom_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:0, roughness:0, //Standard
+    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
+    clearcoat:0,clearcoatRoughness:0, //クリアコート
+    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+})
 const material_default_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
     metalness:0, roughness:0, //Standard
@@ -327,7 +312,7 @@ const material_mat_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0.1,ior:1,reflectivity: 0.5, // 反射率 (非金属)
     sheen:0.5,sheenRoughness:1,specularIntensity:0.5 //光沢 (非金属)
 })
-material_list = [material_default_1,material_normal_1,material_Translucent_1,material_metal_1,material_mat_1]
+material_list = [material_custom_1,material_default_1,material_normal_1,material_Translucent_1,material_metal_1,material_mat_1]
 
 //plane1
 const textureLoader = new THREE.TextureLoader()
@@ -420,6 +405,19 @@ pointlight1.castShadow = true
 scene.add(pointlight1)
 
 /**
+ * GUI
+ */
+const layers = {
+
+}
+const gui = new GUI()
+
+
+//loop activate
+renderer.setAnimationLoop(animate)
+/**Base */
+
+/**
  * Post processing
  */
 const grayScaleShader = {
@@ -452,10 +450,6 @@ composer = new EffectComposer(renderer);
 composer.addPass(renderPass);
 composer.addPass(effectGrayScale); 
 /**Post processing*/
-
-//loop activate
-renderer.setAnimationLoop(animate)
-
 
 /**
  * Function
@@ -513,15 +507,15 @@ function WindowFullscreen(){
 function animate(){
     controls.update()
     // Render
-    renderer.render(scene, camera)
+    //renderer.render(scene, camera)
+    composer.render()
 
     //second
     const sec = performance.now()/1000
 
     //box1_mesh.rotation.y=sec*(Math.PI/4)
 
-    composer.render()
-
     // Call tick again on the next frame
     //window.requestAnimationFrame(animate)
 }
+/**Function */
