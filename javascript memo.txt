@@ -176,5 +176,9 @@ composer.addPass( outputPass );
 composer.render()：composerの結果をレンダリング(rendererに格納される)
 
 
-
+Eventlistenerトリガーアニメーション
+・addEventlistener内ではやらない方がいい
+  ・なんか発火してから0.5s程処理がされない時間がある
+・addEventlistenerはあくまでフラグ管理用にしておくと〇
+・なぜかgsapは普通に動く(非同期だから？)
 

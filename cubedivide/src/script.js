@@ -4,6 +4,10 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
 import { gsap } from "gsap";
 
 /**
@@ -27,92 +31,10 @@ const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window_normal =new THREE.Vector2()
 
 //object
-let edge_box = 0.3
+let edge_box = 0.501
 let boxes_group = new THREE.Group()
 let boxes_list = []
 let box0_mesh,box0_geometry
-
-/**
- * eventlister
- */
-//base
-//window.addEventListener('load',init)
-
-//resize
-window.addEventListener('resize', onWindowResize)
-
-//fullscreen
-window.addEventListener("dblclick",WindowFullscreen)
-
-//number key to camera
-document.addEventListener("keydown",(e)=>{
-    //1
-    if(e.keyCode == 49) {
-        camera.position.set(0,0,dist(fov))
-    }
-    //2
-    if(e.keyCode == 50) {
-        camera.position.set(dist(fov),0,0)
-    }
-    //3
-    if(e.keyCode == 51) {
-        camera.position.set(0,0,-dist(fov))
-    }
-    //4
-    if(e.keyCode == 52) {
-        camera.position.set(-dist(fov),0,0)
-    }
-    //5
-    if(e.keyCode == 53) {
-        camera.position.set(0,dist(fov),0)
-    }
-    //6
-    if(e.keyCode == 54) {
-        camera.position.set(0,-dist(fov),0)
-    }
-})
-/**
-//keydown animation
-document.addEventListener("keydown",(e)=>{
-    //press A
-    if(e.keyCode == 65){
-        gsap.to(boxes_list[1].position,{
-            duration:0.3,
-            x:box0_vertices[1][0]*2,y:box0_vertices[1][1]*2,z:box0_vertices[1][2]*2,
-            ease:"power4.inOut",
-        })
-    }
-})
-
-document.addEventListener("keyup",(e)=>{
-    if(e.keyCode == 65){
-        gsap.to(boxes_list[1].position,{
-            duration:0.3,
-            x:box0_vertices[1][0],y:box0_vertices[1][1],z:box0_vertices[1][2],
-            ease:"power4.inOut",
-        })
-    }
-})
-*\
-
-//mouse
-window.addEventListener('mousemove',e =>
-    {
-        //WebGLマウス座標
-        mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
-        mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
-    
-        //WebGLマウス座標の正規化
-        mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
-        mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
-    
-        //Windowマウス座標の正規化
-        mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
-        mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
-    
-        //WebGL関連
-})
-/**eventlistner */
 
 /**
  * Base
@@ -179,7 +101,7 @@ for(let i = 0; i < box0_vertices.length; i++){
     const box = new THREE.Mesh(
         new THREE.BoxGeometry(edge_box,edge_box,edge_box),
         new THREE.MeshStandardMaterial({
-            color:0x123456,roughness:0.5,metalness:0.3,transparent:true,opacity:0.4
+            color:0x123456,roughness:0.5,metalness:0.3,transparent:true,opacity:1
         })
     )
     boxes_group.add(box)
@@ -191,15 +113,12 @@ scene.add(boxes_group)
 
 console.log(boxes_list[0])
 
-let bairitsu = 1
-//const  = arrayOfArrays.map(innerArray => innerArray.map(element => element * bairitsu));
-
 /**
  * GSAP Animation
  */
-const tl = gsap.timeline()
+//const tl = gsap.timeline()
 
-gsap.to(boxes_list[2].rotation, { duration:1, y: Math.PI, ease: "power4.inOut", repeat: -1 });
+//gsap.to(boxes_list[2].rotation, { duration:1, y: Math.PI, ease: "power4.inOut", repeat: -1 });
 
 /**
  * Background and Lighting
@@ -218,7 +137,41 @@ camera.add(pointlight)
 
 
 renderer.setAnimationLoop(animate)
+/**Base */
+/**
+ * Postprocessing
+ */
+const gradientShader = {
+    uniforms: {
+        tDiffuse: { value: null }
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+        }
+    `,
+    fragmentShader: `
+        uniform sampler2D tDiffuse;
+        varying vec2 vUv;
+        void main() {
+            vec4 color = texture2D(tDiffuse, vUv);
+            float dist = distance(vUv, vec2(0.5, 0.5));
+            color.rgb *= smoothstep(0.2, 0.6, 1.0 - dist);
+            gl_FragColor = color;
+        }
+    `
+}
+const renderPass = new RenderPass(scene, camera);
+const gradientPass = new ShaderPass(gradientShader);
+gradientPass.renderToScreen = true;
 
+let composer = new EffectComposer(renderer);
+composer.addPass(renderPass);
+composer.addPass(gradientPass); 
+
+/**Postprocessing */
 /**
  * Function
  */
@@ -255,9 +208,8 @@ function WindowFullscreen(){
     }
 }
 
-let cameraz_0,cameraz_1
-let sec,sec_0,sec_1,sec_diff
-
+//loop animate
+let sec
 function animate(){
 
     //second
@@ -266,42 +218,142 @@ function animate(){
     //object
     box0_mesh.rotation.y = sec*(Math.PI/8)
     boxes_group.rotation.y = sec*(Math.PI/8)
-    boxes_list[0].rotation.y = sec*(Math.PI/8)
-    
-    controls.update()
+
+
+    //camera
+    if (zoomin) {
+        camera.position.z -= 0.002
+        const wiggleintensity = 0.02
+        camera.position.x += (Math.random() - 0.5)*wiggleintensity
+        camera.position.y += (Math.random() - 0.5)*wiggleintensity
+        camera.position.z += (Math.random() - 0.5)*wiggleintensity
+    }
 
     // Render
+    controls.update()
     renderer.render(scene, camera)
+    composer.render()
 }
+/**function */
 
+/**
+ * eventlister
+ */
+//base
+//window.addEventListener('load',init)
+
+//resize
+window.addEventListener('resize', onWindowResize)
+
+//fullscreen
+window.addEventListener("dblclick",WindowFullscreen)
+
+//number key to camera
+document.addEventListener("keydown",(e)=>{
+    //1
+    if(e.keyCode == 49) {
+        camera.position.set(0,0,dist(fov))
+    }
+    //2
+    if(e.keyCode == 50) {
+        camera.position.set(dist(fov),0,0)
+    }
+    //3
+    if(e.keyCode == 51) {
+        camera.position.set(0,0,-dist(fov))
+    }
+    //4
+    if(e.keyCode == 52) {
+        camera.position.set(-dist(fov),0,0)
+    }
+    //5
+    if(e.keyCode == 53) {
+        camera.position.set(0,dist(fov),0)
+    }
+    //6
+    if(e.keyCode == 54) {
+        camera.position.set(0,-dist(fov),0)
+    }
+})
+
+//obj animation
+let obj_dist = 1.4
+let obj_pressingfrag = false
+document.addEventListener("keydown",(e)=>{
+    //press A
+    if(e.keyCode == 65){
+        for (let i = 0;i < boxes_list.length;i++){
+            gsap.to(boxes_list[i].position,{
+                duration:0.3,
+                x:box0_vertices[i][0]*obj_dist,
+                y:box0_vertices[i][1]*obj_dist,
+                z:box0_vertices[i][2]*obj_dist,
+                ease:"power4.Out",
+            })
+        }
+        obj_pressingfrag = true
+    }
+})
+
+document.addEventListener("keyup",(e)=>{
+    if(e.keyCode == 65){
+        for (let i = 0;i < boxes_list.length;i++){
+            gsap.to(boxes_list[i].position,{
+                duration:0.3,
+                x:box0_vertices[i][0],
+                y:box0_vertices[i][1],
+                z:box0_vertices[i][2],
+                ease:"power4.Out",
+            })
+        }
+        obj_pressingfrag = false
+    }
+})
+//obj animation
+
+//camera animation
+let cameraz_0
+let zoomin = false
 let keyPressed = false
 
 document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 65 && !keyPressed){
-        cameraz_0 = camera.position.z
-        cameraz_1 = cameraz_0
-        sec = performance.now()/1000
-        sec_0 = performance.now()/1000
-        //gsap.to(camera.position,{ duration:1, z : cameraz_0 - 0.5, ease:"circ.Out" })
-        console.log("A keydown,\ncamera0 : " + cameraz_0 + "\ncamera1 : " + cameraz_1+"\nsec_0 : "+ sec_0+"\nsec : "+sec)
+        //frag管理
+        setTimeout(()=>{
+            zoomin = true
+        },50)
         keyPressed = true
+        cameraz_0 = camera.position.z
+        gsap.to(camera.position,{ duration:0.5, z : cameraz_0 - 0.3, ease:"power1.Out" })
     }
-})
-document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 65){
-        if (sec_0 !=null)
-            sec_diff = sec - sec_0
-        cameraz_1 = cameraz_0 - sec_diff*0.2
-        camera.position.z = cameraz_1
-    }else{
-        cameraz_1 = 0
-    }
-    console.log("count")
 })
 document.addEventListener("keyup",(e)=>{
     if(e.keyCode == 65){
-        gsap.to(camera.position,{ duration:0.5, z : cameraz_0, ease:"power4.inOut" })
-        console.log("A keyup ,\ncamera0 : " + cameraz_0 + "\ncamera1 : " + cameraz_1+"\nsec_0 : "+ sec_0+"\nsec : "+sec+"\nsec_diff : "+sec_diff)
+        //frag管理
+        setTimeout(()=>{
+            zoomin = false
+        },200)
         keyPressed = false
+        gsap.to(camera.position,{ duration:0.4, z : cameraz_0, ease:"circ.inOut" })
     }
 })
+//cameraanimation
+
+//mouse
+window.addEventListener('mousemove',e =>
+    {
+        //WebGLマウス座標
+        mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
+        mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
+    
+        //WebGLマウス座標の正規化
+        mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
+        mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
+    
+        //Windowマウス座標の正規化
+        mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
+        mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
+    
+        //WebGL関連
+})
+/**eventlistner */
