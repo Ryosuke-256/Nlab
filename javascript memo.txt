@@ -123,6 +123,8 @@ const doubledArray = originalArray.map(element => element * 2);
 const arrayOfArrays = [[1, 2], [3, 4], [5, 6]];
 // 各要素を2倍にする
 const doubledArrayOfArrays = arrayOfArrays.map(innerArray => innerArray.map(element => element * 2));
+array.map(callback) : 配列の要素一つずつに処理を行う
+
 
 Group
 const group = new THREE.Group()
