@@ -184,3 +184,14 @@ Eventlistenerトリガーアニメーション
 ・addEventlistenerはあくまでフラグ管理用にしておくと〇
 ・なぜかgsapは普通に動く(非同期だから？)
 
+htmlへのテキスト追加
+const newParagraph = document.createElement('p');
+const textNode = document.createTextNode('initial_text');
+newParagraph.appendChild(textNode);
+newParagraph.setAttribute('id', 'setting id');
+document.body.appendChild(newParagraph); //テキストのbodyへの追加
+書き換え
+const myElement = document.getElementById('hdr_name');
+myElement.textContent = hdr_url[index];
+
+

@@ -16,12 +16,28 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
  */
 //imagefiles
 const base_path = 'image\\'
+
 const hdr_images_path = [
-    'symmetrical_garden_02_2k.hdr',
-    'chapel_day_2k.hdr',
-    'cobblestone_street_night_2k.hdr',
-    'brown_photostudio_02_2k.hdr',
+    '5.hdr','19.hdr',
 ]
+
+/**
+const hdr_images_path = [
+    '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
+    '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
+    '125.hdr','152.hdr','164.hdr','183.hdr','198.hdr',
+    '201.hdr','202.hdr','203.hdr','209.hdr','222.hdr',
+    '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
+    '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
+]
+*/
+/**
+const hdr_images_path = [
+    '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
+    '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
+    '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
+]
+*/
 const hdr_files = []
 
 //base
@@ -35,7 +51,6 @@ const sizes = {width: 256,height: 256}
 let pointlight1, cursor1_mesh
 
 //animate object
-let box1_mesh
 var object_obj = null
 
 //camera
@@ -201,11 +216,11 @@ window.addEventListener('mousemove',e =>
     
         //WebGL関連
         //ライトの座標
-        pointlight1.position.x=mouse_webGL.x;
-        pointlight1.position.y=mouse_webGL.y;
+        //pointlight1.position.x=mouse_webGL.x;
+        //pointlight1.position.y=mouse_webGL.y;
     
         //カーソルの座標
-        cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
+        //cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
 })
 /**eventlistner */
 
@@ -238,8 +253,8 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
-renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
+renderer.toneMapping = THREE.ReinhardToneMapping ; // トーンマッピングをACESFilmicに設定。
+renderer.toneMappingExposure = 1; // トーンマッピングの露光量を調整。
 renderer.shadowMap.enabled = true // 影
 
 renderer.domElement.toDataURL("image/png")
@@ -251,10 +266,18 @@ controls = new OrbitControls( camera, canvas)
 /**
  * Object
  */
+//cursor
+cursor1_mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.01,10,10),
+    new THREE.MeshBasicMaterial({color:0x000000}))
+cursor1_mesh.position.set(0,0,0)
+//scene.add(cursor1_mesh)
+
 //material setting
-const material_custom_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:1, //いろいろ
-    metalness:0, roughness:0, //Standard
+const custom_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:0,flatShading:false, //いろいろ
+    metalness:0, roughness:1, //Standard
+    emissive : 0x000000, emissiveIntensity :1.0, //発光
     anisotropy:0,attenuationDistance:10000, //異方性 (金属)
     clearcoat:0,clearcoatRoughness:0, //クリアコート
     iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
@@ -262,9 +285,10 @@ const material_custom_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
     sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
-const material_default_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:1, //いろいろ
-    metalness:0, roughness:0, //Standard
+const default_1 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:0,flatShading:false, //いろいろ
+    metalness:0, roughness:1, //Standard
+    emissive : 0x000000, emissiveIntensity :1.0, //発光
     anisotropy:0,attenuationDistance:10000, //異方性 (金属)
     clearcoat:0,clearcoatRoughness:0, //クリアコート
     iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
@@ -272,7 +296,49 @@ const material_default_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
     sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
-const material_normal_1 = new THREE.MeshPhysicalMaterial({
+const metal_0025 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:0,flatShading:false, //いろいろ
+    metalness:1, roughness:0.025, //Standard
+    emissive : 0x000000, emissiveIntensity :1.0, //発光
+    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
+    clearcoat:0,clearcoatRoughness:0, //クリアコート
+    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+})
+const metal_0129 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:0,flatShading:false, //いろいろ
+    metalness:1, roughness:0.129, //Standard
+    emissive : 0x000000, emissiveIntensity :1.0, //発光
+    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
+    clearcoat:0,clearcoatRoughness:0, //クリアコート
+    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+})
+const plastic_0075 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:1, roughness:1.0, //Standard
+    anisotropy:0,attenuationDistance:0, //異方性 (金属)
+    clearcoat:0.7,clearcoatRoughness:0, //クリアコート
+    iridescence:0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:1,ior:2.3,reflectivity: 0, // 反射率(非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢(非金属)
+})
+const plastic_0225 = new THREE.MeshPhysicalMaterial({
+    color:0xff0000,thickness:1, //いろいろ
+    metalness:1, roughness:1.0, //Standard
+    anisotropy:0,attenuationDistance:0, //異方性 (金属)
+    clearcoat:0.7,clearcoatRoughness:0, //クリアコート
+    iridescence:0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:1,ior:2.3,reflectivity: 0, // 反射率(非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢(非金属)
+})
+const normal_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
     metalness:0, roughness:0.25, //Standard
     anisotropy:0,attenuationDistance:10, //異方性 (金属)
@@ -282,7 +348,7 @@ const material_normal_1 = new THREE.MeshPhysicalMaterial({
     dispersion:1,ior:2.3,reflectivity: 0, // 反射率 (非金属)
     sheen:1,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
-const material_Translucent_1 = new THREE.MeshPhysicalMaterial({
+const Translucent_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:10, //いろいろ
     metalness:0, roughness:0.5, //Standard
     anisotropy:0,attenuationDistance:10, //異方性 (金属)
@@ -292,7 +358,7 @@ const material_Translucent_1 = new THREE.MeshPhysicalMaterial({
     dispersion:1,ior:1,reflectivity:0.5, // 反射率 (非金属)
     sheen:1,sheenRoughness:0.1,specularIntensity:1 //光沢 (非金属)
 })
-const material_metal_1 = new THREE.MeshPhysicalMaterial({
+const metal_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
     metalness:1, roughness:0.001, //Standard
     anisotropy:0,attenuationDistance:0, //異方性 (金属)
@@ -302,7 +368,7 @@ const material_metal_1 = new THREE.MeshPhysicalMaterial({
     dispersion:1,ior:2.3,reflectivity: 0, // 反射率(非金属)
     sheen:1,sheenRoughness:1,specularIntensity:1 //光沢(非金属)
 })
-const material_mat_1 = new THREE.MeshPhysicalMaterial({
+const mat_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:1, //いろいろ
     metalness:0, roughness:0.8, //Standard
     anisotropy:0,attenuationDistance:10, //異方性 (金属)
@@ -312,38 +378,81 @@ const material_mat_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0.1,ior:1,reflectivity: 0.5, // 反射率 (非金属)
     sheen:0.5,sheenRoughness:1,specularIntensity:0.5 //光沢 (非金属)
 })
-material_list = [material_custom_1,material_default_1,material_normal_1,material_Translucent_1,material_metal_1,material_mat_1]
+material_list = [custom_1,default_1,metal_0025,metal_0129,plastic_0075,plastic_0225]
+let materialname_list = ['custom_1','default_1','metal_0025','metal_0129','plastic_0075','plastic_0225']
 
-//plane1
-const textureLoader = new THREE.TextureLoader()
-const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
-const plane1_mesh=new THREE.Mesh(
-    new THREE.PlaneGeometry(10,10,10,10),
-    new THREE.MeshStandardMaterial({
-        color:0xffffff,side: THREE.DoubleSide,
-        roughness:0.0, metalness: 0.0,
-        normalMap:normalMapTexture
-    })
-)
-plane1_mesh.rotation.set(Math.PI/2,0,0)
-plane1_mesh.position.set(0,-1,0)
-plane1_mesh.receiveShadow = true
-//scene.add(plane1_mesh)
+/**
+ * GUI
+ */
+const params = {
+    color:0xff0000,thickness:0,flatShading:false, //いろいろ
+    metalness:0, roughness:1, //Standard
+    emissive : 0x000000, emissiveIntensity :1.0, //発光
+    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
+    clearcoat:0,clearcoatRoughness:0, //クリアコート
+    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
+    transmission:0, //透明度 (非金属)
+    dispersion:false,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+}
+const gui = new GUI()
+gui.addColor( params, 'color' )
+.onChange( () =>{
+    custom_1.color.set( params.color )
+})
+gui.add( params, 'metalness',0,1,0.1)
+.onChange( () =>{
+    custom_1.metalness = params.metalness
+})
+gui.add( params, 'roughness',0,1,0.1)
+.onChange( () =>{
+    custom_1.roughness = params.roughness
+})
+gui.add( params, 'emissiveIntensity',0,1,0.1)
+.onChange( () =>{
+    custom_1.emissiveIntensity = params.emissiveIntensity
+})
+gui.add( params, 'clearcoat',0,1,0.1)
+.onChange( () =>{
+    custom_1.clearcoat = params.clearcoat
+})
+gui.add( params, 'clearcoatRoughness',0,1,0.1)
+.onChange( () =>{
+    custom_1.clearcoatRoughness = params.clearcoatRoughness
+})
 
-//box1
-box1_mesh=new THREE.Mesh(
-    new THREE.SphereGeometry(0.3,50,50),
-    material_list[index_material]
-)
-box1_mesh.castShadow = true
-//scene.add(box1_mesh)
+gui.add( params, 'dispersion' )
+.onChange( () =>{
+    if (params.dispersion){
+        custom_1.dispersion = 1
+    }else{
+        custom_1.dispersion = 0
+    }
+})
 
-//cursor
-cursor1_mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.01,10,10),
-    new THREE.MeshBasicMaterial({color:0x000000}))
-cursor1_mesh.position.set(0,0,0)
-scene.add(cursor1_mesh)
+gui.add( params, 'ior',1,2.3,0.1 )
+.onChange( () =>{
+    custom_1.ior = params.ior
+})
+gui.add( params, 'reflectivity',0,1,0.1)
+.onChange( () =>{
+    custom_1.reflectivity = params.reflectivity
+})
+gui.add( params, 'sheen',0,1,0.1)
+.onChange( () =>{
+    custom_1.sheen = params.sheen
+})
+gui.add( params, 'sheenRoughness',0,1,0.1)
+.onChange( () =>{
+    custom_1.sheenRoughness = params.sheenRoughness
+})
+gui.add( params, 'specularIntensity',0,1,0.1)
+.onChange( () =>{
+    custom_1.specularIntensity = params.specularIntensity
+})
+
+
+/**GUI */
 
 /**
  * models
@@ -359,7 +468,7 @@ objLoader.load(
         const coe = 0.25
         object_obj.scale.set(coe,coe,coe)
         object_obj.position.set(0,0,0)
-        object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
+        init_material(index_material)
         object_obj.castShadow = true
         scene.add(object_obj)
         console.log(object_obj)
@@ -370,17 +479,18 @@ objLoader.load(
     }
 )
 
-
 /**
  * Background and Lighting
  */
 //背景
+const hdr_url = []
 //HDRloadmanager
 const loadingManager = new THREE.LoadingManager(()=>{
     console.log("Finished loading");
     init_master(index_master)
 },(itemUrl,itemsLoaded,itemsTotal)=>{
     console.log("Files loaded:" + itemsLoaded + "/" + itemsTotal)
+    hdr_url.push(itemUrl)
 })
 //loadeverything
 const loader1 = new RGBELoader(loadingManager)
@@ -393,25 +503,29 @@ hdr_images_path.forEach(element => {
     )
 })
 
-//平行光源
-const directionalLight =new THREE.DirectionalLight(0xffffff,0.5)
-directionalLight.position.set(1,1,1)
-scene.add(directionalLight)
-
 //点光源
 pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
 pointlight1.position.set(0,0,0)
 pointlight1.castShadow = true
-scene.add(pointlight1)
+//scene.add(pointlight1)
+
+/**Background and Lighting */
 
 /**
- * GUI
+ * Additional
  */
-const layers = {
+const newParagraph = document.createElement('p');
+const textNode = document.createTextNode('hdr_name');
+newParagraph.appendChild(textNode);
+newParagraph.setAttribute('id', 'hdr_name');
+document.body.appendChild(newParagraph);
 
-}
-const gui = new GUI()
-
+const matParagraph = document.createElement('p');
+const mattextNode = document.createTextNode('mat_name');
+matParagraph.appendChild(mattextNode);
+matParagraph.setAttribute('id', 'mat_name');
+document.body.appendChild(matParagraph);
+/**Additional */
 
 //loop activate
 renderer.setAnimationLoop(animate)
@@ -462,12 +576,19 @@ function init_master(index){
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
+
+    console.log(hdr_url[index])
+    
+    const myElement = document.getElementById('hdr_name');
+    myElement.textContent = hdr_url[index];
 }
 
 //material load
 function init_material(index){
-    box1_mesh.material = material_list[index]
     object_obj.material = material_list[index]
+
+    const myElement = document.getElementById('mat_name');
+    myElement.textContent = materialname_list[index];
 }
 
 //camera distance
@@ -507,13 +628,11 @@ function WindowFullscreen(){
 function animate(){
     controls.update()
     // Render
-    //renderer.render(scene, camera)
-    composer.render()
+    renderer.render(scene, camera)
+    //composer.render()
 
     //second
     const sec = performance.now()/1000
-
-    //box1_mesh.rotation.y=sec*(Math.PI/4)
 
     // Call tick again on the next frame
     //window.requestAnimationFrame(animate)
