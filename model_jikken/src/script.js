@@ -4,196 +4,122 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-/**
- * 宣言
- */
-//base
-let canvas, scene, camera, renderer, controls
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-//size
-const sizes = {width: window.innerWidth,height: window.innerHeight}
+let camera, scene, renderer, stats;
+let cube, sphere, torus, material;
 
-//mouse follow
-let pointlight1, cursor1_mesh
+let cubeCamera, cubeRenderTarget;
 
-//animate object
-let box1_mesh
-var object_gltf = null
-var object_obj = null
+let controls;
 
-//camera
-let fov
+init();
 
-//widowsize関連補正
-let position_ratio = 250
+function init() {
 
-//mouse
-const mouse_webGL = new THREE.Vector2()
-const mouse_webGL_normal = new THREE.Vector2()
-const mouse_window_normal =new THREE.Vector2()
-/**initialization */
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setAnimationLoop( animate );
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    document.body.appendChild( renderer.domElement );
 
-/**
- * Base
-*/
-// Canvas
-canvas = document.querySelector('canvas.webgl')
+    window.addEventListener( 'resize', onWindowResized );
 
-// Scene
-scene = new THREE.Scene()
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
 
-//camera
-fov = 75
-camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
-camera.position.set(0,0,dist(fov))
-scene.add(camera)
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.z = 75;
 
-/**
- * Renderer
- */
-renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    antialias: true
-})
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    scene = new THREE.Scene();
+    scene.rotation.y = 0.5; // avoid flying objects occluding the sun
 
-renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
-renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
-renderer.shadowMap.enabled = true // 影
-/**renderer */
+    new RGBELoader()
+        .load( 'image/brown_photostudio_02_2k.hdr', function ( texture ) {
 
-//controls
-controls = new OrbitControls( camera, canvas)
+            texture.mapping = THREE.EquirectangularReflectionMapping;
 
-/**
- * Object
- */
-const sphere1 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.5,100,100),
-    new THREE.MeshStandardMaterial({
-        color:0xff0000, roughness:0.1, metalness: 0.8
-    })
-)
-scene.add(sphere1)
+            scene.background = texture;
+            scene.environment = texture;
 
-/**
- * models
- */
+        } );
 
-/**
- * Background and Lighting
- */
-//背景
-scene.background=new THREE.Color(0x333333)
+    //
 
-//平行光源
-const directionalLight =new THREE.DirectionalLight(0xffffff,10)
-directionalLight.position.set(1,1,1)
-scene.add(directionalLight)
+    cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
+    cubeRenderTarget.texture.type = THREE.HalfFloatType;
 
-renderer.setAnimationLoop(animate)
-/**Base */
+    cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
 
-/**
- * Function
- */
+    //
 
-//camera distance
-function dist (fov) {
-    const fovRad= (fov/2)*(Math.PI/180)
-    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
-    return dist
+    material = new THREE.MeshStandardMaterial( {
+        envMap: cubeRenderTarget.texture,
+        roughness: 0.05,
+        metalness: 1
+    } );
+
+    const gui = new GUI();
+    gui.add( material, 'roughness', 0, 1 );
+    gui.add( material, 'metalness', 0, 1 );
+    gui.add( renderer, 'toneMappingExposure', 0, 2 ).name( 'exposure' );
+
+    sphere = new THREE.Mesh( new THREE.IcosahedronGeometry( 15, 8 ), material );
+    scene.add( sphere );
+
+    const material2 = new THREE.MeshStandardMaterial( {
+        roughness: 0.1,
+        metalness: 0
+    } );
+
+    cube = new THREE.Mesh( new THREE.BoxGeometry( 15, 15, 15 ), material2 );
+    scene.add( cube );
+
+    torus = new THREE.Mesh( new THREE.TorusKnotGeometry( 8, 3, 128, 16 ), material2 );
+    scene.add( torus );
+
+    //
+
+    controls = new OrbitControls( camera, renderer.domElement );
+    controls.autoRotate = true;
+
 }
 
-//widowresize
-function onWindowResize(){
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
+function onWindowResized() {
 
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.position.set(0,0,dist(fov))
-    camera.updateProjectionMatrix()
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
 }
 
-//windowfullscreeen
-function WindowFullscreen(){
-    if(!document.fullscreenElement){
-        canvas.requestFullscreen()
-    }else{
-        document.exitFullscreen()
-    }
+function animate( msTime ) {
+
+    const time = msTime / 1000;
+
+    cube.position.x = Math.cos( time ) * 30;
+    cube.position.y = Math.sin( time ) * 30;
+    cube.position.z = Math.sin( time ) * 30;
+
+    cube.rotation.x += 0.02;
+    cube.rotation.y += 0.03;
+
+    torus.position.x = Math.cos( time + 10 ) * 30;
+    torus.position.y = Math.sin( time + 10 ) * 30;
+    torus.position.z = Math.sin( time + 10 ) * 30;
+
+    torus.rotation.x += 0.02;
+    torus.rotation.y += 0.03;
+
+    cubeCamera.update( renderer, scene );
+
+    controls.update();
+
+    renderer.render( scene, camera );
+
+    stats.update();
+
 }
-
-function animate(){
-    controls.update()
-    // Render
-    renderer.render(scene, camera)
-
-    //second
-    const sec = performance.now()/1000
-
-    // Call tick again on the next frame
-    //window.requestAnimationFrame(animate)
-}
-/**Function */
-
-/**
- * eventlister
- */
-//base
-//window.addEventListener('load',init)
-
-//resize
-window.addEventListener('resize', onWindowResize)
-
-//fullscreen
-window.addEventListener("dblclick",WindowFullscreen)
-
-//number key to camera
-document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 49) {
-        camera.position.set(0,0,dist(fov))
-    }
-    if(e.keyCode == 50) {
-        camera.position.set(dist(fov),0,0)
-    }
-    if(e.keyCode == 51) {
-        camera.position.set(0,0,-dist(fov))
-    }
-    if(e.keyCode == 52) {
-        camera.position.set(-dist(fov),0,0)
-    }
-    if(e.keyCode == 53) {
-        camera.position.set(0,dist(fov),0)
-    }
-    if(e.keyCode == 54) {
-        camera.position.set(0,-dist(fov),0)
-    }
-})
-
-//mouse
-window.addEventListener('mousemove',e =>
-    {
-        //WebGLマウス座標
-        mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
-        mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
-    
-        //WebGLマウス座標の正規化
-        mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
-        mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
-    
-        //Windowマウス座標の正規化
-        mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
-        mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
-    
-        //WebGL関連
-})
-/**eventlistner */
