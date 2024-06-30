@@ -1,12 +1,10 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/Addons.js';
 
 import { gsap } from "gsap";
 
@@ -64,9 +62,9 @@ renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
-renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
+renderer.outputEncoding = THREE.sRGBEncoding; 
+renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.toneMappingExposure = 1; 
 renderer.shadowMap.enabled = true // 影
 /**renderer */
 
@@ -83,7 +81,16 @@ box0_mesh = new THREE.Mesh(
         color:0x00ff00,wireframe:true
     })
 )
-scene.add(box0_mesh)
+//scene.add(box0_mesh)
+
+const sphere1 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1,30,30),
+    new THREE.MeshBasicMaterial({
+        color:0x00ff00
+    })
+)
+scene.add(sphere1)
+
 
 //頂点情報ゲット
 let vertices = box0_mesh.geometry.attributes.position.array
@@ -101,7 +108,7 @@ for(let i = 0; i < box0_vertices.length; i++){
     const box = new THREE.Mesh(
         new THREE.BoxGeometry(edge_box,edge_box,edge_box),
         new THREE.MeshStandardMaterial({
-            color:0x123456,roughness:0.5,metalness:0.3,transparent:true,opacity:1
+            color:0x123456,roughness:0.8,metalness:0.1,transparent:true,opacity:1
         })
     )
     boxes_group.add(box)
@@ -127,12 +134,12 @@ console.log(boxes_list[0])
 scene.background=new THREE.Color(0x333333)
 
 //平行光源
-const directionalLight =new THREE.DirectionalLight(0xffffff,4)
+const directionalLight =new THREE.DirectionalLight(0xffffff,15)
 directionalLight.position.set(1,1,1)
 scene.add(directionalLight)
 
 //点光源
-const pointlight = new THREE.PointLight(0xffffff,5)
+const pointlight = new THREE.PointLight(0xffffff,4)
 camera.add(pointlight)
 
 
@@ -141,9 +148,11 @@ renderer.setAnimationLoop(animate)
 /**
  * Postprocessing
  */
+//gradientShader
 const gradientShader = {
     uniforms: {
-        tDiffuse: { value: null }
+        tDiffuse: { value: null },
+        smoothStepMin : {value:0.2}
     },
     vertexShader: `
         varying vec2 vUv;
@@ -154,11 +163,12 @@ const gradientShader = {
     `,
     fragmentShader: `
         uniform sampler2D tDiffuse;
+        uniform float smoothStepMin;
         varying vec2 vUv;
         void main() {
             vec4 color = texture2D(tDiffuse, vUv);
             float dist = distance(vUv, vec2(0.5, 0.5));
-            color.rgb *= smoothstep(0.2, 0.6, 1.0 - dist);
+            color.rgb *= smoothstep(smoothStepMin, 0.9, 1.0 - dist);
             gl_FragColor = color;
         }
     `
@@ -166,10 +176,13 @@ const gradientShader = {
 const renderPass = new RenderPass(scene, camera);
 const gradientPass = new ShaderPass(gradientShader);
 gradientPass.renderToScreen = true;
-
-let composer = new EffectComposer(renderer);
-composer.addPass(renderPass);
-composer.addPass(gradientPass); 
+//bloom
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(sizes.width,sizes.height),0.75,0.8,0.4)
+//compse
+let composer = new EffectComposer(renderer)
+composer.addPass(renderPass)
+composer.addPass(bloomPass)
+composer.addPass(gradientPass) 
 
 /**Postprocessing */
 /**
@@ -216,7 +229,8 @@ function animate(){
     sec = performance.now()/1000
 
     //object
-    box0_mesh.rotation.y = sec*(Math.PI/8)
+    //box0_mesh.rotation.y = sec*(Math.PI/8)
+
     boxes_group.rotation.y = sec*(Math.PI/8)
 
 
@@ -229,9 +243,14 @@ function animate(){
         camera.position.z += (Math.random() - 0.5)*wiggleintensity
     }
 
+    //postprocessing
+    if (dark_flag){
+        gradientShader.uniforms.smoothStepMin.value += 0.0005
+    }
+
     // Render
     controls.update()
-    renderer.render(scene, camera)
+    //renderer.render(scene, camera)
     composer.render()
 }
 /**function */
@@ -309,35 +328,61 @@ document.addEventListener("keyup",(e)=>{
         obj_pressingfrag = false
     }
 })
-//obj animation
 
 //camera animation
 let cameraz_0
 let zoomin = false
-let keyPressed = false
+let keyPressed_camera = false
 
 document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 65 && !keyPressed){
+    if(e.keyCode == 65 && !keyPressed_camera){
         //frag管理
         setTimeout(()=>{
             zoomin = true
         },50)
-        keyPressed = true
+        keyPressed_camera = true
         cameraz_0 = camera.position.z
         gsap.to(camera.position,{ duration:0.5, z : cameraz_0 - 0.3, ease:"power1.Out" })
     }
-})
+}) //キーを押してから始めの一回だけ発火、キーを押している最中の挙動はzoomin(flag)でanimationloop内で処理
 document.addEventListener("keyup",(e)=>{
     if(e.keyCode == 65){
         //frag管理
         setTimeout(()=>{
             zoomin = false
         },200)
-        keyPressed = false
+        keyPressed_camera = false
         gsap.to(camera.position,{ duration:0.4, z : cameraz_0, ease:"circ.inOut" })
     }
+}) //キーを離したら発火
+
+//postprocessing
+let dark_flag = false
+let keyPressed_pp = false
+document.addEventListener("keydown",(e)=>{
+    if(e.keyCode == 65 && !keyPressed_pp){
+        //frag管理
+        setTimeout(()=>{
+            dark_flag = true
+        },10)
+        keyPressed_pp = true
+        gradientShader.uniforms.smoothStepMin.value = 0.2
+        gsap.to(gradientShader.uniforms.smoothStepMin,{ duration:0.5, value: 0.8 , ease:"power1.Out" })
+        console.log(gradientShader.uniforms.smoothStepMin.value)
+    }
 })
-//cameraanimation
+//effectGrayScale.uniforms['amount'].value = 0.5;
+document.addEventListener("keyup",(e)=>{
+    if(e.keyCode == 65){
+        //frag管理
+        setTimeout(()=>{
+            zoomin = false
+        },10)
+        keyPressed_pp = false
+        gsap.to(gradientShader.uniforms.smoothStepMin,{ duration:0.3, value: 0.2, ease:"circ.inOut" })
+        console.log(gradientShader.uniforms.smoothStepMin.value)
+    }
+})
 
 //mouse
 window.addEventListener('mousemove',e =>
