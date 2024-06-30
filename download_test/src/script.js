@@ -541,7 +541,7 @@ renderer.setAnimationLoop(animate)
 
 /**
  * Post processing
- */
+
 const grayScaleShader = {
     uniforms: {
         "tDiffuse": { value: null }
