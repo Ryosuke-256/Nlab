@@ -113,7 +113,7 @@ renderer.domElement.toDataURL("image/png")
 renderer.setAnimationLoop(animate)
 /**renderer */
 
-//controls
+//controlssss
 controls = new OrbitControls( camera, canvas)
 
 /**
