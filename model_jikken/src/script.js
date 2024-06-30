@@ -3,7 +3,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/examples/jsm/Addons.js'
 
 /**
  * 宣言
@@ -82,7 +81,6 @@ scene.add(sphere1)
 /**
  * models
  */
-
 
 /**
  * Background and Lighting

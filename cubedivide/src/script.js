@@ -1,12 +1,15 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { gsap } from "gsap";
 
+//postprocessing
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+//additonal
 import { UnrealBloomPass } from 'three/examples/jsm/Addons.js';
-
-import { gsap } from "gsap";
+import { HorizontalBlurShader  } from 'three/examples/jsm/Addons.js';
+import { VerticalBlurShader } from 'three/examples/jsm/Addons.js';
 
 /**
  * 宣言
@@ -37,9 +40,6 @@ let box0_mesh,box0_geometry
 /**
  * Base
  */
-
-//initialization
-
 // Canvas
 canvas = document.querySelector('canvas.webgl')
 
@@ -91,7 +91,6 @@ const sphere1 = new THREE.Mesh(
 )
 scene.add(sphere1)
 
-
 //頂点情報ゲット
 let vertices = box0_mesh.geometry.attributes.position.array
 let box0_vertices_be = []
@@ -108,7 +107,7 @@ for(let i = 0; i < box0_vertices.length; i++){
     const box = new THREE.Mesh(
         new THREE.BoxGeometry(edge_box,edge_box,edge_box),
         new THREE.MeshStandardMaterial({
-            color:0x123456,roughness:0.8,metalness:0.1,transparent:true,opacity:1
+            color:0x3d3258,roughness:0.3,metalness:0.5,transparent:true,opacity:1
         })
     )
     boxes_group.add(box)
@@ -134,25 +133,33 @@ console.log(boxes_list[0])
 scene.background=new THREE.Color(0x333333)
 
 //平行光源
-const directionalLight =new THREE.DirectionalLight(0xffffff,15)
+
+const directionalLight =new THREE.DirectionalLight(0xffffff,10)
 directionalLight.position.set(1,1,1)
 scene.add(directionalLight)
 
-//点光源
-const pointlight = new THREE.PointLight(0xffffff,4)
-camera.add(pointlight)
+//環境光源
+const ambientlight = new THREE.AmbientLight(0xffffff,5)
+scene.add(ambientlight)
 
+//点光源
+const pointlight = new THREE.PointLight(0xffffff,2)
+camera.add(pointlight)
 
 renderer.setAnimationLoop(animate)
 /**Base */
+
 /**
  * Postprocessing
  */
 //gradientShader
+const def_gra = 0.4
+const def_a = 1.0
 const gradientShader = {
     uniforms: {
         tDiffuse: { value: null },
-        smoothStepMin : {value:0.2}
+        smoothStepMin : {value:def_gra},
+        alpha: { value: def_a }
     },
     vertexShader: `
         varying vec2 vUv;
@@ -164,11 +171,13 @@ const gradientShader = {
     fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform float smoothStepMin;
+        uniform float alpha;
         varying vec2 vUv;
         void main() {
             vec4 color = texture2D(tDiffuse, vUv);
             float dist = distance(vUv, vec2(0.5, 0.5));
-            color.rgb *= smoothstep(smoothStepMin, 0.9, 1.0 - dist);
+            color.rgb *= smoothstep(smoothStepMin, 0.95, 1.0 - dist);
+            color.a *= alpha;
             gl_FragColor = color;
         }
     `
@@ -178,13 +187,27 @@ const gradientPass = new ShaderPass(gradientShader);
 gradientPass.renderToScreen = true;
 //bloom
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(sizes.width,sizes.height),0.75,0.8,0.4)
+bloomPass.threshold = 0.25
+bloomPass.strength = 1.5
+bloomPass.radius = 1
+//Blur
+const hBlurPass = new ShaderPass(HorizontalBlurShader)
+const vBlurPass = new ShaderPass(VerticalBlurShader)
+const blur_amt = 0.1
+const def_h = blur_amt/(sizes.width)
+const def_v = blur_amt/(sizes.height)
+hBlurPass.uniforms.h.value = def_h
+vBlurPass.uniforms.v.value = def_v
 //compse
 let composer = new EffectComposer(renderer)
 composer.addPass(renderPass)
 composer.addPass(bloomPass)
-composer.addPass(gradientPass) 
+composer.addPass(gradientPass)
+composer.addPass(hBlurPass)
+composer.addPass(vBlurPass)
 
 /**Postprocessing */
+
 /**
  * Function
  */
@@ -224,7 +247,6 @@ function WindowFullscreen(){
 //loop animate
 let sec
 function animate(){
-
     //second
     sec = performance.now()/1000
 
@@ -232,7 +254,6 @@ function animate(){
     //box0_mesh.rotation.y = sec*(Math.PI/8)
 
     boxes_group.rotation.y = sec*(Math.PI/8)
-
 
     //camera
     if (zoomin) {
@@ -245,7 +266,8 @@ function animate(){
 
     //postprocessing
     if (dark_flag){
-        gradientShader.uniforms.smoothStepMin.value += 0.0005
+        gradientPass.uniforms.smoothStepMin.value += 0.001
+        gradientPass.uniforms.alpha.value -= 0.001
     }
 
     // Render
@@ -366,9 +388,12 @@ document.addEventListener("keydown",(e)=>{
             dark_flag = true
         },10)
         keyPressed_pp = true
-        gradientShader.uniforms.smoothStepMin.value = 0.2
-        gsap.to(gradientShader.uniforms.smoothStepMin,{ duration:0.5, value: 0.8 , ease:"power1.Out" })
-        console.log(gradientShader.uniforms.smoothStepMin.value)
+        gradientPass.uniforms.smoothStepMin.value = def_gra
+        gradientPass.uniforms.alpha.value = def_a
+        gsap.to(gradientPass.uniforms.smoothStepMin,{ duration:0.3, value: 0.6 , ease:"power4.Out" })
+        gsap.to(gradientPass.uniforms.alpha,{duration:0.3,value:0.6,ease:'power4.out'})
+        gsap.to(hBlurPass.uniforms.h,{duration:0.3,value:1/sizes.width,ease:'power4.out'})
+        gsap.to(vBlurPass.uniforms.v,{duration:0.3,value:1/sizes.height,ease:'power4.out'})
     }
 })
 //effectGrayScale.uniforms['amount'].value = 0.5;
@@ -376,11 +401,13 @@ document.addEventListener("keyup",(e)=>{
     if(e.keyCode == 65){
         //frag管理
         setTimeout(()=>{
-            zoomin = false
+            dark_flag = false
         },10)
         keyPressed_pp = false
-        gsap.to(gradientShader.uniforms.smoothStepMin,{ duration:0.3, value: 0.2, ease:"circ.inOut" })
-        console.log(gradientShader.uniforms.smoothStepMin.value)
+        gsap.to(gradientPass.uniforms.smoothStepMin,{ duration:0.6, value: def_gra, ease:"circ.inOut" })
+        gsap.to(gradientPass.uniforms.alpha,{duration:0.3,value: def_a,ease:'circ.inOut'})
+        gsap.to(hBlurPass.uniforms.h,{duration:0.3,value:def_h,ease:'circ.inOut'})
+        gsap.to(vBlurPass.uniforms.v,{duration:0.3,value:def_v,ease:'circ.inOut'})
     }
 })
 

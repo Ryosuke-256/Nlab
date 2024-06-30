@@ -10,6 +10,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 
+import CubeRenderTarget from 'three/examples/jsm/renderers/common/CubeRenderTarget.js'
+
 
 /**
  * initializing
@@ -78,7 +80,6 @@ let material_list
 /**
  * eventlister
  */
-
 //resize
 window.addEventListener('resize', onWindowResize)
 
@@ -134,6 +135,7 @@ document.addEventListener("keydown",(e)=>{
     }
 })
 
+/**
 //donwload push P
 document.addEventListener("keydown",(e) =>{
     if(e.keyCode == 80) {
@@ -142,7 +144,7 @@ document.addEventListener("keydown",(e) =>{
         if(e.which !== 80) return;
         try {
             renderer.render(scene, camera)
- 
+
             composer.render()
             imgData = renderer.domElement.toDataURL();
         }
@@ -198,7 +200,7 @@ document.addEventListener("keydown",(e=>{
         loopwithdelay();
     }
 }))
-
+*/
 //mouse
 window.addEventListener('mousemove',e =>
     {
@@ -223,7 +225,6 @@ window.addEventListener('mousemove',e =>
         //cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
 })
 /**eventlistner */
-
 
 /**
  * Base
@@ -273,6 +274,12 @@ cursor1_mesh = new THREE.Mesh(
 cursor1_mesh.position.set(0,0,0)
 //scene.add(cursor1_mesh)
 
+/**
+let cuberendertarget = new THREE.WebGLCubeRenderTarget(256)
+cuberendertarget.texture.type = THREE.HalfFloatType
+let cubeCamera = new THREE.CubeCamera(1,1000,cuberendertarget)
+*/
+
 //material setting
 const custom_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:0,flatShading:false, //いろいろ
@@ -283,7 +290,8 @@ const custom_1 = new THREE.MeshPhysicalMaterial({
     iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
     transmission:0, //透明度 (非金属)
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
+    //envMap:cuberendertarget.texture,
 })
 const default_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:0,flatShading:false, //いろいろ
@@ -381,9 +389,10 @@ const mat_1 = new THREE.MeshPhysicalMaterial({
 material_list = [custom_1,default_1,metal_0025,metal_0129,plastic_0075,plastic_0225]
 let materialname_list = ['custom_1','default_1','metal_0025','metal_0129','plastic_0075','plastic_0225']
 
+
 /**
  * GUI
- */
+
 const params = {
     color:0xff0000,thickness:0,flatShading:false, //いろいろ
     metalness:0, roughness:1, //Standard
@@ -450,9 +459,8 @@ gui.add( params, 'specularIntensity',0,1,0.1)
 .onChange( () =>{
     custom_1.specularIntensity = params.specularIntensity
 })
-
-
 /**GUI */
+
 
 /**
  * models
@@ -513,7 +521,7 @@ pointlight1.castShadow = true
 
 /**
  * Additional
- */
+
 const newParagraph = document.createElement('p');
 const textNode = document.createTextNode('hdr_name');
 newParagraph.appendChild(textNode);
@@ -554,7 +562,7 @@ const grayScaleShader = {
             gl_FragColor = vec4(vec3(gray), color.a);
         }
     `
-};
+}
 // Applying the shader as a post-processing effect
 const renderPass = new RenderPass(scene, camera);
 const effectGrayScale = new ShaderPass(grayScaleShader);
@@ -626,7 +634,9 @@ function WindowFullscreen(){
 }
 
 function animate(){
+    //update
     controls.update()
+    //cubeCamera.update(renderer,scene)
     // Render
     renderer.render(scene, camera)
     //composer.render()

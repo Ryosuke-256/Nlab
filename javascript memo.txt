@@ -177,6 +177,10 @@ composer.addPass( outputPass );
 
 composer.render()：composerの結果をレンダリング(rendererに格納される)
 
+postprocessing内の数値を変えるには
+glitchPass.uniforms.~~.value
+
+
 
 Eventlistenerトリガーアニメーション
 ・addEventlistener内ではやらない方がいい
