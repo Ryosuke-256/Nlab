@@ -96,147 +96,151 @@ window.addEventListener('mousemove',e =>
  */
 
 //initialization
-function init(){
-    // Canvas
-    canvas = document.querySelector('canvas.webgl')
 
-    // Scene
-    scene = new THREE.Scene()
+// Canvas
+canvas = document.querySelector('canvas.webgl')
 
-    //camera
-    fov = 75
-    camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
-    camera.position.set(0,0,dist(fov))
-    scene.add(camera)
+// Scene
+scene = new THREE.Scene()
 
-    /**
-     * Renderer
-     */
-    renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        antialias: true
+//camera
+fov = 75
+camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
+camera.position.set(0,0,dist(fov))
+scene.add(camera)
+
+/**
+ * Renderer
+ */
+renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: true
+})
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
+renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
+renderer.shadowMap.enabled = true // 影
+/**renderer */
+
+//controls
+controls = new OrbitControls( camera, canvas)
+
+/**
+ * Object
+ */
+//plane1
+const textureLoader = new THREE.TextureLoader()
+const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
+const plane1_mesh=new THREE.Mesh(
+    new THREE.PlaneGeometry(10,10,10,10),
+    new THREE.MeshStandardMaterial({
+        color:0xffffff,side: THREE.DoubleSide,
+        roughness:0.0, metalness: 0.0,
+        normalMap:normalMapTexture
     })
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+)
+plane1_mesh.rotation.set(Math.PI/2,0,0)
+plane1_mesh.position.set(0,-1,0)
+plane1_mesh.receiveShadow = true
+scene.add(plane1_mesh)
 
-    renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB色空間に設定。
-    renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
-    renderer.toneMappingExposure = 2; // トーンマッピングの露光量を調整。
-    renderer.shadowMap.enabled = true // 影
-    /**renderer */
+//box1
+box1_mesh=new THREE.Mesh(
+    new THREE.SphereGeometry(0.3,50,50),
+    new THREE.MeshStandardMaterial({
+        color:0xff0000, roughness:0.1, metalness: 1.0
+    })
+)
+box1_mesh.castShadow = true
+scene.add(box1_mesh)
 
-    //controls
-    controls = new OrbitControls( camera, canvas)
+//cursor
+cursor1_mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.01,10,10),
+    new THREE.MeshBasicMaterial({color:0x000000}))
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
 
-    /**
-     * Object
-     */
-    //plane1
-    const textureLoader = new THREE.TextureLoader()
-    const normalMapTexture = textureLoader.load("./texture/seaworn_stone_tile/seaworn_stone_tiles_nor_dx_1k.jpg")
-    const plane1_mesh=new THREE.Mesh(
-        new THREE.PlaneGeometry(10,10,10,10),
-        new THREE.MeshStandardMaterial({
-            color:0xffffff,side: THREE.DoubleSide,
-            roughness:0.0, metalness: 0.0,
-            normalMap:normalMapTexture
-        })
-    )
-    plane1_mesh.rotation.set(Math.PI/2,0,0)
-    plane1_mesh.position.set(0,-1,0)
-    plane1_mesh.receiveShadow = true
-    scene.add(plane1_mesh)
+/**
+ * models
+ */
+//gltf loader
+const gltfLoader = new GLTFLoader()
+gltfLoader.load(
+    "./models/gltf/teapot.gltf",
+    (gltf) =>{
+        object_gltf = gltf.scene.children[0] //children[0]はいらないときもあるので要確認
 
-    //box1
-    box1_mesh=new THREE.Mesh(
-        new THREE.SphereGeometry(0.3,50,50),
-        new THREE.MeshStandardMaterial({
-            color:0xff0000, roughness:0.1, metalness: 1.0
-        })
-    )
-    box1_mesh.castShadow = true
-    scene.add(box1_mesh)
+        const coe = 0.2
+        object_gltf.scale.set(coe,coe,coe)
+        object_gltf.position.set(-1,0,0)
+        object_gltf.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
+        object_gltf.castShadow = true
+        scene.add(object_gltf)
+        console.log(object_gltf)
+    },(xhr)=>{
+        console.log((xhr.loaded/xhr.total*100)+'% loaded')
+    },(error)=>{
+        console.log('An error happened',error)
+    }
+)
 
-    //cursor
-    cursor1_mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.01,10,10),
-        new THREE.MeshBasicMaterial({color:0x000000}))
-    cursor1_mesh.position.set(0,0,0)
-    scene.add(cursor1_mesh)
+//obj loader
+const objLoader = new OBJLoader()
+objLoader.load(
+    "./models/normal/teapot.obj",
+    (obj) =>{
+        object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
 
-    /**
-     * models
-     */
-    //gltf loader
-    const gltfLoader = new GLTFLoader()
-    gltfLoader.load(
-        "./models/gltf/teapot.gltf",
-        (gltf) =>{
-            object_gltf = gltf.scene.children[0] //children[0]はいらないときもあるので要確認
+        const coe = 0.25
+        object_obj.scale.set(coe,coe,coe)
+        object_obj.position.set(1,0,0)
+        object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
+        object_obj.castShadow = true
+        scene.add(object_obj)
+        console.log(object_obj)
+    },(xhr)=>{
+        console.log((xhr.loaded/xhr.total*100)+'% loaded')
+    },(error)=>{
+        console.log('An error happened',error)
+    }
+)
 
-            const coe = 0.2
-            object_gltf.scale.set(coe,coe,coe)
-            object_gltf.position.set(-1,0,0)
-            object_gltf.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
-            object_gltf.castShadow = true
-            scene.add(object_gltf)
-            console.log(object_gltf)
-        },(xhr)=>{
-            console.log((xhr.loaded/xhr.total*100)+'% loaded')
-        },(error)=>{
-            console.log('An error happened',error)
-        }
-    )
+/**
+ * Background and Lighting
+ */
+//背景
+const loader1 = new RGBELoader();
+loader1.load(
+    "./image/chapel_day_2k.hdr",
+    (texture)=>{
+        texture.encoding = THREE.RGBEEncoding
+        texture.mapping = THREE.EquirectangularReflectionMapping
+        scene.background = texture
+        scene.environment = texture
+    }
+)
 
-    //obj loader
-    const objLoader = new OBJLoader()
-    objLoader.load(
-        "./models/normal/teapot.obj",
-        (obj) =>{
-            object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
+//平行光源
+const directionalLight =new THREE.DirectionalLight(0xffffff,0.5)
+directionalLight.position.set(1,1,1)
+scene.add(directionalLight)
 
-            const coe = 0.25
-            object_obj.scale.set(coe,coe,coe)
-            object_obj.position.set(1,0,0)
-            object_obj.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
-            object_obj.castShadow = true
-            scene.add(object_obj)
-            console.log(object_obj)
-        },(xhr)=>{
-            console.log((xhr.loaded/xhr.total*100)+'% loaded')
-        },(error)=>{
-            console.log('An error happened',error)
-        }
-    )
+//点光源
+pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
+pointlight1.position.set(0,0,0)
+pointlight1.castShadow = true
+scene.add(pointlight1)
 
-    /**
-     * Background and Lighting
-     */
-    //背景
-    const loader1 = new RGBELoader();
-    loader1.load(
-        "./image/chapel_day_2k.hdr",
-        (texture)=>{
-            texture.encoding = THREE.RGBEEncoding
-            texture.mapping = THREE.EquirectangularReflectionMapping
-            scene.background = texture
-            scene.environment = texture
-        }
-    )
+renderer.setAnimationLoop(animate)
+/**Base */
 
-    //平行光源
-    const directionalLight =new THREE.DirectionalLight(0xffffff,0.5)
-    directionalLight.position.set(1,1,1)
-    scene.add(directionalLight)
-
-    //点光源
-    pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
-    pointlight1.position.set(0,0,0)
-    pointlight1.castShadow = true
-    scene.add(pointlight1)
-
-    renderer.setAnimationLoop(animate)
-}
+/**
+ * Function
+ */
 
 //camera distance
 function dist (fov) {
