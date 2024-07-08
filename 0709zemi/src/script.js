@@ -86,6 +86,7 @@ renderer.setAnimationLoop(animate)
 /**renderer */
 
 //controls
+/**
 controls = new PointerLockControls( camera, canvas )
 document.addEventListener('click',()=>{
     controls.lock()
@@ -97,6 +98,8 @@ controls.addEventListener( 'unlock',()=>{
 	console.log('Pointer unlocked')
 })
 scene.add(controls.getObject())
+*/
+controls = new OrbitControls( camera, canvas )
 
 /**
  * Object
@@ -170,6 +173,8 @@ const directionalLight =new THREE.DirectionalLight(0xffffff,10)
 directionalLight.position.set(1,1,1)
 scene.add(directionalLight)
 
+//makePanel1()
+makePanel1()
 /**
  * Additional
  */
@@ -193,19 +198,65 @@ function init_master(index){
 
 function makePanel1(){
     const container = new ThreeMeshUI.Block({
-        height:1.6,width:1,padding:0.1,
+        height:1.05,width:1,padding:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
         textAlign: 'center',
         justifyContent: 'center'
     })
-    container.add(
+    container.position.set(0.0,0.9,0.0)
+    container.rotation.set(Math.PI/8,0.0,0.0)
+    scene.add(container)
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.95,width:0.8,margin:0.1,offset:0.1,
+        textAlign:'center',
+        padding:0.03
+    })
+    container.add(textBlock)
+    textBlock.add(
         new ThreeMeshUI.Text({
-            content:'Control',
+            content:'Rotation camera with \n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.07
+        }),
+        new ThreeMeshUI.Text({
+            content:'Mouse\n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.1
+        }),
+        new ThreeMeshUI.Text({
+            content:'Rotation object with\n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.07
+        }),
+        new ThreeMeshUI.Text({
+            content:'W A S D\n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.1
+        }),
+        new ThreeMeshUI.Text({
+            content:'Screen Shot with\n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.07
+        }),
+        new ThreeMeshUI.Text({
+            content:'P\n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.1
+        }),
+        new ThreeMeshUI.Text({
+            content:'Change HDR with \n',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.07
+        }),
+        new ThreeMeshUI.Text({
+            content:'Right/Left arrow\n',
+            fontColor:new THREE.Color(0xffffff),
             fontSize:0.1
         })
     )
 }
+
 
 //camera distance
 function dist (fov) {
@@ -246,6 +297,7 @@ function animate(){
     controls.update()
     // Render
     renderer.render(scene, camera)
+    ThreeMeshUI.update()
 
     //second
     const sec = performance.now()/1000
@@ -336,8 +388,6 @@ document.addEventListener("keydown",(e) =>{
         if(e.which !== 80) return;
         try {
             renderer.render(scene, camera)
-
-            composer.render()
             imgData = renderer.domElement.toDataURL();
         }
         catch(e) {
