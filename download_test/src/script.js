@@ -9,6 +9,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 
 /**
@@ -22,7 +23,6 @@ const hdr_images_path = [
     '5.hdr','19.hdr',
 ]
 */
-
 /**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
@@ -39,6 +39,7 @@ const hdr_images_path = [
     '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
 ]
+
 
 const hdr_files = []
 
@@ -148,17 +149,17 @@ const metal_0129 = new THREE.MeshPhysicalMaterial({
 })
 const plastic_0075 = new THREE.MeshPhysicalMaterial({
     color:0xa8a8a8, //いろいろ
-    metalness:0, roughness:0.075, //Standard
-    clearcoat:1.0,clearcoatRoughness:0, //クリアコート
+    metalness:0, roughness:0, //Standard
+    clearcoat:1.0,clearcoatRoughness:0.075, //クリアコート
     ior:1.5,reflectivity:0.5, // 屈折率
-    specularIntensity:1 //鏡面反射
+    specularIntensity:0 //鏡面反射
 })
 const plastic_0225 = new THREE.MeshPhysicalMaterial({
     color:0xa8a8a8, //いろいろ
-    metalness:0, roughness:0.225, //Standard
-    clearcoat:1.0,clearcoatRoughness:0, //クリアコート
+    metalness:0, roughness:0, //Standard
+    clearcoat:1.0,clearcoatRoughness:0.225, //クリアコート
     ior:1.5,reflectivity:0.5, // 屈折率
-    specularIntensity:1 //鏡面反射
+    specularIntensity:0 //鏡面反射
 })
 const default_1 = new THREE.MeshPhysicalMaterial({
     color:0xff0000,thickness:0,flatShading:false, //いろいろ
@@ -171,11 +172,11 @@ const default_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
     sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
-material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
-let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
+//material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
+//let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
-//material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
-//let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
+material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
+let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
 
 
 /**
@@ -339,28 +340,87 @@ document.body.appendChild(matParagraph);
 /**
  * Post processing
  */
-//grayScale
-const grayScaleShader = {
+//Tonemapping
+const ReinhardTMO = {
     uniforms: {
-        "tDiffuse": { value: null }
+        tDiffuse: { value: null },
+        pWhite: { value: 1.0 }
     },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        varying vec2 vUv;
-        void main() {
-            vec4 color = texture2D(tDiffuse, vUv);
-            float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-            gl_FragColor = vec4(vec3(gray), color.a);
-        }
-    `
-};
+    vertexShader : `
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+    fragmentShader : `
+    varying vec2 vUv;
+    uniform sampler2D tDiffuse;
+    uniform float pWhite;
+
+    vec3 rgbToxyY(vec3 rgb) {
+        float R = rgb.r;
+        float G = rgb.g;
+        float B = rgb.b;
+
+        //RGB To sRGB
+        R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : (R / 12.92);
+        G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : (G / 12.92);
+        B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : (B / 12.92);
+
+        float X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
+        float Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
+        float Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
+
+        float sum = X + Y + Z;
+        float x = X / sum;
+        float y = Y / sum;
+
+        return vec3(x, y, Y);
+    }
+
+    vec3 xyYToRgb(vec3 xyY) {
+        float x = xyY.x;
+        float y = xyY.y;
+        float Y = xyY.z;
+
+        float X = Y / y * x;
+        float Z = Y / y * (1.0 - x - y);
+
+        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
+        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
+        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
+
+        //RGB to sRGB
+        R = (R > 0.0031308) ? 1.055 * pow(R, (1.0 / 2.4)) - 0.055 : 12.92 * R;
+        G = (G > 0.0031308) ? 1.055 * pow(G, (1.0 / 2.4)) - 0.055 : 12.92 * G;
+        B = (B > 0.0031308) ? 1.055 * pow(B, (1.0 / 2.4)) - 0.055 : 12.92 * B;
+
+        return vec3(R, G, B);
+    }
+
+    float reinhardTonemap(float L,float pWhite) {
+        float Lscaled =  L / 1.19;
+        float Ld = (Lscaled * (1.0 + pow(Lscaled / pWhite,2.0))) / (1.0 + Lscaled);
+        return Ld;
+    }
+
+    void main() {
+        vec4 color = texture2D(tDiffuse, vUv);
+        vec3 xyYColor = rgbToxyY(color.rgb);
+
+        // Reinhard tone mapping
+        xyYColor.z = reinhardTonemap(xyYColor.z, pWhite);
+
+        // Make xy achromatic
+        xyYColor.x = 0.3127; // D65 white point
+        xyYColor.y = 0.3290; // D65 white point
+
+        vec3 rgbColor = xyYToRgb(xyYColor);
+
+        gl_FragColor = vec4(rgbColor, color.a);
+    }`
+}
+
 //ReinhardTMS
 const reinhardToneMappingShader = {
     uniforms: {
@@ -392,16 +452,15 @@ const reinhardToneMappingShader = {
 };
 // Applying the shader as a post-processing effect
 const renderPass = new RenderPass(scene, camera)
-const GrayScalePass = new ShaderPass(grayScaleShader)
-const reinhardTMPass = new ShaderPass(reinhardToneMappingShader)
+const ReinhardTMOPass = new ShaderPass(ReinhardTMO)
+//Output
+const outputPass = new OutputPass()
 //effectGrayScale.renderToScreen = true;
 
 composer = new EffectComposer(renderer)
 composer.addPass(renderPass)
-composer.addPass(GrayScalePass) 
-composer.addPass(reinhardTMPass)
-
-
+composer.addPass(ReinhardTMOPass)
+composer.addPass(outputPass)
 /**Post processing*/
 
 /**
@@ -467,8 +526,8 @@ function WindowFullscreen(){
 function animate(){
     controls.update()
     // Render
-    renderer.render(scene, camera)
-    //composer.render()
+    //renderer.render(scene, camera)
+    composer.render()
 
     //second
     const sec = performance.now()/1000
