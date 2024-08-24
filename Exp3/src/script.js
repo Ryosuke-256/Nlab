@@ -4,6 +4,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { element } from 'three/examples/jsm/nodes/Nodes.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import ThreeMeshUI from 'three-mesh-ui';
 
 //for postprocessing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -47,9 +48,9 @@ const hdr_files = []
 let canvas, scene, camera, renderer, controls,composer
 
 //size
-//const sizes = {width: window.innerWidth,height: window.innerHeight}
-const windowsize = 256
-const sizes = {width: windowsize,height: windowsize}
+const sizes = {width: window.innerWidth,height: window.innerHeight}
+//const windowsize = 256
+//const sizes = {width: windowsize,height: windowsize}
 
 //mouse follow
 let pointlight1, cursor1_mesh
@@ -128,17 +129,6 @@ cursor1_mesh.position.set(0,0,0)
 //scene.add(cursor1_mesh)
 
 //material setting
-const custom_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
-})
 const metal_0025 = new THREE.MeshPhysicalMaterial({
     color:0xecacac, //いろいろ
     metalness:1, roughness:0.025, //Standard
@@ -178,95 +168,15 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
 
-
 /**
  * GUI
  */
-const params = {
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:false,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
-    exposure:1,
-}
-const gui = new GUI()
-gui.addColor( params, 'color' )
-.onChange( () =>{
-    custom_1.color.set( params.color )
-})
-gui.add( params, 'metalness',0,1,0.1)
-.onChange( () =>{
-    custom_1.metalness = params.metalness
-})
-gui.add( params, 'roughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.roughness = params.roughness
-})
-gui.add( params, 'anisotropy',0,1,0.1)
-.onChange(()=>{
-    custom_1.anisotropy = params.anisotropy
-})
-gui.add( params, 'attenuationDistance',0,10000,10)
-.onChange(()=>{
-    custom_1.attenuationDistance = params.attenuationDistance
-})
-gui.add( params, 'emissiveIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.emissiveIntensity = params.emissiveIntensity
-})
-gui.add( params, 'clearcoat',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoat = params.clearcoat
-})
-gui.add( params, 'clearcoatRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoatRoughness = params.clearcoatRoughness
-})
 
-gui.add( params, 'dispersion' )
-.onChange( () =>{
-    if (params.dispersion){
-        custom_1.dispersion = 1
-    }else{
-        custom_1.dispersion = 0
-    }
-})
-
-gui.add( params, 'ior',1,2.3,0.1 )
-.onChange( () =>{
-    custom_1.ior = params.ior
-})
-gui.add( params, 'reflectivity',0,1,0.1)
-.onChange( () =>{
-    custom_1.reflectivity = params.reflectivity
-})
-gui.add( params, 'sheen',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheen = params.sheen
-})
-gui.add( params, 'sheenRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheenRoughness = params.sheenRoughness
-})
-gui.add( params, 'specularIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.specularIntensity = params.specularIntensity
-})
-const toneMappingFolder = gui.addFolder( 'tone mapping' );
-toneMappingFolder.add( params, 'exposure', 0.1, 10 ).onChange( (val)=>{
-    reinhardTMPass.uniforms.exposure.value = val
-})
 /**GUI */
 
 /**
  * models
  */
-
 //obj loader
 const objLoader = new OBJLoader()
 objLoader.load(
@@ -281,6 +191,7 @@ objLoader.load(
         object_obj.castShadow = true
         scene.add(object_obj)
         console.log(object_obj)
+        console.log("confirm")
     },(xhr)=>{
         console.log((xhr.loaded/xhr.total*100)+'% loaded')
     },(error)=>{
@@ -323,19 +234,61 @@ pointlight1.castShadow = true
 /**
  * Additional
  */
-const newParagraph = document.createElement('p');
-const textNode = document.createTextNode('hdr_name');
-newParagraph.appendChild(textNode);
-newParagraph.setAttribute('id', 'hdr_name');
-document.body.appendChild(newParagraph);
 
-const matParagraph = document.createElement('p');
-const mattextNode = document.createTextNode('mat_name');
-matParagraph.appendChild(mattextNode);
-matParagraph.setAttribute('id', 'mat_name');
-document.body.appendChild(matParagraph);
 /**Additional */
 /**Base */
+
+/**
+ * Panel
+ */
+//initialization
+let container
+//activate
+SliderPanel1()
+
+//function
+function SliderPanel1(){
+    //container
+    container = new ThreeMeshUI.Block({
+        height:0.5,width:1,padding:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+        textAlign: 'center',
+        justifyContent: 'center'
+    })
+    //block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.3,width:0.8,margin:0.1,offset:0.1
+    })
+    container.add(textBlock)
+    //text
+    const text = new ThreeMeshUI.Text({
+        content:'The spiny bush viper is known for its extremely keeled dorsal scales.',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.1,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    textBlock.set({
+        textAlign:'right',
+        justifyContent:'end',
+        padding:0.03
+    })
+    textBlock.add(
+        new ThreeMeshUI.Text({
+            content:'Mind your fingers.',
+            fontSize:0.1,
+            fontColor:new THREE.Color(0xefffe8)
+        })
+    )
+    container.position.set(0,-0.5,0.5)
+    container.rotation.set(-Math.PI/8,0,0)
+    scene.add(container)
+}
+
+
+/**Panel */
 
 /**
  * Post processing
@@ -502,7 +455,6 @@ composer.addPass(outputPass)
 /**
  * Function
  */
-
 // HDRファイルのロード
 //init_master
 function init_master(index){
@@ -512,17 +464,11 @@ function init_master(index){
     scene.environment = hdr_files[index]
 
     console.log(hdr_url[index])
-    
-    const myElement = document.getElementById('hdr_name');
-    myElement.textContent = hdr_url[index];
 }
 
 //material load
 function init_material(index){
     object_obj.material = material_list[index]
-
-    const myElement = document.getElementById('mat_name');
-    myElement.textContent = materialname_list[index];
 }
 
 //camera distance
@@ -535,10 +481,10 @@ function dist (fov) {
 //widowresize
 function onWindowResize(){
     // Update sizes
-    //sizes.width = window.innerWidth
-    //sizes.height = window.innerHeight
-    sizes.width = windowsize
-    sizes.height = windowsize
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+    //sizes.width = windowsize
+    //sizes.height = windowsize
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
@@ -570,11 +516,9 @@ function animate(){
 }
 /**Function */
 
-
 /**
  * eventlister
  */
-
 //resize
 window.addEventListener('resize', onWindowResize)
 
@@ -629,72 +573,6 @@ document.addEventListener("keydown",(e)=>{
         init_material(index_material)
     }
 })
-
-//donwload push P
-document.addEventListener("keydown",(e) =>{
-    if(e.keyCode == 80) {
-        var imgData, imgNode;
-        //Listen to 'P' key
-        if(e.which !== 80) return;
-        try {
-            renderer.render(scene, camera)
-
-            composer.render()
-            imgData = renderer.domElement.toDataURL();
-        }
-        catch(e) {
-            console.log("Browser does not support taking screenshot of 3d context");
-            return;
-        }
-        const downloadlink = document.getElementById("downloadlink");
-        downloadlink.href = imgData;
-        downloadlink.download= "downloadfile_" + dlcount + ".png";
-        downloadlink.click();
-        imgNode = document.createElement("img");
-        imgNode.src = imgData;
-        document.body.appendChild(imgNode);
-        dlcount +=1;
-    }
-
-})
-
-//alldownload push L
-function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve,ms))
-}
-
-async function loopwithdelay(){
-    var imgData_2;
-    let i,j
-    const alldownloadlink = document.getElementById("alldownload");
-    //hdr change
-    for (i=0; i < hdr_images_path.length; i++){
-        init_master(i)
-        //material change
-        for (j=0; j < material_list.length; j++){
-            init_material(j);
-            renderer.render(scene, camera)
-            //composer.render()
-            //download
-
-            imgData_2 = renderer.domElement.toDataURL();
-            alldownloadlink.href = imgData_2;
-            let hdr_path = hdr_images_path[i].replace(".hdr","")
-            alldownloadlink.download = "bunny_" + materialname_list[j] + "_" + hdr_path + ".png"
-            alldownloadlink.click();
-            await sleep(100);
-            console.log("downloaded hdr : " + hdr_path + "  material : " + materialname_list[j])
-        }
-    }
-    init_master(index_master);
-    init_material(index_material);
-}
-
-document.addEventListener("keydown",(e=>{
-    if(e.keyCode == 76){
-        loopwithdelay();
-    }
-}))
 
 //mouse
 window.addEventListener('mousemove',e =>
