@@ -207,7 +207,6 @@ async function hdrload(){
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
             console.log("Files loaded:" + itemsLoaded + "/" + itemsTotal)
-            hdr_url.push(itemUrl)
         })
         //loadeverything
         const loader1 = new RGBELoader(loadingManager)
@@ -216,6 +215,7 @@ async function hdrload(){
                 base_path + element,
                 (texture)=>{
                     hdr_files.push(texture)
+                    hdr_url.push(element)
                 }
             )
             let onedata = new OneData(index,0,element)
