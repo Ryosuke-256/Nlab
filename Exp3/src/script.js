@@ -16,9 +16,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 /**
  * initializing
  */
+//name input 
+let experiment_name = prompt("名前を入力してください:");
+console.log("入力された名前は: " + experiment_name)
+
 //imagefiles
 const base_path = 'image\\'
-
 
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr',
@@ -41,7 +44,6 @@ const hdr_images_path = [
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
 ]
 */
-const hdr_files = []
 
 //base
 let canvas, scene, camera, renderer, controls,composer
@@ -50,15 +52,6 @@ let canvas, scene, camera, renderer, controls,composer
 const sizes = {width: window.innerWidth,height: window.innerHeight}
 //const windowsize = 256
 //const sizes = {width: windowsize,height: windowsize}
-
-//mouse follow
-let pointlight1, cursor1_mesh
-
-//animate object
-var object_obj = null
-
-//camera
-let fov
 
 //widowsize関連補正
 let position_ratio = 250
@@ -71,9 +64,6 @@ const mouse_window_normal =new THREE.Vector2()
 //loadchange
 let index_master = 0
 let index_material = 0;
-
-//material
-let material_list
 
 //round
 let roundnum = 2
@@ -90,7 +80,7 @@ canvas = document.querySelector('canvas.webgl')
 scene = new THREE.Scene()
 
 //camera
-fov = 40
+let fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov))
 scene.add(camera)
@@ -121,7 +111,7 @@ controls = new OrbitControls( camera, canvas)
  * Object
  */
 //cursor
-cursor1_mesh = new THREE.Mesh(
+let cursor1_mesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.01,10,10),
     new THREE.MeshBasicMaterial({color:0x000000}))
 cursor1_mesh.position.set(0,0,0)
@@ -164,13 +154,14 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 //material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
-material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
+let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
 
 /**
  * Loading
  */
 //obj loading
+let object_obj = null
 async function modelload(){
     return new Promise((resolve)=>{
         const objLoader = new OBJLoader()
@@ -196,6 +187,7 @@ async function modelload(){
     })
 }
 //hdr loading
+const hdr_files = []
 let hdr_url = []
 let hdrsData = []
 async function hdrload(){
@@ -206,35 +198,49 @@ async function hdrload(){
             init_master(index_master)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
-            console.log("Files loaded:" + itemsLoaded + "/" + itemsTotal)
+            console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
         })
         //loadeverything
         const loader1 = new RGBELoader(loadingManager)
-        hdr_images_path.forEach((element,index) => {
-            loader1.load(
-                base_path + element,
-                (texture)=>{
+        
+        hdrloader(loader1)
+    })
+}
+
+async function hdrloader(loader){
+    for (let i = 0; i < hdr_images_path.length; i++) {
+        const element = hdr_images_path[i]
+        const imagepath = base_path + element
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                imagepath,
+                (texture) => {
                     hdr_files.push(texture)
                     hdr_url.push(element)
-                }
+                    resolve()
+                },
+                undefined,
+                (err) => reject(err)
             )
-            let onedata = new OneData(index,0,element)
-            hdrsData.push(onedata)
         })
-    })
+        let onedata = new OneData(i,0,element)
+        hdrsData.push(onedata)
+    }
 }
 
 function OneData(id,score,name){
     this.id = id
     this.score = score
+    this.totalscore = 0
     this.name = name
+    this.T_times = 0
 }
 
 //main loading
 async function mainload(){
     await modelload()
     await hdrload()
-    console.log("loaded confirm")
     OneSession()
 }
 //activate
@@ -250,7 +256,7 @@ hdrload()
  * Lighting
  */
 //点光源
-pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
+let pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
 pointlight1.position.set(0,0,0)
 pointlight1.castShadow = true
 //scene.add(pointlight1)
@@ -264,7 +270,7 @@ pointlight1.castShadow = true
 /**Base */
 
 /**
- * Panel
+ * Panel 1
  */
 //initialization
 let container
@@ -315,27 +321,42 @@ function SliderPanel1(){
 }
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
+    console.log(handle.position.x)
 }
-/** 
-//eventlistner
-document.addEventListener("keydown",(e)=>{
-    if (e.keyCode == 37){
-        sliderValue = Math.max(0,sliderValue - 0.05)
-        updateSlider()
-    }
-    if (e.keyCode == 39){
-        sliderValue = Math.min(1,sliderValue + 0.05)
-        updateSlider()
-    }
-    if (e.keyCode == 40){
-        resultbar = sliderValue
-        sliderValue = 0.5
-        updateSlider()
-        trial_flag = true
-    }
-})
-*/
-/**Panel */
+/**Panel 1 */
+/**
+ * Panel 2
+ */
+//initialization
+let container2
+//activate
+
+//panel making
+function FinishPanel1(){
+    //container
+    container2 = new ThreeMeshUI.Block({
+        height:0.3,width:1.3,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text = new ThreeMeshUI.Text({
+        content:'Thank you!!',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.075,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    container2.add(textBlock)
+    scene.add(container2)
+}
+/**Panel 2 */
 
 /**
  * trial
@@ -344,21 +365,50 @@ function sleep(ms){
     return new Promise(resolve => setTimeout(resolve,ms))
 }
 async function OneSession(){
+    let totalResults = [
+        ['Name','Result_Av','T_times','TIME(SEC)'],
+    ]
     for (let session = 0; session < material_list.length;session++){
+        let ReportTable= [
+            hdr_images_path
+        ]
         init_material(session)
+        let resulttable
         for (let round = 0;round < roundnum;round++){
+            resulttable = Array(roundnum).fill().map(() => Array(hdrsData.length).fill(0))
+            hdrsData.sort(() => Math.random() - 0.5);
             for (let trial = 0;trial < hdrsData.length;trial++){
                 init_master(hdrsData[trial].id)
                 await OneTrial()
+                hdrsData[trial].score = resultbar
+                hdrsData[trial].totalscore = hdrsData[trial].totalscore + resultbar
+                resulttable[round][hdrsData[trial].id] = resultbar
             }
+            hdrsData.sort((a, b) => a.id - b.id)
+            let reporcontents = hdrsData.map(field => field.score)
+            console.log(reporcontents)
+            ReportTable.push(reporcontents)
         }
+        //let ReportTable = HeaderTable.concat(resulttable)
+        let sheetname = experiment_name + "_" + materialname_list[session] + ".csv"
+        exportToCsv(sheetname, ReportTable)
     }
+    //filewrite
+
+    //finalization
+    console.log("Finished")
+    scene.background=new THREE.Color(0x333333)
+    scene.remove(container)
+    scene.remove(object_obj)
+    FinishPanel1()
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
-        document.addEventListener("keydown",(e)=>{
+        console.log("loop confirm")
+        function TrialFunction(e){
             if (e.keyCode == 37){
                 sliderValue = Math.max(0,sliderValue - 0.05)
+                console.log("rightconfirm")
                 updateSlider()
             }
             if (e.keyCode == 39){
@@ -369,10 +419,11 @@ async function OneTrial(){
                 resultbar = sliderValue
                 sliderValue = 0.5
                 updateSlider()
-                trial_flag = true
+                document.removeEventListener("keydown",TrialFunction)
                 resolve()
             }
-        })
+        }
+        document.addEventListener("keydown",TrialFunction)
     })
 }
 /**trial */
@@ -382,40 +433,14 @@ async function OneTrial(){
  */
 //総合成績表
 function writeTotalResult(){
-    var nowTime = new Date().getTime()
-    var deltaTimeInSeconds = (nowTime - startTrialTime)*0.001
+    let nowTime = new Date().getTime()
     // 書き出し項目
-    var totalResult = [
-        t_times,
-        deltaTimeInSeconds,
-        result,
-    ]
-    console.log(totalResult)
+    let totalResult = []
     totalResults.push(totalResult)
-    exportToCsv("test", totalResult)
+    exportToCsv("test", totalResults)
 }
-const totalResults = [
-    ['Name','Result_Av','T_times','TIME(SEC)'],
-]
-//各回成績表
-function writeReportTable(){
-    var nowTime = new Date().getTime()
-    var deltaTimeInSeconds = (nowTime - startTrialTime)*0.001
-    // 書き出し項目
-    var reporcontents = [
-        t_times,
-        deltaTimeInSeconds,
-        result,
-    ]
-    console.log(reporcontents)
-    ReportTable.push(reporcontents)
-    exportToCsv("test", reporcontents)
-}
-const ReportTable= [[
-    '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
-    '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
-    '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
-]]
+
+//csv出力
 function exportToCsv(filename, rows) {
     //CSVの各行を処理する
     var processRow = function (row) {
