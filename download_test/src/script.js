@@ -523,6 +523,23 @@ const ReinhardTMOv2 = {
         return Ld;
     }
 
+    vec3 xyYToRgb(vec3 xyY) {
+        float x = xyY.x;
+        float y = xyY.y;
+        float Y = xyY.z;
+
+        //xyY To XYZ
+        float X = Y / y * x;
+        float Z = Y / y * (1.0 - x - y);
+
+        //XYZ To RGB
+        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
+        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
+        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
+
+        return vec3(R, G, B);
+    }
+
     void main() {
         vec4 color = texture2D(tDiffuse, vUv);
         vec3 xyYColor = rgbToxyY(color.rgb);
@@ -534,7 +551,9 @@ const ReinhardTMOv2 = {
         xyYColor.x = 0.3127; // D65 white point
         xyYColor.y = 0.3290; // D65 white point
 
-        gl_FragColor = vec4(xyYColor, color.a);
+        vec3 rgbColor = xyYToRgb(xyYColor);
+
+        gl_FragColor = vec4(rgbColor, color.a);
     }`
 }
 
