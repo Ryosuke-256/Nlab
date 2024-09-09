@@ -106,8 +106,6 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 renderer.outputEncoding = THREE.sRGBEncoding
-renderer.toneMapping = THREE.ReinhardToneMapping
-renderer.toneMappingExposure = 1.0
 renderer.shadowMap.enabled = true
 
 renderer.domElement.toDataURL("image/png")
@@ -397,7 +395,7 @@ document.body.appendChild(matParagraph);
 const ReinhardTMO = {
     uniforms: {
         tDiffuse: { value: null },
-        pWhite: { value: 1.0 }
+        pWhite: { value: 10.0 }
     },
     vertexShader : `
     varying vec2 vUv;
