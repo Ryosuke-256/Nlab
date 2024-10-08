@@ -2,8 +2,6 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { element } from 'three/examples/jsm/nodes/Nodes.js'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import ThreeMeshUI from 'three-mesh-ui';
 
 //for postprocessing
@@ -11,6 +9,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
 
 
 /**
@@ -45,6 +44,17 @@ const hdr_images_path = [
 ]
 */
 
+//modelfiles
+const model_base_path = 'models/normal\\'
+const model_path = [
+    'sphere.obj',
+    'bunny.obj',
+    'dragon.obj',
+    'boardA.obj',
+    'boardB.obj',
+    'boardC.obj',
+]
+
 //base
 let canvas, scene, camera, renderer, controls,composer
 
@@ -63,7 +73,8 @@ const mouse_window_normal =new THREE.Vector2()
 
 //loadchange
 let index_master = 0
-let index_material = 0;
+let index_material = 0
+let index_model = 0
 
 //round
 let roundnum = 2
@@ -158,36 +169,52 @@ let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
 /**
  * Loading
  */
-//obj loading
+
+//model loading
 let object_obj = null
+const model_files = []
+let model_url = []
 async function modelload(){
     return new Promise((resolve)=>{
-        const objLoader = new OBJLoader()
-        objLoader.load(
-            "./models/normal/bunny.obj",
-            (obj) =>{
-                object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
-
-                const coe = 0.34
-                object_obj.scale.set(coe,coe,coe)
-                object_obj.position.set(0,0.05,0)
-                init_material(index_material)
-                object_obj.castShadow = true
-                scene.add(object_obj)
-                console.log(object_obj)
-                resolve()
-            },(xhr)=>{
-                console.log('now loading')
-            },(error)=>{
-                console.log('An error happened',error)
-            }
-        )
+        //Modelloadmanager
+        const ModelloadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished loading")
+            init_model(index_model)
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("Files loaded:" + itemsLoaded + "/" + model_path.length)
+        })
+        //loadeverything
+        const model_loader = new OBJLoader(ModelloadingManager)
+        
+        modelloader(model_loader)
     })
 }
+
+async function modelloader(loader){
+    for (let i = 0; i < model_path.length; i++) {
+        const element = model_path[i]
+        const modelpath = model_base_path + element
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                modelpath,
+                (obj) => {
+                    model_files.push(obj.children[0])
+                    model_url.push(element)
+                    resolve()
+                },(xhr)=>{
+                    console.log((xhr.loaded/xhr.total*100)+'% loaded')
+                },
+                (err) => reject(err)
+            )
+        })
+    }
+}
+
 //hdr loading
 const hdr_files = []
 let hdr_url = []
-let hdrsData = []
 async function hdrload(){
     return new Promise((resolve)=>{
         //HDRloadmanager
@@ -222,16 +249,34 @@ async function hdrloader(loader){
                 (err) => reject(err)
             )
         })
-        let onedata = new OneData(i,0,element)
-        hdrsData.push(onedata)
     }
 }
 
-function OneData(id,score,name){
-    this.id = id
-    this.score = score
+let stimulsData = []
+let datacount = 0
+async function Data_make(){
+    return new Promise((resolve)=>{
+        for (let i = 0; i < model_path.length; i++) {
+            const model_name = model_path[i]
+            for (let j = 0; j < hdr_images_path.length; j++){
+                const hdr_name = hdr_images_path[j]
+                let onedata = new OneData(datacount,j,hdr_name,i,model_name)
+                stimulsData.push(onedata)
+                datacount += 1
+            }
+        }
+        resolve()
+    })
+}
+
+function OneData(datacount,hdrid,hdr,modelid,model){
+    this.allid = datacount
+    this.hdrid = hdrid
+    this.modelid = modelid
+    this.score = 0
     this.totalscore = 0
-    this.name = name
+    this.hdr = hdr
+    this.model = model
     this.T_times = 0
 }
 
@@ -239,6 +284,7 @@ function OneData(id,score,name){
 async function mainload(){
     await modelload()
     await hdrload()
+    await Data_make()
     OneSession()
 }
 //activate
@@ -373,17 +419,18 @@ async function OneSession(){
         init_material(session)
         let resulttable
         for (let round = 0;round < roundnum;round++){
-            resulttable = Array(roundnum).fill().map(() => Array(hdrsData.length).fill(0))
-            hdrsData.sort(() => Math.random() - 0.5);
-            for (let trial = 0;trial < hdrsData.length;trial++){
-                init_master(hdrsData[trial].id)
+            resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
+            stimulsData.sort(() => Math.random() - 0.5);
+            for (let trial = 0;trial < stimulsData.length;trial++){
+                init_model(stimulsData[trial].modelid)
+                init_master(stimulsData[trial].hdrid)
                 await OneTrial()
-                hdrsData[trial].score = resultbar
-                hdrsData[trial].totalscore = hdrsData[trial].totalscore + resultbar
-                resulttable[round][hdrsData[trial].id] = resultbar
+                stimulsData[trial].score = resultbar
+                stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
+                resulttable[round][stimulsData[trial].allid] = resultbar
             }
-            hdrsData.sort((a, b) => a.id - b.id)
-            let reporcontents = hdrsData.map(field => field.score)
+            stimulsData.sort((a, b) => a.allid - b.allid)
+            let reporcontents = stimulsData.map(field => field.score)
             console.log(reporcontents)
             ReportTable.push(reporcontents)
         }
@@ -476,6 +523,16 @@ function exportToCsv(filename, rows) {
         document.body.removeChild(link)
     }
 }
+
+//xlsx出力
+function exprotToxlsx(filename,data){
+    //  ワークシートを作成
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    //  ワークブックを作成
+    const wb = XLSX.utils.book_new();
+}
+
+
 /**Write Out */
 
 /**
@@ -646,6 +703,7 @@ composer.addPass(outputPass)
 // HDRファイルのロード
 //init_master
 function init_master(index){
+    console.log(index)
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
@@ -658,6 +716,25 @@ function init_master(index){
 function init_material(index){
     object_obj.material = material_list[index]
 }
+
+//model load
+function init_model(index){
+    if(object_obj != null){
+        scene.remove(object_obj)
+    }
+    object_obj = model_files[index]
+    const coe = 0.34
+    console.log(index)
+    console.log(model_files)
+    console.log(object_obj)
+    object_obj.scale.set(coe,coe,coe)
+    object_obj.position.set(0,0.05,0)
+    init_material(index_material)
+    object_obj.castShadow = true
+    scene.add(object_obj)
+    console.log(object_obj)
+}
+
 
 //camera distance
 function dist (fov) {

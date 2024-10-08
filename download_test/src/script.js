@@ -726,7 +726,7 @@ async function loopwithdelay(){
     for (i=0; i < hdr_images_path.length; i++){
         init_master(i)
         //material change
-        for (j=0; j < material_list.length; j++){
+        for (j=0; j < 1; j++){
             init_material(j);
             //renderer.render(scene, camera)
             composer.render()
