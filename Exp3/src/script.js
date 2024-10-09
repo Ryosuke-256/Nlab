@@ -2,8 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { element } from 'three/examples/jsm/nodes/Nodes.js'
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import ThreeMeshUI from 'three-mesh-ui';
 
 //for postprocessing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -12,17 +11,21 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 
+
 /**
  * initializing
  */
+//name input 
+let experiment_name = prompt("名前を入力してください:");
+console.log("入力された名前は: " + experiment_name)
+
 //imagefiles
 const base_path = 'image\\'
 
-/**
 const hdr_images_path = [
-    '5.hdr','125.hdr',
+    '19.hdr','39.hdr','78.hdr',
 ]
-*/
+
 /**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
@@ -33,32 +36,32 @@ const hdr_images_path = [
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
 */
-
+/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
     '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
 ]
+*/
 
-
-const hdr_files = []
+//modelfiles
+const model_base_path = 'models/normal\\'
+const model_path = [
+    'sphere.obj',
+    'bunny.obj',
+    'dragon.obj',
+    'boardA.obj',
+    'boardB.obj',
+    'boardC.obj',
+]
 
 //base
 let canvas, scene, camera, renderer, controls,composer
 
 //size
-//const sizes = {width: window.innerWidth,height: window.innerHeight}
-const windowsize = 256
-const sizes = {width: windowsize,height: windowsize}
-
-//mouse follow
-let pointlight1, cursor1_mesh
-
-//animate object
-var object_obj = null
-
-//camera
-let fov
+const sizes = {width: window.innerWidth,height: window.innerHeight}
+//const windowsize = 256
+//const sizes = {width: windowsize,height: windowsize}
 
 //widowsize関連補正
 let position_ratio = 250
@@ -68,15 +71,13 @@ const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window_normal =new THREE.Vector2()
 
-//downlodcount
-let dlcount = 0
-
 //loadchange
 let index_master = 0
-let index_material = 0;
+let index_material = 0
+let index_model = 0
 
-//material
-let material_list
+//round
+let roundnum = 2
 /**initialization */
 
 /**
@@ -90,7 +91,7 @@ canvas = document.querySelector('canvas.webgl')
 scene = new THREE.Scene()
 
 //camera
-fov = 40
+let fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov))
 scene.add(camera)
@@ -119,24 +120,13 @@ controls = new OrbitControls( camera, canvas)
  * Object
  */
 //cursor
-cursor1_mesh = new THREE.Mesh(
+let cursor1_mesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.01,10,10),
     new THREE.MeshBasicMaterial({color:0x000000}))
 cursor1_mesh.position.set(0,0,0)
 //scene.add(cursor1_mesh)
 
 //material setting
-const custom_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
-})
 const metal_0025 = new THREE.MeshPhysicalMaterial({
     color:0xecacac, //いろいろ
     metalness:1, roughness:0.025, //Standard
@@ -173,168 +163,82 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 //material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
-material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
+let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
 
-
 /**
- * GUI
- */
-const params = {
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:false,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
-    exposure:1,
-}
-const gui = new GUI()
-gui.addColor( params, 'color' )
-.onChange( () =>{
-    custom_1.color.set( params.color )
-})
-gui.add( params, 'metalness',0,1,0.1)
-.onChange( () =>{
-    custom_1.metalness = params.metalness
-})
-gui.add( params, 'roughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.roughness = params.roughness
-})
-gui.add( params, 'anisotropy',0,1,0.1)
-.onChange(()=>{
-    custom_1.anisotropy = params.anisotropy
-})
-gui.add( params, 'attenuationDistance',0,10000,10)
-.onChange(()=>{
-    custom_1.attenuationDistance = params.attenuationDistance
-})
-gui.add( params, 'emissiveIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.emissiveIntensity = params.emissiveIntensity
-})
-gui.add( params, 'clearcoat',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoat = params.clearcoat
-})
-gui.add( params, 'clearcoatRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoatRoughness = params.clearcoatRoughness
-})
-
-gui.add( params, 'dispersion' )
-.onChange( () =>{
-    if (params.dispersion){
-        custom_1.dispersion = 1
-    }else{
-        custom_1.dispersion = 0
-    }
-})
-
-gui.add( params, 'ior',1,2.3,0.1 )
-.onChange( () =>{
-    custom_1.ior = params.ior
-})
-gui.add( params, 'reflectivity',0,1,0.1)
-.onChange( () =>{
-    custom_1.reflectivity = params.reflectivity
-})
-gui.add( params, 'sheen',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheen = params.sheen
-})
-gui.add( params, 'sheenRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheenRoughness = params.sheenRoughness
-})
-gui.add( params, 'specularIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.specularIntensity = params.specularIntensity
-})
-const toneMappingFolder = gui.addFolder( 'tone mapping' );
-toneMappingFolder.add( params, 'exposure', 0.1, 10 ).onChange( (val)=>{
-    reinhardTMPass.uniforms.exposure.value = val
-})
-/**GUI */
-
-/**
- * models
+ * Loading
  */
 
-//obj loader
-const objLoader = new OBJLoader()
-objLoader.load(
-    "./models/normal/bunny.obj",
-    (obj) =>{
-        object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
-
-        const coe = 0.34
-        object_obj.scale.set(coe,coe,coe)
-        object_obj.position.set(0,0.05,0)
-        init_material(index_material)
-        object_obj.castShadow = true
-        scene.add(object_obj)
-        console.log(object_obj)
-    },(xhr)=>{
-        console.log((xhr.loaded/xhr.total*100)+'% loaded')
-    },(error)=>{
-        console.log('An error happened',error)
-    }
-)
-/**Model */
-
-/**
- * Background and Lighting
- */
-//背景
-const hdr_url = []
-/**
- * 最適load
-//HDRloadmanager
-const loadingManager = new THREE.LoadingManager(()=>{
-    console.log("Finished loading");
-    init_master(index_master)
-},(itemUrl,itemsLoaded,itemsTotal)=>{
-    console.log("Files loaded:" + itemsLoaded + "/" + itemsTotal)
-})
-//loadeverything
-const loader1 = new RGBELoader(loadingManager)
-
-async function hdrloader(){
-    hdr_images_path.forEach(element => {
-        const imagepath = base_path + element
-        loader1.load(
-            imagepath,
-            (texture)=>{
-                hdr_files.push(texture)
-                hdr_url.push(element)
-            }
-        )
+//model loading
+let object_obj = null
+const model_files = []
+let model_url = []
+async function modelload(){
+    return new Promise((resolve)=>{
+        //Modelloadmanager
+        const ModelloadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished loading")
+            init_model(index_model)
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("Files loaded:" + itemsLoaded + "/" + model_path.length)
+        })
+        //loadeverything
+        const model_loader = new OBJLoader(ModelloadingManager)
+        
+        modelloader(model_loader)
     })
 }
-*/
 
-/** 順番通りload */
-async function hdrloader() {
-    //HDRloadmanager
-    const loadingManager = new THREE.LoadingManager(()=>{
-        console.log("Finished loading")
-        init_master(index_master)
-    },(itemUrl,itemsLoaded,itemsTotal)=>{
-        console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
+async function modelloader(loader){
+    for (let i = 0; i < model_path.length; i++) {
+        const element = model_path[i]
+        const modelpath = model_base_path + element
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                modelpath,
+                (obj) => {
+                    model_files.push(obj.children[0])
+                    model_url.push(element)
+                    resolve()
+                },(xhr)=>{
+                    console.log((xhr.loaded/xhr.total*100)+'% loaded')
+                },
+                (err) => reject(err)
+            )
+        })
+    }
+}
+
+//hdr loading
+const hdr_files = []
+let hdr_url = []
+async function hdrload(){
+    return new Promise((resolve)=>{
+        //HDRloadmanager
+        const loadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished loading");
+            init_master(index_master)
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
+        })
+        //loadeverything
+        const loader1 = new RGBELoader(loadingManager)
+        
+        hdrloader(loader1)
     })
-    const loader1 = new RGBELoader(loadingManager)
+}
 
+async function hdrloader(loader){
     for (let i = 0; i < hdr_images_path.length; i++) {
         const element = hdr_images_path[i]
         const imagepath = base_path + element
-
+    
         await new Promise((resolve, reject) => {
-            loader1.load(
+            loader.load(
                 imagepath,
                 (texture) => {
                     hdr_files.push(texture)
@@ -348,45 +252,288 @@ async function hdrloader() {
     }
 }
 
-hdrloader()
-
-// HDRファイルのロード
-//init_master
-function init_master(index){
-    hdr_files[index].encoding = THREE.RGBEEncoding
-    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
-    scene.background = hdr_files[index]
-    scene.environment = hdr_files[index]
-
-    console.log(hdr_url[index])
-    
-    const myElement = document.getElementById('hdr_name');
-    myElement.textContent = hdr_url[index];
+let stimulsData = []
+let datacount = 0
+async function Data_make(){
+    return new Promise((resolve)=>{
+        for (let i = 0; i < model_path.length; i++) {
+            const model_name = model_path[i]
+            for (let j = 0; j < hdr_images_path.length; j++){
+                const hdr_name = hdr_images_path[j]
+                let onedata = new OneData(datacount,j,hdr_name,i,model_name)
+                stimulsData.push(onedata)
+                datacount += 1
+            }
+        }
+        resolve()
+    })
 }
 
+function OneData(datacount,hdrid,hdr,modelid,model){
+    this.allid = datacount
+    this.hdrid = hdrid
+    this.modelid = modelid
+    this.score = 0
+    this.totalscore = 0
+    this.hdr = hdr
+    this.model = model
+    this.T_times = 0
+}
+
+//main loading
+async function mainload(){
+    await modelload()
+    await hdrload()
+    await Data_make()
+    OneSession()
+}
+//activate
+mainload()
+
+/**
+modelload()
+hdrload()
+*/
+/** Loading */
+
+/**
+ * Lighting
+ */
 //点光源
-pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
+let pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
 pointlight1.position.set(0,0,0)
 pointlight1.castShadow = true
 //scene.add(pointlight1)
-/**Background and Lighting */
+/**Lighting */
 
 /**
  * Additional
  */
-const newParagraph = document.createElement('p');
-const textNode = document.createTextNode('hdr_name');
-newParagraph.appendChild(textNode);
-newParagraph.setAttribute('id', 'hdr_name');
-document.body.appendChild(newParagraph);
 
-const matParagraph = document.createElement('p');
-const mattextNode = document.createTextNode('mat_name');
-matParagraph.appendChild(mattextNode);
-matParagraph.setAttribute('id', 'mat_name');
-document.body.appendChild(matParagraph);
 /**Additional */
 /**Base */
+
+/**
+ * Panel 1
+ */
+//initialization
+let container
+let sliderValue = 0.5
+let slider,handle,resultbar
+//activate
+SliderPanel1()
+//Sliderpanel
+function SliderPanel1(){
+    //container
+    container = new ThreeMeshUI.Block({
+        height:0.3,width:1.3,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text = new ThreeMeshUI.Text({
+        content:'Please adjust slider',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.075,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    container.add(textBlock)
+    //slider
+    slider = new ThreeMeshUI.Block({
+        height:0.025,width:1,offset:0.02,
+        backgroundColor: new THREE.Color(0x999999),
+        justifyContent:'center',
+    });
+    handle = new ThreeMeshUI.Block({
+        height:0.07,width:0.015,offset:0.01,
+        backgroundColor: new THREE.Color(0xffffff),
+        backgroundOpacity: 1
+    });
+    slider.add(handle)
+    container.add(slider)
+
+    container.position.set(0,-0.5,0.5)
+    container.rotation.set(0,0,0)
+    scene.add(container)
+}
+function updateSlider(){
+    handle.position.x = (sliderValue - 0.5) * slider.getWidth()
+    console.log(handle.position.x)
+}
+/**Panel 1 */
+/**
+ * Panel 2
+ */
+//initialization
+let container2
+//activate
+
+//panel making
+function FinishPanel1(){
+    //container
+    container2 = new ThreeMeshUI.Block({
+        height:0.3,width:1.3,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text = new ThreeMeshUI.Text({
+        content:'Thank you!!',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.075,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    container2.add(textBlock)
+    scene.add(container2)
+}
+/**Panel 2 */
+
+/**
+ * trial
+ */
+function sleep(ms){
+    return new Promise(resolve => setTimeout(resolve,ms))
+}
+async function OneSession(){
+    let totalResults = [
+        ['Name','Result_Av','T_times','TIME(SEC)'],
+    ]
+    for (let session = 0; session < material_list.length;session++){
+        let ReportTable= [
+            hdr_images_path
+        ]
+        init_material(session)
+        let resulttable
+        for (let round = 0;round < roundnum;round++){
+            resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
+            stimulsData.sort(() => Math.random() - 0.5);
+            for (let trial = 0;trial < stimulsData.length;trial++){
+                init_model(stimulsData[trial].modelid)
+                init_master(stimulsData[trial].hdrid)
+                await OneTrial()
+                stimulsData[trial].score = resultbar
+                stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
+                resulttable[round][stimulsData[trial].allid] = resultbar
+            }
+            stimulsData.sort((a, b) => a.allid - b.allid)
+            let reporcontents = stimulsData.map(field => field.score)
+            console.log(reporcontents)
+            ReportTable.push(reporcontents)
+        }
+        //let ReportTable = HeaderTable.concat(resulttable)
+        let sheetname = experiment_name + "_" + materialname_list[session] + ".csv"
+        exportToCsv(sheetname, ReportTable)
+    }
+    //filewrite
+
+    //finalization
+    console.log("Finished")
+    scene.background=new THREE.Color(0x333333)
+    scene.remove(container)
+    scene.remove(object_obj)
+    FinishPanel1()
+}
+async function OneTrial(){
+    return new Promise((resolve)=>{
+        console.log("loop confirm")
+        function TrialFunction(e){
+            if (e.keyCode == 37){
+                sliderValue = Math.max(0,sliderValue - 0.05)
+                console.log("rightconfirm")
+                updateSlider()
+            }
+            if (e.keyCode == 39){
+                sliderValue = Math.min(1,sliderValue + 0.05)
+                updateSlider()
+            }
+            if (e.keyCode == 40){
+                resultbar = sliderValue
+                sliderValue = 0.5
+                updateSlider()
+                document.removeEventListener("keydown",TrialFunction)
+                resolve()
+            }
+        }
+        document.addEventListener("keydown",TrialFunction)
+    })
+}
+/**trial */
+
+/**
+ * Write Out
+ */
+//総合成績表
+function writeTotalResult(){
+    let nowTime = new Date().getTime()
+    // 書き出し項目
+    let totalResult = []
+    totalResults.push(totalResult)
+    exportToCsv("test", totalResults)
+}
+
+//csv出力
+function exportToCsv(filename, rows) {
+    //CSVの各行を処理する
+    var processRow = function (row) {
+        var finalVal = ''
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString()
+            if (row[j] instanceof Date) {
+                innerValue = row[j].toLocaleString()
+            }
+            var result = innerValue.replace(/"/g, '""')
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"'
+            if (j > 0)
+                finalVal += ','
+            finalVal += result
+        }
+        return finalVal + '\n'
+    };
+    //CSVファイル全体を生成する
+    var csvFile = ''
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processRow(rows[i])
+    }
+    //CSVファイルをBlobにしてダウンロード
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' })
+    var link = document.createElement("a")
+    if (link.download !== undefined) { // feature detection
+        // Browsers that support HTML5 download attribute
+        var url = URL.createObjectURL(blob)
+        link.setAttribute("href", url)
+        link.setAttribute("download", filename)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+}
+
+//xlsx出力
+function exprotToxlsx(filename,data){
+    //  ワークシートを作成
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    //  ワークブックを作成
+    const wb = XLSX.utils.book_new();
+}
+
+
+/**Write Out */
 
 /**
  * Post processing
@@ -395,7 +542,7 @@ document.body.appendChild(matParagraph);
 const ReinhardTMO = {
     uniforms: {
         tDiffuse: { value: null },
-        pWhite: { value: 10.0 }
+        pWhite: { value: 1.0 }
     },
     vertexShader : `
     varying vec2 vUv;
@@ -521,23 +668,6 @@ const ReinhardTMOv2 = {
         return Ld;
     }
 
-    vec3 xyYToRgb(vec3 xyY) {
-        float x = xyY.x;
-        float y = xyY.y;
-        float Y = xyY.z;
-
-        //xyY To XYZ
-        float X = Y / y * x;
-        float Z = Y / y * (1.0 - x - y);
-
-        //XYZ To RGB
-        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
-        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
-        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
-
-        return vec3(R, G, B);
-    }
-
     void main() {
         vec4 color = texture2D(tDiffuse, vUv);
         vec3 xyYColor = rgbToxyY(color.rgb);
@@ -549,9 +679,7 @@ const ReinhardTMOv2 = {
         xyYColor.x = 0.3127; // D65 white point
         xyYColor.y = 0.3290; // D65 white point
 
-        vec3 rgbColor = xyYToRgb(xyYColor);
-
-        gl_FragColor = vec4(rgbColor, color.a);
+        gl_FragColor = vec4(xyYColor, color.a);
     }`
 }
 
@@ -572,13 +700,41 @@ composer.addPass(outputPass)
 /**
  * Function
  */
+// HDRファイルのロード
+//init_master
+function init_master(index){
+    console.log(index)
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
+
+    console.log(hdr_url[index])
+}
+
 //material load
 function init_material(index){
     object_obj.material = material_list[index]
-
-    const myElement = document.getElementById('mat_name');
-    myElement.textContent = materialname_list[index];
 }
+
+//model load
+function init_model(index){
+    if(object_obj != null){
+        scene.remove(object_obj)
+    }
+    object_obj = model_files[index]
+    const coe = 0.34
+    console.log(index)
+    console.log(model_files)
+    console.log(object_obj)
+    object_obj.scale.set(coe,coe,coe)
+    object_obj.position.set(0,0.05,0)
+    init_material(index_material)
+    object_obj.castShadow = true
+    scene.add(object_obj)
+    console.log(object_obj)
+}
+
 
 //camera distance
 function dist (fov) {
@@ -590,10 +746,10 @@ function dist (fov) {
 //widowresize
 function onWindowResize(){
     // Update sizes
-    //sizes.width = window.innerWidth
-    //sizes.height = window.innerHeight
-    sizes.width = windowsize
-    sizes.height = windowsize
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+    //sizes.width = windowsize
+    //sizes.height = windowsize
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
@@ -615,7 +771,9 @@ function WindowFullscreen(){
 }
 
 function animate(){
+    //update
     controls.update()
+    ThreeMeshUI.update()
     // Render
     //renderer.render(scene, camera)
     composer.render()
@@ -625,11 +783,9 @@ function animate(){
 }
 /**Function */
 
-
 /**
  * eventlister
  */
-
 //resize
 window.addEventListener('resize', onWindowResize)
 
@@ -661,95 +817,28 @@ document.addEventListener("keydown",(e)=>{
 //change loaded
 document.addEventListener("keydown",(e)=>{
     //hdr
-    //press ←
-    if(e.keyCode == 37 && index_master > 0){
+    //press Q
+    if(e.keyCode == 81 && index_master > 0){
         index_master -=1;
         init_master(index_master);
     }
-    //press →
-    if(e.keyCode == 39 && index_master < hdr_files.length-1){
+    //press E
+    if(e.keyCode == 69 && index_master < hdr_files.length-1){
         index_master +=1;
         init_master(index_master)
     }
-
     //materials
-    //pressR
-    if(e.keyCode == 82 && index_material > 0){
+    //press A
+    if(e.keyCode == 65 && index_material > 0){
         index_material -=1
         init_material(index_material)
     }
-    //pressY
-    if(e.keyCode == 89 && index_material < material_list.length-1){
+    //press D
+    if(e.keyCode == 68 && index_material < material_list.length-1){
         index_material += 1
         init_material(index_material)
     }
 })
-
-//donwload push P
-document.addEventListener("keydown",(e) =>{
-    if(e.keyCode == 80) {
-        var imgData, imgNode;
-        //Listen to 'P' key
-        if(e.which !== 80) return;
-        try {
-            renderer.render(scene, camera)
-
-            composer.render()
-            imgData = renderer.domElement.toDataURL();
-        }
-        catch(e) {
-            console.log("Browser does not support taking screenshot of 3d context");
-            return;
-        }
-        const downloadlink = document.getElementById("downloadlink");
-        downloadlink.href = imgData;
-        downloadlink.download= "downloadfile_" + dlcount + ".png";
-        downloadlink.click();
-        imgNode = document.createElement("img");
-        imgNode.src = imgData;
-        document.body.appendChild(imgNode);
-        dlcount +=1;
-    }
-
-})
-
-//alldownload push L
-function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve,ms))
-}
-
-async function loopwithdelay(){
-    var imgData_2;
-    let i,j
-    const alldownloadlink = document.getElementById("alldownload");
-    //hdr change
-    for (i=0; i < hdr_images_path.length; i++){
-        init_master(i)
-        //material change
-        for (j=0; j < 1; j++){
-            init_material(j);
-            //renderer.render(scene, camera)
-            composer.render()
-            //download
-
-            imgData_2 = renderer.domElement.toDataURL();
-            alldownloadlink.href = imgData_2;
-            let hdr_path = hdr_images_path[i].replace(".hdr","")
-            alldownloadlink.download = "bunny_" + materialname_list[j] + "_" + hdr_path + ".png"
-            alldownloadlink.click();
-            await sleep(100);
-            console.log("downloaded hdr : " + hdr_path + "  material : " + materialname_list[j])
-        }
-    }
-    init_master(index_master);
-    init_material(index_material);
-}
-
-document.addEventListener("keydown",(e=>{
-    if(e.keyCode == 76){
-        loopwithdelay();
-    }
-}))
 
 //mouse
 window.addEventListener('mousemove',e =>

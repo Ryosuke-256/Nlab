@@ -304,7 +304,7 @@ function exportToCsv(filename, rows) {
         link.click()
         document.body.removeChild(link)
     }
-} 
+}
 
 //camera distance
 function dist (fov) {
