@@ -19,6 +19,16 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 let experiment_name = prompt("名前を入力してください:");
 console.log("入力された名前は: " + experiment_name)
 
+//times input
+let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
+let Material_num = prompt("何回目ですか？:")
+
+while(Material_num < 1 || Material_num > 4){
+    Material_num = prompt("1-4の範囲で入力してください")
+}
+
+console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
+
 //imagefiles
 const base_path = 'image\\'
 
@@ -49,7 +59,7 @@ const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
     'bunny.obj',
-    'dragon.obj',
+    //'dragon.obj',
     'boardA.obj',
     'boardB.obj',
     'boardC.obj',
@@ -164,7 +174,8 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
 let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
-let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
+let ThisMat = material_list[Material_num - 1]
+let ThisMatName = materialname_list[Material_num - 1]
 
 /**
  * Loading
@@ -178,11 +189,11 @@ async function modelload(){
     return new Promise((resolve)=>{
         //Modelloadmanager
         const ModelloadingManager = new THREE.LoadingManager(()=>{
-            console.log("Finished loading")
+            console.log("Finished Model loading")
             init_model(index_model)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
-            console.log("Files loaded:" + itemsLoaded + "/" + model_path.length)
+            console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
         })
         //loadeverything
         const model_loader = new OBJLoader(ModelloadingManager)
@@ -204,7 +215,7 @@ async function modelloader(loader){
                     model_url.push(element)
                     resolve()
                 },(xhr)=>{
-                    console.log((xhr.loaded/xhr.total*100)+'% loaded')
+
                 },
                 (err) => reject(err)
             )
@@ -219,11 +230,11 @@ async function hdrload(){
     return new Promise((resolve)=>{
         //HDRloadmanager
         const loadingManager = new THREE.LoadingManager(()=>{
-            console.log("Finished loading");
+            console.log("Finished HDR loading");
             init_master(index_master)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
-            console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
+            console.log("HDR loaded:" + itemsLoaded + "/" + hdr_images_path.length)
         })
         //loadeverything
         const loader1 = new RGBELoader(loadingManager)
@@ -253,30 +264,22 @@ async function hdrloader(loader){
 }
 
 let stimulsData = []
-let datacount = 0
 async function Data_make(){
     return new Promise((resolve)=>{
-        for (let i = 0; i < model_path.length; i++) {
-            const model_name = model_path[i]
-            for (let j = 0; j < hdr_images_path.length; j++){
-                const hdr_name = hdr_images_path[j]
-                let onedata = new OneData(datacount,j,hdr_name,i,model_name)
-                stimulsData.push(onedata)
-                datacount += 1
-            }
+        for (let i = 0; i < hdr_url.length; i++){
+            const hdr_name = hdr_url[i]
+            let onedata = new OneData(i,hdr_name)
+            stimulsData.push(onedata)
         }
         resolve()
     })
 }
 
-function OneData(datacount,hdrid,hdr,modelid,model){
-    this.allid = datacount
-    this.hdrid = hdrid
-    this.modelid = modelid
+function OneData(id,hdr){
+    this.id = id
     this.score = 0
     this.totalscore = 0
     this.hdr = hdr
-    this.model = model
     this.T_times = 0
 }
 
@@ -358,14 +361,15 @@ function SliderPanel1(){
     });
     slider.add(handle)
     container.add(slider)
-
-    container.position.set(0,-0.5,0.5)
-    container.rotation.set(0,0,0)
-    scene.add(container)
 }
+
+container.position.set(0,-0.75,-dist(fov)+0.5)
+container.rotation.set(-Math.PI/12,0,0)
+camera.add(container)
+
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
-    console.log(handle.position.x)
+    //console.log(handle.position.x)
 }
 /**Panel 1 */
 /**
@@ -412,36 +416,36 @@ async function OneSession(){
     let totalResults = [
         ['Name','Result_Av','T_times','TIME(SEC)'],
     ]
-    for (let session = 0; session < material_list.length;session++){
+    for (let session = 0; session < model_files.length;session++){
         let ReportTable= [
             hdr_images_path
         ]
-        init_material(session)
+        init_material(Material_num)
+        init_model(session)
         let resulttable
         for (let round = 0;round < roundnum;round++){
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
             stimulsData.sort(() => Math.random() - 0.5);
             for (let trial = 0;trial < stimulsData.length;trial++){
-                init_model(stimulsData[trial].modelid)
-                init_master(stimulsData[trial].hdrid)
+                init_master(stimulsData[trial].id)
                 await OneTrial()
                 stimulsData[trial].score = resultbar
                 stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
-                resulttable[round][stimulsData[trial].allid] = resultbar
+                resulttable[round][stimulsData[trial].id] = resultbar
             }
-            stimulsData.sort((a, b) => a.allid - b.allid)
+            stimulsData.sort((a, b) => a.id - b.id)
             let reporcontents = stimulsData.map(field => field.score)
             console.log(reporcontents)
             ReportTable.push(reporcontents)
         }
         //let ReportTable = HeaderTable.concat(resulttable)
-        let sheetname = experiment_name + "_" + materialname_list[session] + ".csv"
-        exportToCsv(sheetname, ReportTable)
+        let xlsxname = experiment_name + "_" + ThisMatName + "_" + model_url[session] + ".csv"
+        exportToCsv(xlsxname, ReportTable)
     }
     //filewrite
 
     //finalization
-    console.log("Finished")
+    console.log("Exp Finished")
     scene.background=new THREE.Color(0x333333)
     scene.remove(container)
     scene.remove(object_obj)
@@ -449,11 +453,9 @@ async function OneSession(){
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
-        console.log("loop confirm")
         function TrialFunction(e){
             if (e.keyCode == 37){
                 sliderValue = Math.max(0,sliderValue - 0.05)
-                console.log("rightconfirm")
                 updateSlider()
             }
             if (e.keyCode == 39){
@@ -462,6 +464,7 @@ async function OneTrial(){
             }
             if (e.keyCode == 40){
                 resultbar = sliderValue
+                console.log(sliderValue)
                 sliderValue = 0.5
                 updateSlider()
                 document.removeEventListener("keydown",TrialFunction)
@@ -542,7 +545,7 @@ function exprotToxlsx(filename,data){
 const ReinhardTMO = {
     uniforms: {
         tDiffuse: { value: null },
-        pWhite: { value: 1.0 }
+        pWhite: { value: 10.0 }
     },
     vertexShader : `
     varying vec2 vUv;
@@ -626,7 +629,7 @@ const ReinhardTMO = {
 const ReinhardTMOv2 = {
     uniforms: {
         tDiffuse: { value: null },
-        pWhite: { value: 1.0 }
+        pWhite: { value: 10.0 }
     },
     vertexShader : `
     varying vec2 vUv;
@@ -703,13 +706,10 @@ composer.addPass(outputPass)
 // HDRファイルのロード
 //init_master
 function init_master(index){
-    console.log(index)
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
-
-    console.log(hdr_url[index])
 }
 
 //material load
@@ -724,15 +724,11 @@ function init_model(index){
     }
     object_obj = model_files[index]
     const coe = 0.34
-    console.log(index)
-    console.log(model_files)
-    console.log(object_obj)
     object_obj.scale.set(coe,coe,coe)
     object_obj.position.set(0,0.05,0)
     init_material(index_material)
     object_obj.castShadow = true
     scene.add(object_obj)
-    console.log(object_obj)
 }
 
 
@@ -771,15 +767,15 @@ function WindowFullscreen(){
 }
 
 function animate(){
+    //second
+    const sec = performance.now()/1000
+
     //update
     controls.update()
     ThreeMeshUI.update()
     // Render
     //renderer.render(scene, camera)
     composer.render()
-
-    //second
-    const sec = performance.now()/1000
 }
 /**Function */
 
