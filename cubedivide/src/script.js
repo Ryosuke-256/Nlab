@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-//additonal
+//additonal 
 import { UnrealBloomPass } from 'three/examples/jsm/Addons.js';
 import { HorizontalBlurShader  } from 'three/examples/jsm/Addons.js';
 import { VerticalBlurShader } from 'three/examples/jsm/Addons.js';
@@ -154,7 +154,7 @@ renderer.setAnimationLoop(animate)
  */
 //gradientShader
 const def_gra = 0.4
-const def_a = 1.0
+const def_a = 0.1
 const gradientShader = {
     uniforms: {
         tDiffuse: { value: null },
