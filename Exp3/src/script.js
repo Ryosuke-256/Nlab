@@ -58,7 +58,7 @@ const hdr_images_path = [
 const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
-    'bunny.obj',
+    //'bunny.obj',
     //'dragon.obj',
     'boardA.obj',
     'boardB.obj',
@@ -69,9 +69,7 @@ const model_path = [
 let canvas, scene, camera, renderer, controls,composer
 
 //size
-const sizes = {width: window.innerWidth,height: window.innerHeight}
-//const windowsize = 256
-//const sizes = {width: windowsize,height: windowsize}
+let sizes = {width: window.innerWidth,height: window.innerHeight}
 
 //widowsize関連補正
 let position_ratio = 250
@@ -88,11 +86,6 @@ let index_model = 0
 
 //round
 let roundnum = 2
-/**initialization */
-
-/**
- * Base
- */
 
 // Canvas
 canvas = document.querySelector('canvas.webgl')
@@ -105,6 +98,14 @@ let fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov))
 scene.add(camera)
+
+//camera distance
+function dist (fov) {
+    const fovRad= (fov/2)*(Math.PI/180)
+    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
+    return dist
+}
+/**initialization */
 
 /**
  * Renderer
@@ -190,7 +191,7 @@ async function modelload(){
         //Modelloadmanager
         const ModelloadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished Model loading")
-            init_model(index_model)
+            //init_model(index_model)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
             console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
@@ -201,7 +202,6 @@ async function modelload(){
         modelloader(model_loader)
     })
 }
-
 async function modelloader(loader){
     for (let i = 0; i < model_path.length; i++) {
         const element = model_path[i]
@@ -222,7 +222,6 @@ async function modelloader(loader){
         })
     }
 }
-
 //hdr loading
 const hdr_files = []
 let hdr_url = []
@@ -231,7 +230,7 @@ async function hdrload(){
         //HDRloadmanager
         const loadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished HDR loading");
-            init_master(index_master)
+            //init_HDR(index_master)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
             console.log("HDR loaded:" + itemsLoaded + "/" + hdr_images_path.length)
@@ -242,7 +241,6 @@ async function hdrload(){
         hdrloader(loader1)
     })
 }
-
 async function hdrloader(loader){
     for (let i = 0; i < hdr_images_path.length; i++) {
         const element = hdr_images_path[i]
@@ -274,7 +272,6 @@ async function Data_make(){
         resolve()
     })
 }
-
 function OneData(id,hdr){
     this.id = id
     this.score = 0
@@ -282,21 +279,30 @@ function OneData(id,hdr){
     this.hdr = hdr
     this.T_times = 0
 }
-
-//main loading
-async function mainload(){
-    await modelload()
-    await hdrload()
-    await Data_make()
-    OneSession()
+//init_HDR
+function init_HDR(index){
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
 }
-//activate
-mainload()
-
-/**
-modelload()
-hdrload()
-*/
+//material load
+function init_material(index){
+    object_obj.material = material_list[index]
+}
+//model load
+function init_model(index){
+    if(object_obj != null){
+        scene.remove(object_obj)
+    }
+    object_obj = model_files[index]
+    const coe = 0.34
+    object_obj.scale.set(coe,coe,coe)
+    object_obj.position.set(0,0.05,0)
+    init_material(index_material)
+    object_obj.castShadow = true
+    scene.add(object_obj)
+}
 /** Loading */
 
 /**
@@ -314,17 +320,44 @@ pointlight1.castShadow = true
  */
 
 /**Additional */
-/**Base */
+
+/** 
+ * Loading Panel
+ */
+let loadpanel
+function LoadPanel(){
+    //container
+    loadpanel = new ThreeMeshUI.Block({
+        height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text = new ThreeMeshUI.Text({
+        content:'Now Loading',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.2,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    loadpanel.add(textBlock)
+    scene.add(loadpanel)
+}
+/** Loading Panel */
 
 /**
- * Panel 1
+ * Slider Panel
  */
 //initialization
 let container
 let sliderValue = 0.5
 let slider,handle,resultbar
-//activate
-SliderPanel1()
 //Sliderpanel
 function SliderPanel1(){
     //container
@@ -361,35 +394,32 @@ function SliderPanel1(){
     });
     slider.add(handle)
     container.add(slider)
+    container.position.set(0,-0.75,-dist(fov)+0.5)
+    container.rotation.set(-Math.PI/12,0,0)
+    camera.add(container)
 }
-
-container.position.set(0,-0.75,-dist(fov)+0.5)
-container.rotation.set(-Math.PI/12,0,0)
-camera.add(container)
-
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
     //console.log(handle.position.x)
 }
-/**Panel 1 */
+/**Slider Panel */
+
 /**
- * Panel 2
+ *  Finish Panel
  */
 //initialization
 let container2
-//activate
-
 //panel making
 function FinishPanel1(){
     //container
     container2 = new ThreeMeshUI.Block({
-        height:0.3,width:1.3,margin:0.1,
+        height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
     })
@@ -404,30 +434,221 @@ function FinishPanel1(){
     container2.add(textBlock)
     scene.add(container2)
 }
-/**Panel 2 */
+/** Finish Panel */
+
+/**
+ * Initial Panel
+ */
+//initialization
+let startpanel
+//panel making
+async function StartPanel(){
+    return new Promise((resolve)=>{
+        //container
+        startpanel = new ThreeMeshUI.Block({
+            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Press Up Key To Test Session',
+            fontColor:new THREE.Color(0xd2ffbd),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        startpanel.add(textBlock)
+        scene.add(startpanel)
+        window.addEventListener("keydown",(e)=>{
+            if(e.keyCode == 38){
+                scene.remove(startpanel)
+                resolve()
+            }
+        })
+    })
+}
+/** Initial Panel */
+
+/**
+ * Test Session Panel
+ */
+let testpanel1
+function TestPanel1(){
+    //container
+    testpanel1 = new ThreeMeshUI.Block({
+        height:0.3,width:1.3,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text1 = new ThreeMeshUI.Text({
+        content:'This is Test Session',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.075,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text1)
+    testpanel1.add(textBlock)
+    testpanel1.position.set(0,0.75,0)
+}
+let testpanel2
+function TestPanel2(){
+    //container
+    testpanel2 = new ThreeMeshUI.Block({
+        height:0.3,width:1.3,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text1 = new ThreeMeshUI.Text({
+        content:'Press UP to finish test',
+        fontColor:new THREE.Color(0xd2ffbd),
+        fontSize:0.075,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text1)
+    testpanel2.add(textBlock)
+    testpanel2.position.set(0,0.75,0)
+}
+//activate
+TestPanel1()
+TestPanel2()
+/** Test SessionPanel */
+
+/**
+ * Exp Start panel
+ */
+let exppanel
+async function ExpPanel(model_num){
+    return new Promise((resolve)=>{
+        //container
+        exppanel = new ThreeMeshUI.Block({
+            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Press Up Key To Exp ' + model_num +'/'+ model_files.length,
+            fontColor:new THREE.Color(0xd2ffbd),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        exppanel.add(textBlock)
+        exppanel.position.set(0,0,-dist(fov)+1)
+        camera.add(exppanel)
+        window.addEventListener("keydown",(e)=>{
+            if(e.keyCode == 38){
+                camera.remove(exppanel)
+                resolve()
+            }
+        })
+    })
+}
+/** Exp panel */
 
 /**
  * trial
  */
+//sleep
 function sleep(ms){
     return new Promise(resolve => setTimeout(resolve,ms))
 }
+//test trial
+var testcontinue = true
+async function TestSession(){
+    testcontinue = true
+    let testcount = 0
+    while(testcontinue){ 
+        if(testcount < hdr_files.length){
+            scene.add(testpanel1)
+        }else{
+            scene.add(testpanel2)
+        }
+        init_HDR(stimulsData[testcontinue % hdr_files.length].id)
+        await TestTrial()
+        testcount += 1
+        scene.remove(testpanel1)
+        scene.remove(testpanel2)
+    }
+}
+async function TestTrial(){
+    return new Promise((resolve)=>{
+        function TestTrialFunction(e){
+            if (e.keyCode == 37){
+                sliderValue = Math.max(0,sliderValue - 0.05)
+                updateSlider()
+            }
+            if (e.keyCode == 39){
+                sliderValue = Math.min(1,sliderValue + 0.05)
+                updateSlider()
+            }
+            if (e.keyCode == 40){
+                console.log(sliderValue)
+                sliderValue = 0.5
+                updateSlider()
+                document.removeEventListener("keydown",TestTrialFunction)
+                resolve()
+            }
+            if (e.keyCode == 38){
+                testcontinue = false
+                document.removeEventListener("keydown",TestTrialFunction)
+                resolve()
+            }
+        }
+        document.addEventListener("keydown",TestTrialFunction)
+    })
+}
+//main trial
 async function OneSession(){
     let totalResults = [
         ['Name','Result_Av','T_times','TIME(SEC)'],
     ]
+    //slider activate
+    SliderPanel1()
     for (let session = 0; session < model_files.length;session++){
         let ReportTable= [
             hdr_images_path
         ]
-        init_material(Material_num)
         init_model(session)
+        init_material(Material_num)
+        await TestSession()
+        console.log("escape test")
+        await sleep(100)
+        await ExpPanel(session+1)
+        console.log("panel excape")
         let resulttable
         for (let round = 0;round < roundnum;round++){
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
             stimulsData.sort(() => Math.random() - 0.5);
             for (let trial = 0;trial < stimulsData.length;trial++){
-                init_master(stimulsData[trial].id)
+                init_HDR(stimulsData[trial].id)
                 await OneTrial()
                 stimulsData[trial].score = resultbar
                 stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
@@ -474,6 +695,18 @@ async function OneTrial(){
         document.addEventListener("keydown",TrialFunction)
     })
 }
+//main loading
+async function mainload(){
+    LoadPanel()
+    await modelload()
+    await hdrload()
+    await Data_make()
+    scene.remove(loadpanel)
+    await StartPanel()
+    OneSession()
+}
+//activate
+mainload()
 /**trial */
 
 /**
@@ -487,7 +720,6 @@ function writeTotalResult(){
     totalResults.push(totalResult)
     exportToCsv("test", totalResults)
 }
-
 //csv出力
 function exportToCsv(filename, rows) {
     //CSVの各行を処理する
@@ -526,7 +758,6 @@ function exportToCsv(filename, rows) {
         document.body.removeChild(link)
     }
 }
-
 //xlsx出力
 function exprotToxlsx(filename,data){
     //  ワークシートを作成
@@ -534,8 +765,6 @@ function exprotToxlsx(filename,data){
     //  ワークブックを作成
     const wb = XLSX.utils.book_new();
 }
-
-
 /**Write Out */
 
 /**
@@ -703,42 +932,6 @@ composer.addPass(outputPass)
 /**
  * Function
  */
-// HDRファイルのロード
-//init_master
-function init_master(index){
-    hdr_files[index].encoding = THREE.RGBEEncoding
-    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
-    scene.background = hdr_files[index]
-    scene.environment = hdr_files[index]
-}
-
-//material load
-function init_material(index){
-    object_obj.material = material_list[index]
-}
-
-//model load
-function init_model(index){
-    if(object_obj != null){
-        scene.remove(object_obj)
-    }
-    object_obj = model_files[index]
-    const coe = 0.34
-    object_obj.scale.set(coe,coe,coe)
-    object_obj.position.set(0,0.05,0)
-    init_material(index_material)
-    object_obj.castShadow = true
-    scene.add(object_obj)
-}
-
-
-//camera distance
-function dist (fov) {
-    const fovRad= (fov/2)*(Math.PI/180)
-    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
-    return dist
-}
-
 //widowresize
 function onWindowResize(){
     // Update sizes
@@ -755,8 +948,12 @@ function onWindowResize(){
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-}
 
+    // Update composer
+    composer.setSize(sizes.width, sizes.height)
+    
+    console.log(sizes)
+}
 //windowfullscreeen
 function WindowFullscreen(){
     if(!document.fullscreenElement){
@@ -764,8 +961,8 @@ function WindowFullscreen(){
     }else{
         document.exitFullscreen()
     }
+    onWindowResize()
 }
-
 function animate(){
     //second
     const sec = performance.now()/1000
@@ -784,10 +981,8 @@ function animate(){
  */
 //resize
 window.addEventListener('resize', onWindowResize)
-
 //fullscreen
 window.addEventListener("dblclick",WindowFullscreen)
-
 //number key to camera 1 to 6
 document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 49) {
@@ -809,19 +1004,18 @@ document.addEventListener("keydown",(e)=>{
         camera.position.set(0,-dist(fov),0)
     }
 })
-
 //change loaded
 document.addEventListener("keydown",(e)=>{
     //hdr
     //press Q
     if(e.keyCode == 81 && index_master > 0){
         index_master -=1;
-        init_master(index_master);
+        init_HDR(index_master);
     }
     //press E
     if(e.keyCode == 69 && index_master < hdr_files.length-1){
         index_master +=1;
-        init_master(index_master)
+        init_HDR(index_master)
     }
     //materials
     //press A
@@ -835,7 +1029,6 @@ document.addEventListener("keydown",(e)=>{
         init_material(index_material)
     }
 })
-
 //mouse
 window.addEventListener('mousemove',e =>
     {
