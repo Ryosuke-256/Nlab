@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 
 //for postprocessing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -119,13 +120,16 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
+renderer.xr.enabled = true
 
 renderer.domElement.toDataURL("image/png")
 renderer.setAnimationLoop(animate)
+
+document.body.appendChild( VRButton.createButton( renderer ))
 /**renderer */
 
 //controlssss
-controls = new OrbitControls( camera, canvas)
+//controls = new OrbitControls( camera, canvas)
 
 /**
  * Object
@@ -872,14 +876,14 @@ const ReinhardTMOv2 = {
     uniform float pWhite;
 
     vec3 rgbToxyY(vec3 rgb) {
-        float R = rgb.r;
-        float G = rgb.g;
-        float B = rgb.b;
+        float sR = rgb.r;
+        float sG = rgb.g;
+        float sB = rgb.b;
 
         //sRGB To RGB
-        R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : (R / 12.92);
-        G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : (G / 12.92);
-        B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : (B / 12.92);
+        float R = (sR > 0.04045) ? pow((sR + 0.055) / 1.055, 2.4) : (sR / 12.92);
+        float G = (sG > 0.04045) ? pow((sG + 0.055) / 1.055, 2.4) : (sG / 12.92);
+        float B = (sB > 0.04045) ? pow((sB + 0.055) / 1.055, 2.4) : (sB / 12.92);
 
         //RGB To XYZ
         float X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
@@ -894,9 +898,31 @@ const ReinhardTMOv2 = {
         return vec3(x, y, Y);
     }
 
+    vec3 xyYToRgb(vec3 xyY) {
+        float x = xyY.x;
+        float y = xyY.y;
+        float Y = xyY.z;
+
+        //xyY To XYZ
+        float X = Y / y * x;
+        float Z = Y / y * (1.0 - x - y);
+
+        //XYZ To RGB
+        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
+        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
+        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
+
+        //RGB to sRGB
+        float sR = (R > 0.0031308) ? 1.055 * pow(R, (1.0 / 2.4)) - 0.055 : 12.92 * R;
+        float sG = (G > 0.0031308) ? 1.055 * pow(G, (1.0 / 2.4)) - 0.055 : 12.92 * G;
+        float sB = (B > 0.0031308) ? 1.055 * pow(B, (1.0 / 2.4)) - 0.055 : 12.92 * B;
+
+        return vec3(sR, sG, sB);
+    }
+
     float reinhardTonemap(float L,float pWhite) {
         float Lscaled =  L / 1.19;
-        float Ld = (Lscaled * (1.0 + pow(Lscaled / pWhite,2.0))) / (1.0 + Lscaled);
+        float Ld = (Lscaled * (1.0 + Lscaled / pow(pWhite,2.0))) / (1.0 + Lscaled);
         return Ld;
     }
 
@@ -911,7 +937,9 @@ const ReinhardTMOv2 = {
         xyYColor.x = 0.3127; // D65 white point
         xyYColor.y = 0.3290; // D65 white point
 
-        gl_FragColor = vec4(xyYColor, color.a);
+        vec3 rgbColor = xyYToRgb(xyYColor);
+
+        gl_FragColor = vec4(rgbColor, color.a);
     }`
 }
 
@@ -951,8 +979,6 @@ function onWindowResize(){
 
     // Update composer
     composer.setSize(sizes.width, sizes.height)
-    
-    console.log(sizes)
 }
 //windowfullscreeen
 function WindowFullscreen(){
@@ -968,7 +994,7 @@ function animate(){
     const sec = performance.now()/1000
 
     //update
-    controls.update()
+    //controls.update()
     ThreeMeshUI.update()
     // Render
     //renderer.render(scene, camera)
