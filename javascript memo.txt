@@ -199,3 +199,7 @@ const myElement = document.getElementById('hdr_name');
 myElement.textContent = hdr_url[index];
 
 
+React memo
+・npx create-react-app filenameでディレクトリ作成
+・defaultでは npm run startでdebug
+・App.jsで機能を作ってindex.jsで作ったappを使うイメージ
