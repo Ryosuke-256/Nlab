@@ -2,12 +2,6 @@ import * as THREE from "three";
 import { OrbitControls, Box } from "@react-three/drei";
 import { XR, VRButton, ARButton } from "@react-three/xr";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import {
-  EffectComposer,
-  Bloom,
-  Glitch
-} from "@react-three/postprocessing";
-
 
 export default function App() {
   return (
@@ -24,13 +18,6 @@ export default function App() {
           <Box key="companionCube">
             <meshPhongMaterial color="#440066" />
           </Box>
-          <EffectComposer multisampling={0} disableNormalPass={true}>
-            <Bloom
-              luminanceThreshold={0}
-              luminanceSmoothing={0.9}
-              height={300}
-            />
-          </EffectComposer>
         </XR>
       </Canvas>
     </>
