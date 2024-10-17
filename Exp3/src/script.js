@@ -99,13 +99,16 @@ let fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov))
 scene.add(camera)
-
 //camera distance
 function dist (fov) {
     const fovRad= (fov/2)*(Math.PI/180)
     const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
     return dist
 }
+
+//container
+const allcontainer = document.createElement('div')
+document.body.appendChild(allcontainer)
 /**initialization */
 
 /**
@@ -115,21 +118,22 @@ renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
 })
+//renderer = new THREE.WebGLRenderer()
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
+//allcontainer.appendChild(renderer.domElement)
+
 renderer.xr.enabled = true
+document.body.appendChild( VRButton.createButton( renderer ))
 
 renderer.domElement.toDataURL("image/png")
 renderer.setAnimationLoop(animate)
-
-document.body.appendChild( VRButton.createButton( renderer ))
 /**renderer */
 
 //controlssss
-//controls = new OrbitControls( camera, canvas)
+controls = new OrbitControls( camera, canvas)
 
 /**
  * Object
@@ -595,7 +599,7 @@ async function TestSession(){
         }else{
             scene.add(testpanel2)
         }
-        init_HDR(stimulsData[testcontinue % hdr_files.length].id)
+        init_HDR(stimulsData[testcount % hdr_files.length].id)
         await TestTrial()
         testcount += 1
         scene.remove(testpanel1)
@@ -774,6 +778,14 @@ function exprotToxlsx(filename,data){
 /**
  * Post processing
  */
+//target
+const target = new THREE.WebGLRenderTarget({
+    minFilter:THREE.LinearFilter,
+    magFilter:THREE.LinearFilter,
+    format:THREE.RGBAFormat,
+    colorSpace:THREE.SRGBColorSpace
+})
+
 //Tonemapping
 const ReinhardTMO = {
     uniforms: {
@@ -951,9 +963,14 @@ const ReinhardTMOv2Pass = new ShaderPass(ReinhardTMOv2)
 const outputPass = new OutputPass()
 //effectGrayScale.renderToScreen = true;
 
+
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+
 composer = new EffectComposer(renderer)
 composer.addPass(renderPass)
 composer.addPass(ReinhardTMOPass)
+//composer.addPass( bloomPass );
 composer.addPass(outputPass)
 /**Post processing*/
 

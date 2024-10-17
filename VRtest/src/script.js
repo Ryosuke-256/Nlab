@@ -14,6 +14,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 /**
  * 宣言
  */
+//container
+const container = document.getElementById('container')
+
 //base
 let canvas, scene, camera, renderer, controls,composer
 
@@ -118,13 +121,11 @@ cameraGroup.position.set(0,0,dist(fov))
 scene.add(cameraGroup)
 cameraGroup.add(camera)
 
+
 /**
  * Renderer
  */
-renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    antialias: true
-})
+renderer = new THREE.WebGLRenderer()
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -132,13 +133,15 @@ renderer.outputEncoding = THREE.sRGBEncoding; // レンダラーの出力をsRGB
 renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESFilmicに設定。
 renderer.toneMappingExposure = 1; // トーンマッピングの露光量を調整。
 renderer.shadowMap.enabled = true // 影
-renderer.xr.enabled = true
+container.appendChild( renderer.domElement )
 
+renderer.xr.enabled = true
 document.body.appendChild( VRButton.createButton( renderer ))
 /**renderer */
 
 //controls
-controls = new OrbitControls( camera, canvas)
+//controls = new OrbitControls( camera, canvas)
+controls = new OrbitControls( camera, renderer.domElement )
 
 /**
  * Object
@@ -180,27 +183,6 @@ scene.add(cursor1_mesh)
 /**
  * models
  */
-//gltf loader
-const gltfLoader = new GLTFLoader()
-gltfLoader.load(
-    "./models/gltf/teapot.gltf",
-    (gltf) =>{
-        object_gltf = gltf.scene.children[0] //children[0]はいらないときもあるので要確認
-
-        const coe = 0.2
-        object_gltf.scale.set(coe,coe,coe)
-        object_gltf.position.set(-1,0,0)
-        object_gltf.material = new THREE.MeshStandardMaterial({color:0xff0000,roughness:0.5,metalness:0.5})
-        object_gltf.castShadow = true
-        scene.add(object_gltf)
-        console.log(object_gltf)
-    },(xhr)=>{
-        console.log((xhr.loaded/xhr.total*100)+'% loaded')
-    },(error)=>{
-        console.log('An error happened',error)
-    }
-)
-
 //obj loader
 const objLoader = new OBJLoader()
 objLoader.load(
@@ -254,6 +236,14 @@ renderer.setAnimationLoop(animate)
 /**
  * Post effect
  */
+const target = new THREE.WebGLRenderTarget(
+    window.innerWidth, window.innerHeight,{
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    colorSpace: THREE.SRGBColorSpace
+})
+
 const grayscaleShader = {
     uniforms: {
       'tDiffuse': { value: null }
@@ -275,14 +265,11 @@ const grayscaleShader = {
       } `
 }
 
-//init
 const renderPass = new RenderPass(scene, camera)
-// Applying the shader as a post-processing effect
 const GrayShader = new ShaderPass(grayscaleShader)
-//Output
 const outputPass = new OutputPass()
 
-composer = new EffectComposer(renderer)
+composer = new EffectComposer(renderer,target)
 composer.addPass(renderPass)
 composer.addPass(GrayShader)
 composer.addPass(outputPass)
@@ -334,12 +321,7 @@ function animate(){
     const sec = performance.now()/1000
 
     box1_mesh.rotation.y=sec*(Math.PI/4)
-    if(object_gltf!=null){
-        object_gltf.rotation.z=sec*(Math.PI/4)
-    }
     if(object_obj!=null){
         object_obj.rotation.y=sec*(Math.PI/4)
     }
-    // Call tick again on the next frame
-    //window.requestAnimationFrame(animate)
 }
