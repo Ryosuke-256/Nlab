@@ -11,8 +11,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-
-
 /**
  * initializing
  */
@@ -124,6 +122,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 //allcontainer.appendChild(renderer.domElement)
+renderer.toneMapping = THREE.ReinhardToneMapping
+renderer.toneMappingExposure = 1.0
 
 renderer.xr.enabled = true
 document.body.appendChild( VRButton.createButton( renderer ))
@@ -1014,8 +1014,8 @@ function animate(){
     //controls.update()
     ThreeMeshUI.update()
     // Render
-    //renderer.render(scene, camera)
-    composer.render()
+    renderer.render(scene, camera)
+    //composer.render()
 }
 /**Function */
 
