@@ -4,12 +4,8 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 
-//for postprocessing
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /**
  * initializing
@@ -120,14 +116,9 @@ renderer.shadowMap.enabled = true
 renderer.toneMapping = THREE.CustomToneMapping
 renderer.toneMappingExposure = 1.0
 
+//VR
 renderer.xr.enabled = true
 document.body.appendChild( VRButton.createButton( renderer ))
-
-renderer.xr.addEventListener('sessionstart',()=>{
-    console.log("VR Started")
-    //SliderPanel1()
-})
-
 
 renderer.domElement.toDataURL("image/png")
 renderer.setAnimationLoop(animate)
@@ -230,6 +221,7 @@ const default_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
     sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
+
 //material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
@@ -240,7 +232,6 @@ let ThisMatName = materialname_list[Material_num - 1]
 /**
  * Loading
  */
-
 //model loading
 let object_obj = null
 const model_files = []
@@ -319,7 +310,7 @@ async function hdrloader(loader){
         })
     }
 }
-
+// DataMaking
 let stimulsData = []
 async function Data_make(){
     return new Promise((resolve)=>{
@@ -348,6 +339,7 @@ function init_HDR(index){
 //material load
 function init_material(index){
     object_obj.material = material_list[index]
+    object_obj.material.needsUpdate = true
 }
 //model load
 function init_model(index){
@@ -400,6 +392,7 @@ function LoadPanel(){
     })
     textBlock.add(text)
     loadpanel.add(textBlock)
+    loadpanel.position.set(0,0,0.5)
     scene.add(loadpanel)
 }
 /** Loading Panel */
@@ -447,7 +440,7 @@ function SliderPanel1(){
     });
     slider.add(handle)
     container.add(slider)
-    container.position.set(0,-0.75,-1.5)
+    container.position.set(0,-1.0,-1.5)
     container.rotation.set(-Math.PI/12,0,0)
     camera.add(container)
 }
@@ -489,6 +482,45 @@ function FinishPanel1(){
 }
 /** Finish Panel */
 
+/** 
+ * VR Button Pnale
+ */
+//initialization
+let vrPanel
+//panel making
+async function VRPanel(){
+    return new Promise((resolve)=>{
+        console.log("vrpanel start")
+        //container
+        vrPanel = new ThreeMeshUI.Block({
+            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Press [Enter VR] button',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        vrPanel.add(textBlock)
+        scene.add(vrPanel)
+        renderer.xr.addEventListener('sessionstart',()=>{
+            scene.remove(vrPanel)
+            resolve()
+        })
+    })
+}
+/** VR Button */
+
 /**
  * Initial Panel
  */
@@ -510,7 +542,7 @@ async function StartPanel(){
             justifyContent:'center',
         })
         const text = new ThreeMeshUI.Text({
-            content:'Press Up Key To Test Session',
+            content:'Press Up Key \n To Test Session',
             fontColor:new THREE.Color(0xffffff),
             fontSize:0.2,
             backgroundOpacity: 0.0,
@@ -606,15 +638,15 @@ async function ExpPanel(model_num){
             justifyContent:'center',
         })
         const text = new ThreeMeshUI.Text({
-            content:'Press Up Key To Exp ' + model_num +'/'+ model_files.length,
-            fontColor:new THREE.Color(0xd2ffbd),
-            fontSize:0.2,
+            content:'Press Up Key \n To Exp ' + model_num +'/'+ model_files.length,
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.125,
             backgroundOpacity: 0.0,
             offset:0.01
         })
         textBlock.add(text)
         exppanel.add(textBlock)
-        exppanel.position.set(0,0,-dist(fov)+1)
+        exppanel.position.set(0,0,-0.75)
         camera.add(exppanel)
         window.addEventListener("keydown",(e)=>{
             if(e.keyCode == 38){
@@ -633,8 +665,24 @@ async function ExpPanel(model_num){
 function sleep(ms){
     return new Promise(resolve => setTimeout(resolve,ms))
 }
+//pretrial
+async function Preload(){
+    init_model(0)
+    init_material(Material_num)
+    await PreSession2()
+    scene.remove(object_obj)
+}
+async function PreSession2(){
+    for (let i = 0; i < hdr_files.length;i++){
+        init_HDR(i)
+        await sleep(30)
+    }
+
+}
 //test trial
 var testcontinue = true
+let mousex1 = 0
+let mousex2 = 0
 async function TestSession(){
     testcontinue = true
     let testcount = 0
@@ -645,12 +693,39 @@ async function TestSession(){
             scene.add(testpanel2)
         }
         init_HDR(stimulsData[testcount % hdr_files.length].id)
+        mousex1 = mouse_window_normal.x / 10
+        trialloop()
         await TestTrial()
         testcount += 1
         scene.remove(testpanel1)
         scene.remove(testpanel2)
     }
 }
+
+function trialloop(){
+    mousex2 = mouse_window_normal.x / 10
+    sliderValue = sliderValue + (mousex2 - mousex1)
+    updateSlider()
+    mousex1 = mouse_window_normal.x / 10
+    renderer.xr.getSession().requestAnimationFrame(trialloop)
+}
+
+async function TestTrial(){
+    return new Promise((resolve)=>{
+        function TrialFunction(e){
+            if(e.keyCode == 40){
+                console.log(sliderValue)
+                console.log(mouse_window_normal.x)
+                sliderValue = 0.5
+                updateSlider()
+                document.removeEventListener("keydown",TrialFunction)
+                resolve()
+            }
+        }
+        document.addEventListener("keydown",TrialFunction)
+    })
+}
+/**
 async function TestTrial(){
     return new Promise((resolve)=>{
         function TestTrialFunction(e){
@@ -663,7 +738,6 @@ async function TestTrial(){
                 updateSlider()
             }
             if (e.keyCode == 40){
-                console.log(sliderValue)
                 sliderValue = 0.5
                 updateSlider()
                 document.removeEventListener("keydown",TestTrialFunction)
@@ -678,6 +752,7 @@ async function TestTrial(){
         document.addEventListener("keydown",TestTrialFunction)
     })
 }
+*/
 //main trial
 async function OneSession(){
     let totalResults = [
@@ -692,10 +767,8 @@ async function OneSession(){
         init_model(session)
         init_material(Material_num)
         await TestSession()
-        console.log("escape test")
         await sleep(100)
         await ExpPanel(session+1)
-        console.log("panel excape")
         let resulttable
         for (let round = 0;round < roundnum;round++){
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
@@ -725,6 +798,24 @@ async function OneSession(){
     scene.remove(object_obj)
     FinishPanel1()
 }
+
+async function OneTrial(){
+    return new Promise((resolve)=>{
+        sliderValue = mouse_window_normal.x
+        function TrialFunction(e){
+            if(e.keyCode == 40){
+                resultbar = sliderValue
+                console.log(sliderValue)
+                sliderValue = 0.5
+                updateSlider()
+                document.removeEventListener("keydown",TrialFunction)
+                resolve()
+            }
+        }
+        document.addEventListener("keydown",TrialFunction)
+    })
+}
+/**
 async function OneTrial(){
     return new Promise((resolve)=>{
         function TrialFunction(e){
@@ -748,13 +839,17 @@ async function OneTrial(){
         document.addEventListener("keydown",TrialFunction)
     })
 }
+*/
+
 //main loading
 async function mainload(){
     LoadPanel()
     await modelload()
     await hdrload()
     await Data_make()
+    await Preload()
     scene.remove(loadpanel)
+    await VRPanel()
     await StartPanel()
     OneSession()
 }
@@ -821,107 +916,6 @@ function exprotToxlsx(filename,data){
 /**Write Out */
 
 /**
- * Post processing
- */
-//Tonemapping
-const ReinhardTMO = {
-    uniforms: {
-        tDiffuse: { value: null },
-        pWhite: { value: 10.0 }
-    },
-    vertexShader : `
-    varying vec2 vUv;
-    void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }`,
-    fragmentShader : `
-    varying vec2 vUv;
-    uniform sampler2D tDiffuse;
-    uniform float pWhite;
-
-    vec3 rgbToxyY(vec3 rgb) {
-        float sR = rgb.r;
-        float sG = rgb.g;
-        float sB = rgb.b;
-
-        //sRGB To RGB
-        float R = (sR > 0.04045) ? pow((sR + 0.055) / 1.055, 2.4) : (sR / 12.92);
-        float G = (sG > 0.04045) ? pow((sG + 0.055) / 1.055, 2.4) : (sG / 12.92);
-        float B = (sB > 0.04045) ? pow((sB + 0.055) / 1.055, 2.4) : (sB / 12.92);
-
-        //RGB To XYZ
-        float X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
-        float Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
-        float Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
-
-        //XYZ To xyY
-        float sum = X + Y + Z;
-        float x = X / sum;
-        float y = Y / sum;
-
-        return vec3(x, y, Y);
-    }
-
-    vec3 xyYToRgb(vec3 xyY) {
-        float x = xyY.x;
-        float y = xyY.y;
-        float Y = xyY.z;
-
-        //xyY To XYZ
-        float X = Y / y * x;
-        float Z = Y / y * (1.0 - x - y);
-
-        //XYZ To RGB
-        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
-        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
-        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
-
-        //RGB to sRGB
-        float sR = (R > 0.0031308) ? 1.055 * pow(R, (1.0 / 2.4)) - 0.055 : 12.92 * R;
-        float sG = (G > 0.0031308) ? 1.055 * pow(G, (1.0 / 2.4)) - 0.055 : 12.92 * G;
-        float sB = (B > 0.0031308) ? 1.055 * pow(B, (1.0 / 2.4)) - 0.055 : 12.92 * B;
-
-        return vec3(sR, sG, sB);
-    }
-
-    float reinhardTonemap(float L,float pWhite) {
-        float Lscaled =  L / 1.19;
-        float Ld = (Lscaled * (1.0 + Lscaled / pow(pWhite,2.0))) / (1.0 + Lscaled);
-        return Ld;
-    }
-
-    void main() {
-        vec4 color = texture2D(tDiffuse, vUv);
-        vec3 xyYColor = rgbToxyY(color.rgb);
-
-        // Reinhard tone mapping
-        xyYColor.z = reinhardTonemap(xyYColor.z, pWhite);
-
-        // Make xy achromatic
-        xyYColor.x = 0.3127; // D65 white point
-        xyYColor.y = 0.3290; // D65 white point
-
-        vec3 rgbColor = xyYToRgb(xyYColor);
-
-        gl_FragColor = vec4(rgbColor, color.a);
-    }`
-}
-
-// Applying the shader as a post-processing effect
-const renderPass = new RenderPass(scene, camera)
-const ReinhardTMOPass = new ShaderPass(ReinhardTMO)
-//Output
-const outputPass = new OutputPass()
-//effectGrayScale.renderToScreen = true;
-
-composer = new EffectComposer(renderer)
-composer.addPass(renderPass)
-composer.addPass(ReinhardTMOPass)
-composer.addPass(outputPass)
-/**Post processing*/
-
-/**
  * Function
  */
 //widowresize
@@ -956,13 +950,12 @@ function WindowFullscreen(){
 function animate(){
     //second
     const sec = performance.now()/1000
-
+    
     //update
     //controls.update()
     ThreeMeshUI.update()
     // Render
     renderer.render(scene, camera)
-    //composer.render()
 }
 /**Function */
 
@@ -1020,8 +1013,7 @@ document.addEventListener("keydown",(e)=>{
     }
 })
 //mouse
-window.addEventListener('mousemove',e =>
-    {
+window.addEventListener('mousemove',e =>{
         //WebGLマウス座標
         mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
         mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
