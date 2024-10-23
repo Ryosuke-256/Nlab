@@ -6,6 +6,12 @@ import ThreeMeshUI from 'three-mesh-ui';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 
+/**
+ * Setteing
+ */
+const slider_vel = 0.25
+
+/** Setting */
 
 /**
  * initializing
@@ -360,12 +366,13 @@ function init_model(index){
 /**
  * geometry
  */
-//cursor
+/**cursor
 cursor1_mesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.1,10,10),
     new THREE.MeshBasicMaterial({color:0x000000}))
 cursor1_mesh.position.set(0,0,0)
 scene.add(cursor1_mesh)
+*/
 /** geometry */
 
 /**
@@ -690,6 +697,7 @@ async function Preload(){
     }
     scene.remove(object_obj)
 }
+
 //test trial
 var testcontinue = true
 let mousex1 = 0
@@ -710,16 +718,6 @@ async function TestSession(){
         scene.remove(testpanel2)
     }
 }
-
-function trialloop(){
-    mousex2 = mouse_window.x
-
-    handle.position.x = ( mousex2 - mousex1 )/2
-    handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
-
-    renderer.xr.getSession().requestAnimationFrame(trialloop)
-}
-
 async function TestTrial(){
     return new Promise((resolve)=>{
         mousex1 = mouse_window.x
@@ -730,6 +728,11 @@ async function TestTrial(){
                 console.log(sliderValue)
                 sliderValue = 0.5
                 updateSlider()
+                document.removeEventListener("keydown",TrialFunction)
+                resolve()
+            }
+            if(e.keyCode == 38){
+                testcontinue = false
                 document.removeEventListener("keydown",TrialFunction)
                 resolve()
             }
@@ -765,6 +768,7 @@ async function TestTrial(){
     })
 }
 */
+
 //main trial
 async function OneSession(){
     let totalResults = [
@@ -791,6 +795,7 @@ async function OneSession(){
                 stimulsData[trial].score = resultbar
                 stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
                 resulttable[round][stimulsData[trial].id] = resultbar
+                await sleep(50)
             }
             stimulsData.sort((a, b) => a.id - b.id)
             let reporcontents = stimulsData.map(field => field.score)
@@ -801,8 +806,6 @@ async function OneSession(){
         let xlsxname = experiment_name + "_" + ThisMatName + "_" + model_url[session] + ".csv"
         exportToCsv(xlsxname, ReportTable)
     }
-    //filewrite
-
     //finalization
     console.log("Exp Finished")
     scene.background=new THREE.Color(0x333333)
@@ -813,6 +816,8 @@ async function OneSession(){
 async function OneTrial(){
     return new Promise((resolve)=>{
         mousex1 = mouse_window.x
+        sliderValue = 0.5
+        updateSlider()
         trialloop()
         document.addEventListener("keydown",TrialFunction)
         function TrialFunction(e){
@@ -820,13 +825,19 @@ async function OneTrial(){
                 updateValue()
                 console.log(sliderValue)
                 resultbar = sliderValue
-                sliderValue = 0.5
-                updateSlider()
                 document.removeEventListener("keydown",TrialFunction)
                 resolve()
             }
         }
     })
+}
+function trialloop(){
+    mousex2 = mouse_window.x
+
+    handle.position.x = ( mousex2 - mousex1 ) * slider_vel
+    handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
+
+    renderer.xr.getSession().requestAnimationFrame(trialloop)
 }
 /**
 async function OneTrial(){
@@ -854,7 +865,7 @@ async function OneTrial(){
 }
 */
 
-//main loading
+//Exp Flow
 async function mainload(){
     LoadPanel()
     await modelload()
@@ -866,7 +877,6 @@ async function mainload(){
     await StartPanel()
     OneSession()
 }
-//activate
 mainload()
 /**trial */
 
@@ -936,8 +946,6 @@ function onWindowResize(){
     // Update sizes
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
-    //sizes.width = windowsize
-    //sizes.height = windowsize
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
@@ -947,9 +955,6 @@ function onWindowResize(){
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
-    // Update composer
-    composer.setSize(sizes.width, sizes.height)
 }
 //windowfullscreeen
 function WindowFullscreen(){
@@ -1045,5 +1050,8 @@ window.addEventListener('mousemove',e =>{
     //Windowマウス座標の正規化
     mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
     mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
+
+    //other
+    //cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
 })
 /**eventlistner */
