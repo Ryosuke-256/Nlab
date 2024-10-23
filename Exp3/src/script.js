@@ -72,7 +72,8 @@ let position_ratio = 250
 //mouse
 const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
-const mouse_window_normal =new THREE.Vector2()
+const mouse_window = new THREE.Vector2()
+const mouse_window_normal = new THREE.Vector2()
 
 //loadchange
 let index_master = 0
@@ -357,6 +358,17 @@ function init_model(index){
 /** Loading */
 
 /**
+ * geometry
+ */
+//cursor
+cursor1_mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1,10,10),
+    new THREE.MeshBasicMaterial({color:0x000000}))
+cursor1_mesh.position.set(0,0,0)
+scene.add(cursor1_mesh)
+/** geometry */
+
+/**
  * Lighting
  */
 //点光源
@@ -447,6 +459,9 @@ function SliderPanel1(){
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
     //console.log(handle.position.x)
+}
+function updateValue(){
+    sliderValue = handle.position.x / slider.getWidth() + 0.5
 }
 /**Slider Panel */
 
@@ -665,19 +680,15 @@ async function ExpPanel(model_num){
 function sleep(ms){
     return new Promise(resolve => setTimeout(resolve,ms))
 }
-//pretrial
+//preload
 async function Preload(){
     init_model(0)
     init_material(Material_num)
-    await PreSession2()
-    scene.remove(object_obj)
-}
-async function PreSession2(){
     for (let i = 0; i < hdr_files.length;i++){
         init_HDR(i)
         await sleep(30)
     }
-
+    scene.remove(object_obj)
 }
 //test trial
 var testcontinue = true
@@ -693,8 +704,6 @@ async function TestSession(){
             scene.add(testpanel2)
         }
         init_HDR(stimulsData[testcount % hdr_files.length].id)
-        mousex1 = mouse_window_normal.x / 10
-        trialloop()
         await TestTrial()
         testcount += 1
         scene.remove(testpanel1)
@@ -703,19 +712,22 @@ async function TestSession(){
 }
 
 function trialloop(){
-    mousex2 = mouse_window_normal.x / 10
-    sliderValue = sliderValue + (mousex2 - mousex1)
-    updateSlider()
-    mousex1 = mouse_window_normal.x / 10
+    mousex2 = mouse_window.x
+
+    handle.position.x = ( mousex2 - mousex1 )/2
+    handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
+
     renderer.xr.getSession().requestAnimationFrame(trialloop)
 }
 
 async function TestTrial(){
     return new Promise((resolve)=>{
+        mousex1 = mouse_window.x
+        trialloop()
         function TrialFunction(e){
             if(e.keyCode == 40){
+                updateValue()
                 console.log(sliderValue)
-                console.log(mouse_window_normal.x)
                 sliderValue = 0.5
                 updateSlider()
                 document.removeEventListener("keydown",TrialFunction)
@@ -798,21 +810,22 @@ async function OneSession(){
     scene.remove(object_obj)
     FinishPanel1()
 }
-
 async function OneTrial(){
     return new Promise((resolve)=>{
-        sliderValue = mouse_window_normal.x
+        mousex1 = mouse_window.x
+        trialloop()
+        document.addEventListener("keydown",TrialFunction)
         function TrialFunction(e){
             if(e.keyCode == 40){
-                resultbar = sliderValue
+                updateValue()
                 console.log(sliderValue)
+                resultbar = sliderValue
                 sliderValue = 0.5
                 updateSlider()
                 document.removeEventListener("keydown",TrialFunction)
                 resolve()
             }
         }
-        document.addEventListener("keydown",TrialFunction)
     })
 }
 /**
@@ -950,10 +963,13 @@ function WindowFullscreen(){
 function animate(){
     //second
     const sec = performance.now()/1000
-    
+
+    //object
+
     //update
     //controls.update()
     ThreeMeshUI.update()
+
     // Render
     renderer.render(scene, camera)
 }
@@ -1014,16 +1030,20 @@ document.addEventListener("keydown",(e)=>{
 })
 //mouse
 window.addEventListener('mousemove',e =>{
-        //WebGLマウス座標
-        mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
-        mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
-    
-        //WebGLマウス座標の正規化
-        mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
-        mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
-    
-        //Windowマウス座標の正規化
-        mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
-        mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
+    //WebGLマウス座標
+    mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
+    mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
+
+    //WebGLマウス座標の正規化
+    mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
+    mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
+
+    //windowマウス座標
+    mouse_window.x = e.clientX*2/position_ratio-1
+    mouse_window.y = e.clientY*2/position_ratio+1
+
+    //Windowマウス座標の正規化
+    mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
+    mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
 })
 /**eventlistner */
