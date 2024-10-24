@@ -10,6 +10,7 @@ import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls
  * Setteing
  */
 const slider_vel = 0.25
+const distance = 3
 
 /** Setting */
 
@@ -98,8 +99,11 @@ scene = new THREE.Scene()
 //camera
 let fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
-camera.position.set(0,0,dist(fov))
-scene.add(camera)
+//camera.position.set(10000,0,dist(fov))
+const cameraGroup = new THREE.Group()
+cameraGroup.add(camera)
+cameraGroup.position.set(0,-1.5,distance)
+scene.add(cameraGroup)
 //camera distance
 function dist (fov) {
     const fovRad= (fov/2)*(Math.PI/180)
@@ -356,7 +360,7 @@ function init_model(index){
     object_obj = model_files[index]
     const coe = 0.34
     object_obj.scale.set(coe,coe,coe)
-    object_obj.position.set(0,0.05,0)
+    object_obj.position.set(0,0,0)
     init_material(index_material)
     object_obj.castShadow = true
     scene.add(object_obj)
@@ -411,7 +415,7 @@ function LoadPanel(){
     })
     textBlock.add(text)
     loadpanel.add(textBlock)
-    loadpanel.position.set(0,0,0.5)
+    loadpanel.position.set(0,0,-distance)
     scene.add(loadpanel)
 }
 /** Loading Panel */
@@ -433,22 +437,20 @@ function SliderPanel1(){
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
     })
     const text = new ThreeMeshUI.Text({
-        content:'Please adjust slider',
+        content:'Adjust slider & Left click',
         fontColor:new THREE.Color(0xffffff),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
-    textBlock.add(text)
-    container.add(textBlock)
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.025,width:1,offset:0.02,
+        height:0.025,width:1,offset:0.02,margin:0.06,
         backgroundColor: new THREE.Color(0x999999),
         justifyContent:'center',
     });
@@ -459,9 +461,12 @@ function SliderPanel1(){
     });
     slider.add(handle)
     container.add(slider)
-    container.position.set(0,-1.0,-1.5)
+    textBlock.add(text)
+    container.add(textBlock)
+    container.position.set(0,-0.45,-1)
     container.rotation.set(-Math.PI/12,0,0)
-    camera.add(container)
+    container.scale.set(0.75,0.75,0.75)
+    //camera.add(container)
 }
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
@@ -494,7 +499,7 @@ function FinishPanel1(){
     const text = new ThreeMeshUI.Text({
         content:'Thank you!!',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.075,
+        fontSize:0.2,
         backgroundOpacity: 0.0,
         offset:0.01
     })
@@ -535,6 +540,7 @@ async function VRPanel(){
         textBlock.add(text)
         vrPanel.add(textBlock)
         scene.add(vrPanel)
+        vrPanel.position.set(0,0,-distance)
         renderer.xr.addEventListener('sessionstart',()=>{
             scene.remove(vrPanel)
             resolve()
@@ -544,7 +550,7 @@ async function VRPanel(){
 /** VR Button */
 
 /**
- * Initial Panel
+ * Test Intro Panel
  */
 //initialization
 let startpanel
@@ -553,18 +559,18 @@ async function StartPanel(){
     return new Promise((resolve)=>{
         //container
         startpanel = new ThreeMeshUI.Block({
-            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            height:sizes.height*0.8/position_ratio,width:sizes.width*0.8/position_ratio,margin:0.1,
             fontFamily: './assets/Roboto-msdf.json',
             fontTexture: './assets/Roboto-msdf.png',
         })
         //text block
         const textBlock = new ThreeMeshUI.Block({
-            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+            height:sizes.height*0.75/position_ratio,width:sizes.width*0.75/position_ratio,margin:0.04,offset:0.03,
             textAlign:'center',
             justifyContent:'center',
         })
         const text = new ThreeMeshUI.Text({
-            content:'Press Up Key \n To Test Session',
+            content:'Right Click \n To Test Session',
             fontColor:new THREE.Color(0xffffff),
             fontSize:0.2,
             backgroundOpacity: 0.0,
@@ -573,15 +579,16 @@ async function StartPanel(){
         textBlock.add(text)
         startpanel.add(textBlock)
         scene.add(startpanel)
-        window.addEventListener("keydown",(e)=>{
-            if(e.keyCode == 38){
+        window.addEventListener("mousedown",(e)=>{
+            if(e.button == 2){
                 scene.remove(startpanel)
                 resolve()
             }
         })
+        startpanel.position.set(0,0,1)
     })
 }
-/** Initial Panel */
+/** Test Intro Panel */
 
 /**
  * Test Session Panel
@@ -596,14 +603,14 @@ function TestPanel1(){
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        height:0.12,width:1.05,margin:0.04,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
     })
     const text1 = new ThreeMeshUI.Text({
         content:'This is Test Session',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.075,
+        fontSize:0.1,
         backgroundOpacity: 0.0,
         offset:0.01
     })
@@ -621,14 +628,14 @@ function TestPanel2(){
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:0.95,margin:0.04,offset:0.03,
+        height:0.12,width:1.15,margin:0.04,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
     })
     const text1 = new ThreeMeshUI.Text({
-        content:'Press UP to finish test',
+        content:'Right Click to finish test',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.075,
+        fontSize:0.1,
         backgroundOpacity: 0.0,
         offset:0.01
     })
@@ -649,30 +656,30 @@ async function ExpPanel(model_num){
     return new Promise((resolve)=>{
         //container
         exppanel = new ThreeMeshUI.Block({
-            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            height:sizes.height*0.8/position_ratio,width:sizes.width*0.8/position_ratio,margin:0.1,
             fontFamily: './assets/Roboto-msdf.json',
             fontTexture: './assets/Roboto-msdf.png',
         })
         //text block
         const textBlock = new ThreeMeshUI.Block({
-            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0,
+            height:sizes.height*0.75/position_ratio,width:sizes.width*0.75/position_ratio,margin:0.04,offset:0.05,
             textAlign:'center',
             justifyContent:'center',
         })
         const text = new ThreeMeshUI.Text({
-            content:'Press Up Key \n To Exp ' + model_num +'/'+ model_files.length,
+            content:'Right Click \n To Exp ' + model_num +'/'+ model_files.length,
             fontColor:new THREE.Color(0xffffff),
-            fontSize:0.125,
+            fontSize:0.2,
             backgroundOpacity: 0.0,
             offset:0.01
         })
         textBlock.add(text)
         exppanel.add(textBlock)
-        exppanel.position.set(0,0,-0.75)
-        camera.add(exppanel)
-        window.addEventListener("keydown",(e)=>{
-            if(e.keyCode == 38){
-                camera.remove(exppanel)
+        exppanel.position.set(0,0,1)
+        scene.add(exppanel)
+        window.addEventListener("mousedown",(e)=>{
+            if(e.button == 2){
+                scene.remove(exppanel)
                 resolve()
             }
         })
@@ -723,21 +730,21 @@ async function TestTrial(){
         mousex1 = mouse_window.x
         trialloop()
         function TrialFunction(e){
-            if(e.keyCode == 40){
+            if(e.button == 0){
                 updateValue()
                 console.log(sliderValue)
                 sliderValue = 0.5
                 updateSlider()
-                document.removeEventListener("keydown",TrialFunction)
+                document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
-            if(e.keyCode == 38){
+            if(e.button == 2){
                 testcontinue = false
-                document.removeEventListener("keydown",TrialFunction)
+                document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
         }
-        document.addEventListener("keydown",TrialFunction)
+        document.addEventListener("mousedown",TrialFunction)
     })
 }
 /**
@@ -782,9 +789,14 @@ async function OneSession(){
         ]
         init_model(session)
         init_material(Material_num)
+        camera.remove(container)
+        await StartPanel()
+        camera.add(container)
         await TestSession()
         await sleep(100)
+        camera.remove(container)
         await ExpPanel(session+1)
+        camera.add(container)
         let resulttable
         for (let round = 0;round < roundnum;round++){
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
@@ -819,13 +831,13 @@ async function OneTrial(){
         sliderValue = 0.5
         updateSlider()
         trialloop()
-        document.addEventListener("keydown",TrialFunction)
+        document.addEventListener("mousedown",TrialFunction)
         function TrialFunction(e){
-            if(e.keyCode == 40){
+            if(e.button == 0){
                 updateValue()
                 console.log(sliderValue)
                 resultbar = sliderValue
-                document.removeEventListener("keydown",TrialFunction)
+                document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
         }
@@ -874,7 +886,6 @@ async function mainload(){
     await Preload()
     scene.remove(loadpanel)
     await VRPanel()
-    await StartPanel()
     OneSession()
 }
 mainload()
@@ -986,7 +997,12 @@ function animate(){
 //resize
 window.addEventListener('resize', onWindowResize)
 //fullscreen
-window.addEventListener("dblclick",WindowFullscreen)
+document.addEventListener("keydown",(e)=>{
+    if(e.keyCode == 32) {
+        WindowFullscreen
+        console.log("full window")
+    }
+})
 //number key to camera 1 to 6
 document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 49) {
