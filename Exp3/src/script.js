@@ -4,13 +4,16 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 
 /**
  * Setteing
  */
+// slider valocity
 const slider_vel = 0.25
+//camera distance
 const distance = 3
+//round
+const roundnum = 1
 
 /** Setting */
 
@@ -34,11 +37,12 @@ console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
 //imagefiles
 const base_path = 'image\\'
 
+/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr',
 ]
+*/
 
-/**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -47,7 +51,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
-*/
+
 /**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
@@ -60,8 +64,8 @@ const hdr_images_path = [
 const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
-    //'bunny.obj',
-    //'dragon.obj',
+    'bunny.obj',
+    'dragon.obj',
     'boardA.obj',
     'boardB.obj',
     'boardC.obj',
@@ -81,14 +85,12 @@ const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
 const mouse_window = new THREE.Vector2()
 const mouse_window_normal = new THREE.Vector2()
+const mouse_pl = new THREE.Vector2(0,0)
 
 //loadchange
 let index_master = 0
 let index_material = 0
 let index_model = 0
-
-//round
-let roundnum = 2
 
 // Canvas
 canvas = document.querySelector('canvas.webgl')
@@ -370,13 +372,6 @@ function init_model(index){
 /**
  * geometry
  */
-/**cursor
-cursor1_mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1,10,10),
-    new THREE.MeshBasicMaterial({color:0x000000}))
-cursor1_mesh.position.set(0,0,0)
-scene.add(cursor1_mesh)
-*/
 /** geometry */
 
 /**
@@ -388,6 +383,23 @@ pointlight1.position.set(0,0,0)
 pointlight1.castShadow = true
 //scene.add(pointlight1)
 /**Lighting */
+
+/**
+ * additional
+ */
+document.addEventListener('pointerlockchange',()=>{
+    if(document.pointerLockElement == document.body){
+        console.log("pointer locked")
+    } else {
+        console.log("pointer unlocked")
+    }
+})
+document.addEventListener('keydown',(e)=>{
+    if (e.keyCode == 27){
+        document.exitPointerLock()
+    }
+})
+/** additional */
 
 /** 
  * Loading Panel
@@ -415,7 +427,7 @@ function LoadPanel(){
     })
     textBlock.add(text)
     loadpanel.add(textBlock)
-    loadpanel.position.set(0,0,-distance)
+    loadpanel.position.set(0,-cameraGroup.position.y,-distance)
     scene.add(loadpanel)
 }
 /** Loading Panel */
@@ -540,9 +552,10 @@ async function VRPanel(){
         textBlock.add(text)
         vrPanel.add(textBlock)
         scene.add(vrPanel)
-        vrPanel.position.set(0,0,-distance)
+        vrPanel.position.set(0,-cameraGroup.position.y,-distance)
         renderer.xr.addEventListener('sessionstart',()=>{
             scene.remove(vrPanel)
+            document.body.requestPointerLock()
             resolve()
         })
     })
@@ -697,7 +710,7 @@ function sleep(ms){
 //preload
 async function Preload(){
     init_model(0)
-    init_material(Material_num)
+    init_material(Material_num-1)
     for (let i = 0; i < hdr_files.length;i++){
         init_HDR(i)
         await sleep(30)
@@ -727,7 +740,7 @@ async function TestSession(){
 }
 async function TestTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_window.x
+        mousex1 = mouse_pl.x
         trialloop()
         function TrialFunction(e){
             if(e.button == 0){
@@ -788,7 +801,7 @@ async function OneSession(){
             hdr_images_path
         ]
         init_model(session)
-        init_material(Material_num)
+        init_material(Material_num-1)
         camera.remove(container)
         await StartPanel()
         camera.add(container)
@@ -827,7 +840,7 @@ async function OneSession(){
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_window.x
+        mousex1 = mouse_pl.x
         sliderValue = 0.5
         updateSlider()
         trialloop()
@@ -844,7 +857,7 @@ async function OneTrial(){
     })
 }
 function trialloop(){
-    mousex2 = mouse_window.x
+    mousex2 = mouse_pl.x
 
     handle.position.x = ( mousex2 - mousex1 ) * slider_vel
     handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
@@ -998,8 +1011,9 @@ function animate(){
 window.addEventListener('resize', onWindowResize)
 //fullscreen
 document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 32) {
-        WindowFullscreen
+    //press F
+    if(e.keyCode == 70) {
+        WindowFullscreen()
         console.log("full window")
     }
 })
@@ -1067,7 +1081,9 @@ window.addEventListener('mousemove',e =>{
     mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
     mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
 
-    //other
-    //cursor1_mesh.position.set(mouse_webGL.x,mouse_webGL.y,0)
+    //pointer lock api
+    mouse_pl.x += e.movementX/position_ratio
+    mouse_pl.y += e.movementY/position_ratio
+    
 })
 /**eventlistner */
