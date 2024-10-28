@@ -12,8 +12,10 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 const slider_vel = 0.25
 //camera distance
 const distance = 3
-//round
-const roundnum = 1
+//round limit
+const roundnum = 5
+//model start
+const modelstart = 3
 
 /** Setting */
 
@@ -629,7 +631,7 @@ function TestPanel1(){
     })
     textBlock.add(text1)
     testpanel1.add(textBlock)
-    testpanel1.position.set(0,0.75,0)
+    testpanel1.position.set(0,-0.75,0)
 }
 let testpanel2
 function TestPanel2(){
@@ -654,7 +656,7 @@ function TestPanel2(){
     })
     textBlock.add(text1)
     testpanel2.add(textBlock)
-    testpanel2.position.set(0,0.75,0)
+    testpanel2.position.set(0,-0.75,0)
 }
 //activate
 TestPanel1()
@@ -796,7 +798,7 @@ async function OneSession(){
     ]
     //slider activate
     SliderPanel1()
-    for (let session = 0; session < model_files.length;session++){
+    for (let session = modelstart-1; session < model_files.length;session++){
         let ReportTable= [
             hdr_images_path
         ]
