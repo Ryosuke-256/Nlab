@@ -15,7 +15,7 @@ const distance = 3
 //round limit
 const roundnum = 5
 //model start
-const modelstart = 3
+const modelstart = 5
 
 /** Setting */
 
@@ -724,9 +724,10 @@ async function Preload(){
 var testcontinue = true
 let mousex1 = 0
 let mousex2 = 0
+let testcount = 0
 async function TestSession(){
     testcontinue = true
-    let testcount = 0
+    testcount = 0
     while(testcontinue){ 
         if(testcount < hdr_files.length){
             scene.add(testpanel1)
@@ -753,7 +754,7 @@ async function TestTrial(){
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
-            if(e.button == 2){
+            if(e.button == 2 && testcount >= hdr_files.length){
                 testcontinue = false
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
@@ -830,7 +831,8 @@ async function OneSession(){
             ReportTable.push(reporcontents)
         }
         //let ReportTable = HeaderTable.concat(resulttable)
-        let xlsxname = experiment_name + "_" + ThisMatName + "_" + model_url[session] + ".csv"
+        let modelname = model_url[session].replace(/\.obj/g,"")
+        let xlsxname = experiment_name + "_" + ThisMatName + "_" + modelname + ".csv"
         exportToCsv(xlsxname, ReportTable)
     }
     //finalization
