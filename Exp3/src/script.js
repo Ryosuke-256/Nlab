@@ -14,7 +14,7 @@ const slider_vel = 0.25
 const distance = 3
 //round limit
 const roundnum = 5
-//model start
+//model startq
 const modelstart = 1
 
 /** Setting */
