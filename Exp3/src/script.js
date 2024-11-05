@@ -637,20 +637,20 @@ let testpanel2
 function TestPanel2(){
     //container
     testpanel2 = new ThreeMeshUI.Block({
-        height:0.3,width:1.3,margin:0.1,
+        height:0.5,width:2.0,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:1.15,margin:0.04,offset:0.03,
+        height:0.4,width:1.5,margin:0.04,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
     })
     const text1 = new ThreeMeshUI.Text({
         content:'Right Click to finish test',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.1,
+        fontSize:0.2,
         backgroundOpacity: 0.0,
         offset:0.01
     })
@@ -815,6 +815,7 @@ async function OneSession(){
         camera.add(container)
         let resulttable
         for (let round = 0;round < roundnum;round++){
+            console.log("round" + round+1 + "start")
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
             stimulsData.sort(() => Math.random() - 0.5);
             for (let trial = 0;trial < stimulsData.length;trial++){
