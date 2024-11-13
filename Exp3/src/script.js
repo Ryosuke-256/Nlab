@@ -15,7 +15,7 @@ const distance = 3
 //round limit
 const roundnum = 5
 //model startq
-const modelstart = 1
+const modelstart = 5
 
 /** Setting */
 
