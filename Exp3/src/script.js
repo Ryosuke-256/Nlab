@@ -30,7 +30,11 @@ for (let i=0;i<experiment_name.length; i++){
     namenum += experiment_name.charCodeAt(i);
 }
 console.log("name number : "+namenum);
-let matchangenseedlist = [0,0,0,0]
+let changenseedlist = [0,0,0,0,0,0]
+for (let i = changenseedlist.length - 1 ; i >=0; i--){
+    namenum = Math.floor(seededRandom(1,24*100,namenum))
+    changenseedlist[i] = namenum
+}
 
 let Material_num = prompt("何回目ですか？:")
 while(Material_num < 1 || Material_num > 4){
@@ -39,23 +43,29 @@ while(Material_num < 1 || Material_num > 4){
 
 let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
 for (let i = materialname_list.length-1 ; i >=0; i--){
-    namenum = Math.floor(seededRandom(namenum)*100)+1
-    matchangenseedlist[i] = namenum
-    let changenum = namenum%4;
-    console.log("name number : " + namenum+"/nchangenum : "+changenum)
+    let changenum = changenseedlist[i] % 4;
+    console.log("/nchangenum : "+changenum)
     let tmpStorage = materialname_list[i]
     materialname_list[i] = materialname_list[changenum]
     materialname_list[changenum] = tmpStorage
 }
-//console.log(matchangenseedlist)
-//console.log(materialname_list)
 
-function seededRandom(seed) { 
-    let m = 0x80000000;
-    let a = 1103515245;
-    let c = 12345; seed = (seed * a + c) % m;
-    return seed / (m - 1);
+console.log("chang list : " + changenseedlist)
+console.log(materialname_list)
+
+
+function createseededRandom(seed) { 
+    return function() {
+        seed = (seed * 9301 + 49297) % 233280
+        return seed / 233280
+    }
 }
+
+function seededRandom(min,max,seed){
+    const randomFunc = createseededRandom(seed); 
+    return Math.floor(randomFunc() * (max - min + 1)) + min;
+}
+
 
 console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
 
@@ -267,7 +277,7 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 
 let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 for (let i = material_list.length-1 ; i >= 0; i--){
-    let changenum = matchangenseedlist[i]%4;
+    let changenum = changenseedlist[i]%4;
     //console.log("changenum : "+changenum)
     let tmpStorage = material_list[i]
     material_list[i] = material_list[changenum]
@@ -293,13 +303,13 @@ async function modelload(){
             //Shuffle model
             //console.log(model_url)
             for (let i = model_url.length-1; i>=0; i--){
-                let rand = Math.floor(Math.random() * (i+1))
+                let changenum = changenseedlist[i] % model_url.length;
                 let tmpStorage1 = model_url[i]
-                model_url[i] = model_url[rand]
-                model_url[rand] = tmpStorage1
+                model_url[i] = model_url[changenum]
+                model_url[changenum] = tmpStorage1
                 let tmpStorage2 = model_files[i]
-                model_files[i] = model_files[rand]
-                model_files[rand] = tmpStorage2
+                model_files[i] = model_files[changenum]
+                model_files[changenum] = tmpStorage2
             }
             console.log(model_url)
             resolve()
