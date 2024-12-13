@@ -25,13 +25,36 @@ const modelstart = 1
 //name input 
 let experiment_name = prompt("名前を入力してください:");
 console.log("入力された名前は: " + experiment_name)
+let namenum = 0
+for (let i=0;i<experiment_name.length; i++){
+    namenum += experiment_name.charCodeAt(i);
+}
+console.log("name number : "+namenum);
+let matchangenseedlist = [0,0,0,0]
 
-//times input
-let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
 let Material_num = prompt("何回目ですか？:")
-
 while(Material_num < 1 || Material_num > 4){
     Material_num = prompt("1-4の範囲で入力してください")
+}
+
+let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
+for (let i = materialname_list.length-1 ; i >=0; i--){
+    namenum = Math.floor(seededRandom(namenum)*100)+1
+    matchangenseedlist[i] = namenum
+    let changenum = namenum%4;
+    console.log("name number : " + namenum+"/nchangenum : "+changenum)
+    let tmpStorage = materialname_list[i]
+    materialname_list[i] = materialname_list[changenum]
+    materialname_list[changenum] = tmpStorage
+}
+//console.log(matchangenseedlist)
+//console.log(materialname_list)
+
+function seededRandom(seed) { 
+    let m = 0x80000000;
+    let a = 1103515245;
+    let c = 12345; seed = (seed * a + c) % m;
+    return seed / (m - 1);
 }
 
 console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
@@ -45,6 +68,7 @@ const hdr_images_path = [
 ]
 */
 
+
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -53,6 +77,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
+
 
 /**
 const hdr_images_path = [
@@ -241,6 +266,15 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
 let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
+for (let i = material_list.length-1 ; i >= 0; i--){
+    let changenum = matchangenseedlist[i]%4;
+    //console.log("changenum : "+changenum)
+    let tmpStorage = material_list[i]
+    material_list[i] = material_list[changenum]
+    material_list[changenum] = tmpStorage
+}
+//console.log(material_list)
+
 let ThisMat = material_list[Material_num - 1]
 let ThisMatName = materialname_list[Material_num - 1]
 
@@ -256,7 +290,18 @@ async function modelload(){
         //Modelloadmanager
         const ModelloadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished Model loading")
-            //init_model(index_model)
+            //Shuffle model
+            //console.log(model_url)
+            for (let i = model_url.length-1; i>=0; i--){
+                let rand = Math.floor(Math.random() * (i+1))
+                let tmpStorage1 = model_url[i]
+                model_url[i] = model_url[rand]
+                model_url[rand] = tmpStorage1
+                let tmpStorage2 = model_files[i]
+                model_files[i] = model_files[rand]
+                model_files[rand] = tmpStorage2
+            }
+            console.log(model_url)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
             console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
@@ -743,7 +788,7 @@ async function TestSession(){
 }
 async function TestTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_pl.x
+        mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
         trialloop()
         function TrialFunction(e){
             if(e.button == 0){
@@ -763,34 +808,6 @@ async function TestTrial(){
         document.addEventListener("mousedown",TrialFunction)
     })
 }
-/**
-async function TestTrial(){
-    return new Promise((resolve)=>{
-        function TestTrialFunction(e){
-            if (e.keyCode == 37){
-                sliderValue = Math.max(0,sliderValue - 0.05)
-                updateSlider()
-            }
-            if (e.keyCode == 39){
-                sliderValue = Math.min(1,sliderValue + 0.05)
-                updateSlider()
-            }
-            if (e.keyCode == 40){
-                sliderValue = 0.5
-                updateSlider()
-                document.removeEventListener("keydown",TestTrialFunction)
-                resolve()
-            }
-            if (e.keyCode == 38){
-                testcontinue = false
-                document.removeEventListener("keydown",TestTrialFunction)
-                resolve()
-            }
-        }
-        document.addEventListener("keydown",TestTrialFunction)
-    })
-}
-*/
 
 //main trial
 async function OneSession(){
@@ -817,7 +834,7 @@ async function OneSession(){
         for (let round = 0;round < roundnum;round++){
             console.log("round" + round+1 + "start")
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
-            stimulsData.sort(() => Math.random() - 0.5);
+            stimulsData.sort(() => Math.random() - 0.5)
             for (let trial = 0;trial < stimulsData.length;trial++){
                 init_HDR(stimulsData[trial].id)
                 await OneTrial()
@@ -845,9 +862,7 @@ async function OneSession(){
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_pl.x
-        sliderValue = 0.5
-        updateSlider()
+        mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
         trialloop()
         document.addEventListener("mousedown",TrialFunction)
         function TrialFunction(e){
@@ -869,31 +884,6 @@ function trialloop(){
 
     renderer.xr.getSession().requestAnimationFrame(trialloop)
 }
-/**
-async function OneTrial(){
-    return new Promise((resolve)=>{
-        function TrialFunction(e){
-            if (e.keyCode == 37){
-                sliderValue = Math.max(0,sliderValue - 0.05)
-                updateSlider()
-            }
-            if (e.keyCode == 39){
-                sliderValue = Math.min(1,sliderValue + 0.05)
-                updateSlider()
-            }
-            if (e.keyCode == 40){
-                resultbar = sliderValue
-                console.log(sliderValue)
-                sliderValue = 0.5
-                updateSlider()
-                document.removeEventListener("keydown",TrialFunction)
-                resolve()
-            }
-        }
-        document.addEventListener("keydown",TrialFunction)
-    })
-}
-*/
 
 //Exp Flow
 async function mainload(){
