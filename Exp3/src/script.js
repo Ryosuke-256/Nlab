@@ -47,8 +47,8 @@ for (let i = materialname_list.length-1 ; i >=0; i--){
     materialname_list[i] = materialname_list[changenum]
     materialname_list[changenum] = tmpStorage
 }
-console.log(matchangenseedlist)
-console.log(materialname_list)
+//console.log(matchangenseedlist)
+//console.log(materialname_list)
 
 function seededRandom(seed) { 
     let m = 0x80000000;
@@ -68,6 +68,7 @@ const hdr_images_path = [
 ]
 */
 
+
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -76,6 +77,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
+
 
 /**
 const hdr_images_path = [
@@ -266,12 +268,12 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 for (let i = material_list.length-1 ; i >= 0; i--){
     let changenum = matchangenseedlist[i]%4;
-    console.log("changenum : "+changenum)
+    //console.log("changenum : "+changenum)
     let tmpStorage = material_list[i]
     material_list[i] = material_list[changenum]
     material_list[changenum] = tmpStorage
 }
-console.log(material_list)
+//console.log(material_list)
 
 let ThisMat = material_list[Material_num - 1]
 let ThisMatName = materialname_list[Material_num - 1]
@@ -289,7 +291,7 @@ async function modelload(){
         const ModelloadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished Model loading")
             //Shuffle model
-            console.log(model_url)
+            //console.log(model_url)
             for (let i = model_url.length-1; i>=0; i--){
                 let rand = Math.floor(Math.random() * (i+1))
                 let tmpStorage1 = model_url[i]
@@ -786,7 +788,7 @@ async function TestSession(){
 }
 async function TestTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_pl.x
+        mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
         trialloop()
         function TrialFunction(e){
             if(e.button == 0){
@@ -860,9 +862,7 @@ async function OneSession(){
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
-        mousex1 = mouse_pl.x
-        sliderValue = 0.5
-        updateSlider()
+        mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
         trialloop()
         document.addEventListener("mousedown",TrialFunction)
         function TrialFunction(e){
