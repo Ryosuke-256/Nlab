@@ -29,16 +29,17 @@ let namenum = 0
 for (let i=0;i<experiment_name.length; i++){
     namenum += experiment_name.charCodeAt(i);
 }
+
+let Material_num = prompt("何回目ですか？:")
+while(Material_num < 1 || Material_num > 4){
+    Material_num = prompt("1-4の範囲で入力してください")
+}
+
 console.log("name number : "+namenum);
 let changenseedlist = [0,0,0,0,0,0]
 for (let i = changenseedlist.length - 1 ; i >=0; i--){
     namenum = Math.floor(seededRandom(1,24*100,namenum))
     changenseedlist[i] = namenum
-}
-
-let Material_num = prompt("何回目ですか？:")
-while(Material_num < 1 || Material_num > 4){
-    Material_num = prompt("1-4の範囲で入力してください")
 }
 
 let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
@@ -303,7 +304,7 @@ async function modelload(){
             //Shuffle model
             //console.log(model_url)
             for (let i = model_url.length-1; i>=0; i--){
-                let changenum = changenseedlist[i] % model_url.length;
+                let changenum = (changenseedlist[i] + Material_num) % model_url.length;
                 let tmpStorage1 = model_url[i]
                 model_url[i] = model_url[changenum]
                 model_url[changenum] = tmpStorage1
@@ -842,7 +843,7 @@ async function OneSession(){
         camera.add(container)
         let resulttable
         for (let round = 0;round < roundnum;round++){
-            console.log("round" + round+1 + "start")
+            console.log("round" + round + "start")
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
             stimulsData.sort(() => Math.random() - 0.5)
             for (let trial = 0;trial < stimulsData.length;trial++){
