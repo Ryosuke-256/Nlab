@@ -10,7 +10,7 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
  */
 // slider valocity
 const slider_vel = 0.25
-//camera distanceaa
+//camera distanceaaa
 const distance = 3
 //round limit
 const roundnum = 5
