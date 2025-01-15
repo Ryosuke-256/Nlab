@@ -8,7 +8,7 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 /**
  * Setteing
  */
-// slider valocity
+// slider valocitya
 const slider_vel = 0.25
 //camera distanceaaa
 const distance = 3
