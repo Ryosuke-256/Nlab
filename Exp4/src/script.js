@@ -177,8 +177,32 @@ renderer.xr.addEventListener('sessionstart',()=>{
     }
 })
 
+
 renderer.domElement.toDataURL("image/png")
+
+let xrCamera
+function animate(){
+    //second
+    const sec = performance.now()/1000
+
+    //update
+    ThreeMeshUI.update()
+
+    //Webxr
+    xrCamera = renderer.xr.getCamera(camera)
+    xrCamera.cameras.forEach((eyeCamera, index) => {
+        eyeCamera.position.set(0, 1.5, 0)
+        eyeCamera.rotation.set(0,0,0)
+    })
+    xrCamera.rotation.set(0,0,0)
+    xrCamera.quaternion.set(0,0,0,0)
+
+    // Render   
+    renderer.render(scene, camera)
+}
+
 renderer.setAnimationLoop(animate)
+//renderer.setAnimationLoop(animate)
 /**renderer */
 
 /**
@@ -984,16 +1008,6 @@ function onWindowResize(){
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 }
-function animate(){
-    //second
-    const sec = performance.now()/1000
-
-    //update
-    ThreeMeshUI.update()
-
-    // Render
-    renderer.render(scene, camera)
-}
 /**Function */
 
 /**
@@ -1013,6 +1027,11 @@ document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 69 && index_master < hdr_files.length-1){
         index_master +=1;
         init_HDR(index_master)
+    }
+    //press A
+    if(e.keyCode == 65){
+        console.log(xrCamera)
+        console.log(xrCamera.cameras[0])
     }
 })
 //mouse
