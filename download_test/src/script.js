@@ -94,7 +94,12 @@ fov = 40
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov))
 scene.add(camera)
-
+//camera distance
+function dist (fov) {
+    const fovRad= (fov/2)*(Math.PI/180)
+    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
+    return dist
+}
 /**
  * Renderer
  */
@@ -500,12 +505,6 @@ function init_material(index){
     myElement.textContent = materialname_list[index];
 }
 
-//camera distance
-function dist (fov) {
-    const fovRad= (fov/2)*(Math.PI/180)
-    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
-    return dist
-}
 
 //widowresize
 function onWindowResize(){
