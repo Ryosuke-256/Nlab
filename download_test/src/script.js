@@ -475,90 +475,10 @@ const ReinhardTMO = {
         gl_FragColor = vec4(rgbColor, color.a);
     }`
 }
-//Tonemapping
-const ReinhardTMOv2 = {
-    uniforms: {
-        tDiffuse: { value: null },
-        pWhite: { value: 1.0 }
-    },
-    vertexShader : `
-    varying vec2 vUv;
-    void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }`,
-    fragmentShader : `
-    varying vec2 vUv;
-    uniform sampler2D tDiffuse;
-    uniform float pWhite;
-
-    vec3 rgbToxyY(vec3 rgb) {
-        float R = rgb.r;
-        float G = rgb.g;
-        float B = rgb.b;
-
-        //sRGB To RGB
-        R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : (R / 12.92);
-        G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : (G / 12.92);
-        B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : (B / 12.92);
-
-        //RGB To XYZ
-        float X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
-        float Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
-        float Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
-
-        //XYZ To xyY
-        float sum = X + Y + Z;
-        float x = X / sum;
-        float y = Y / sum;
-
-        return vec3(x, y, Y);
-    }
-
-    float reinhardTonemap(float L,float pWhite) {
-        float Lscaled =  L / 1.19;
-        float Ld = (Lscaled * (1.0 + pow(Lscaled / pWhite,2.0))) / (1.0 + Lscaled);
-        return Ld;
-    }
-
-    vec3 xyYToRgb(vec3 xyY) {
-        float x = xyY.x;
-        float y = xyY.y;
-        float Y = xyY.z;
-
-        //xyY To XYZ
-        float X = Y / y * x;
-        float Z = Y / y * (1.0 - x - y);
-
-        //XYZ To RGB
-        float R = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
-        float G = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
-        float B = X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
-
-        return vec3(R, G, B);
-    }
-
-    void main() {
-        vec4 color = texture2D(tDiffuse, vUv);
-        vec3 xyYColor = rgbToxyY(color.rgb);
-
-        // Reinhard tone mapping
-        xyYColor.z = reinhardTonemap(xyYColor.z, pWhite);
-
-        // Make xy achromatic
-        xyYColor.x = 0.3127; // D65 white point
-        xyYColor.y = 0.3290; // D65 white point
-
-        vec3 rgbColor = xyYToRgb(xyYColor);
-
-        gl_FragColor = vec4(rgbColor, color.a);
-    }`
-}
 
 // Applying the shader as a post-processing effect
 const renderPass = new RenderPass(scene, camera)
 const ReinhardTMOPass = new ShaderPass(ReinhardTMO)
-const ReinhardTMOv2Pass = new ShaderPass(ReinhardTMOv2)
 //Output
 const outputPass = new OutputPass()
 //effectGrayScale.renderToScreen = true;
