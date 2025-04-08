@@ -2,19 +2,19 @@ import * as THREE from 'three'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
-import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 
 /**
  * Setteing
  */
 // slider valocity
-const slider_vel = 0.25
-//camera distance
-const distance = 3
+const slider_vel = 0.35;
 //round limit
-const roundnum = 1
+const roundnum = 1;
 //model startq
-const modelstart = 1
+const modelstart = 1;
+//camera adjust
+const camera_dist = 6;
+const camera_y = 0;
 
 /** Setting */
 
@@ -53,14 +53,12 @@ for (let i = materialname_list.length-1 ; i >=0; i--){
 console.log("chang list : " + changenseedlist)
 console.log(materialname_list)
 
-
 function createseededRandom(seed) { 
     return function() {
         seed = (seed * 9301 + 49297) % 233280
         return seed / 233280
     }
 }
-
 function seededRandom(min,max,seed){
     const randomFunc = createseededRandom(seed); 
     return Math.floor(randomFunc() * (max - min + 1)) + min;
@@ -75,10 +73,9 @@ const base_path = 'image\\'
 /**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr',
-]
-*/
-
-
+];
+ */
+/**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -86,63 +83,59 @@ const hdr_images_path = [
     '201.hdr','202.hdr','203.hdr','209.hdr','222.hdr',
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
-]
+];
+*/
 
-
-/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
     '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
-]
-*/
+];
+
 
 //modelfiles
 const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
     'bunny.obj',
-    'dragon.obj',
+    //'dragon.obj',
     'boardA.obj',
     'boardB.obj',
     'boardC.obj',
 ]
-
 //size
-let sizes = {width: window.innerWidth,height: window.innerHeight};
+let sizes = {width: window.innerWidth,height: window.innerHeight}
+
 //widowsize関連補正
-let position_ratio = 250;
+let position_ratio = 250
 
 //mouse
-const mouse_pl = new THREE.Vector2(0,0);
+const mouse_pl = new THREE.Vector2(0,0)
 
-//load index
-let index_master = 0;
-let index_material = 0;
+//loadchange
+let index_master = 0
+let index_material = 0
 
 // Canvas
-let canvas = document.querySelector('canvas.webgl');
+let canvas = document.querySelector('canvas.webgl')
 
 // Scene
-let scene = new THREE.Scene();
+let scene = new THREE.Scene()
 
 //camera
-let fov = 40;
-let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
-//camera.position.set(10000,0,dist(fov))
-const cameraGroup = new THREE.Group();
-cameraGroup.add(camera);
-cameraGroup.position.set(0,-1.5,distance)
+let fov = 40
+let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, 20)
+const cameraGroup = new THREE.Group()
+cameraGroup.add(camera)
+cameraGroup.position.set(0,camera_y,camera_dist)
 scene.add(cameraGroup)
 //camera distance
-function dist (fov) {
+function dist(fov) {
     const fovRad= (fov/2)*(Math.PI/180)
     const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
     return dist
 }
-let camera_fix = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
-camera_fix.position.set(0,-1.5,distance);
-scene.add(camera_fix);
+
 /**initialization */
 
 /**
@@ -159,11 +152,9 @@ renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.toneMapping = THREE.CustomToneMapping
 renderer.toneMappingExposure = 1.0
+renderer.domElement.toDataURL("image/png")
 
-//VR
-renderer.xr.enabled = true
-document.body.appendChild( VRButton.createButton( renderer ))
-
+//let xrCamera
 function animate(){
     //second
     const sec = performance.now()/1000
@@ -171,12 +162,11 @@ function animate(){
     //update
     ThreeMeshUI.update()
 
-    // Render
+    // Render   
     renderer.render(scene, camera)
 }
 
-renderer.domElement.toDataURL("image/png")
-renderer.setAnimationLoop(animate)
+renderer.setAnimationLoop(animate);
 /**renderer */
 
 /**
@@ -230,7 +220,7 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /** ToneMap */
 
 /**
- * Object
+ * Material
  */
 //material setting
 const metal_0025 = new THREE.MeshPhysicalMaterial({
@@ -379,12 +369,13 @@ function OneData(id,hdr){
     this.hdr = hdr
     this.T_times = 0
 }
-//init_HDR
+//HDR load
 function init_HDR(index){
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
+    init_BGsphere(BGsphere_mesh,hdr_files[index])
 }
 //material load
 function init_material(index){
@@ -401,32 +392,66 @@ function init_model(index){
     object_obj.scale.set(coe,coe,coe)
     object_obj.position.set(0,0,0)
     init_material(index_material)
-    object_obj.castShadow = true
+    object_obj.castShadow = false
     scene.add(object_obj)
 }
+//BGsphere load
+function init_BGsphere(mesh,texture){
+    mesh.material.map = texture
+    mesh.material.needsUpdate = true
+}
+
 /** Loading */
 
 /**
- * Lighting
+ * Geometry
  */
+//Mask plate
+const outerWidth = 20;
+const outerHeight = 10;
+const innerWidth = 1;
+const innerHeight = 1;
+
+const outerShape = new THREE.Shape();
+outerShape.moveTo(-outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, -outerHeight / 2);
+
+const innerShape = new THREE.Shape();
+innerShape.moveTo(-innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, -innerHeight / 2);
+outerShape.holes.push(innerShape);
+
+const geometry_mask = new THREE.ShapeGeometry(outerShape);
+const material_mask = new THREE.MeshBasicMaterial({ color: 0x666666, side: THREE.DoubleSide });
+const mask = new THREE.Mesh(geometry_mask, material_mask);
+mask.position.z = 0.1; // カメラの前に配置
+scene.add(mask)
+
+//background sphere
+const BGsphere_geo = new THREE.SphereGeometry(3.5,32,16)
+const BGsphere_mat = new THREE.MeshBasicMaterial({color:0xffffff,
+    side:THREE.DoubleSide}
+)
+const BGsphere_mesh = new THREE.Mesh(BGsphere_geo,BGsphere_mat)
+BGsphere_mesh.rotation.set(0,Math.PI,0)
+BGsphere_mesh.scale.set(-1,1,1)
+//scene.add(BGsphere_mesh)
+
+/** Geometry*/
 
 /**
  * additional
  */
-document.addEventListener('pointerlockchange',()=>{
-    if(document.pointerLockElement == document.body){
-        console.log("pointer locked")
-    } else {
-        console.log("pointer unlocked")
-    }
-})
-document.addEventListener('keydown',(e)=>{
-    if (e.keyCode == 27){
-        document.exitPointerLock()
-    }
-})
+
 /** additional */
 
+const panel_z = 0.4
 /** 
  * Loading Panel
  */
@@ -447,13 +472,13 @@ function LoadPanel(){
     const text = new ThreeMeshUI.Text({
         content:'Now Loading',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.2,
+        fontSize:0.1,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     textBlock.add(text)
     loadpanel.add(textBlock)
-    loadpanel.position.set(0,-cameraGroup.position.y,-distance)
+    loadpanel.position.set(0,camera_y,panel_z)
     scene.add(loadpanel)
 }
 /** Loading Panel */
@@ -472,36 +497,38 @@ function SliderPanel1(){
         height:0.3,width:1.3,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
+        backgroundOpacity: 0,
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
         height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
+        backgroundOpacity: 0,
     })
     const text = new ThreeMeshUI.Text({
         content:'Adjust slider & Left click',
-        fontColor:new THREE.Color(0xffffff),
+        fontColor:new THREE.Color(0x000000),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.025,width:1,offset:0.02,margin:0.06,
-        backgroundColor: new THREE.Color(0x999999),
+        height:0.015,width:1,offset:0.02,margin:0.06,
+        backgroundColor: new THREE.Color(0x777777),
         justifyContent:'center',
     });
     handle = new ThreeMeshUI.Block({
-        height:0.07,width:0.015,offset:0.01,
-        backgroundColor: new THREE.Color(0xffffff),
+        height:0.07,width:0.025,offset:0.01,
+        backgroundColor: new THREE.Color(0x000000),
         backgroundOpacity: 1
     });
     slider.add(handle)
     container.add(slider)
     textBlock.add(text)
     container.add(textBlock)
-    container.position.set(0,-0.45,-1)
+    container.position.set(0,-0.5,-3)
     container.rotation.set(-Math.PI/12,0,0)
     container.scale.set(0.75,0.75,0.75)
     //camera.add(container)
@@ -543,50 +570,10 @@ function FinishPanel1(){
     })
     textBlock.add(text)
     container2.add(textBlock)
+    container2.position.set(0,0,panel_z)
     scene.add(container2)
 }
 /** Finish Panel */
-
-/** 
- * VR Button Pnale
- */
-//initialization
-let vrPanel
-//panel making
-async function VRPanel(){
-    return new Promise((resolve)=>{
-        console.log("vrpanel start")
-        //container
-        vrPanel = new ThreeMeshUI.Block({
-            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
-            fontFamily: './assets/Roboto-msdf.json',
-            fontTexture: './assets/Roboto-msdf.png',
-        })
-        //text block
-        const textBlock = new ThreeMeshUI.Block({
-            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
-            textAlign:'center',
-            justifyContent:'center',
-        })
-        const text = new ThreeMeshUI.Text({
-            content:'Press [Enter VR] button',
-            fontColor:new THREE.Color(0xffffff),
-            fontSize:0.2,
-            backgroundOpacity: 0.0,
-            offset:0.01
-        })
-        textBlock.add(text)
-        vrPanel.add(textBlock)
-        scene.add(vrPanel)
-        vrPanel.position.set(0,-cameraGroup.position.y,-distance)
-        renderer.xr.addEventListener('sessionstart',()=>{
-            scene.remove(vrPanel)
-            document.body.requestPointerLock()
-            resolve()
-        })
-    })
-}
-/** VR Button */
 
 /**
  * Test Intro Panel
@@ -624,7 +611,7 @@ async function StartPanel(){
                 resolve()
             }
         })
-        startpanel.position.set(0,0,1)
+        startpanel.position.set(0,0,panel_z)
     })
 }
 /** Test Intro Panel */
@@ -655,7 +642,7 @@ function TestPanel1(){
     })
     textBlock.add(text1)
     testpanel1.add(textBlock)
-    testpanel1.position.set(0,-0.75,0)
+    testpanel1.position.set(0,0.75,panel_z)
 }
 let testpanel2
 function TestPanel2(){
@@ -680,7 +667,7 @@ function TestPanel2(){
     })
     textBlock.add(text1)
     testpanel2.add(textBlock)
-    testpanel2.position.set(0,-0.75,0)
+    testpanel2.position.set(0,0.75,panel_z)
 }
 //activate
 TestPanel1()
@@ -714,7 +701,7 @@ async function ExpPanel(model_num){
         })
         textBlock.add(text)
         exppanel.add(textBlock)
-        exppanel.position.set(0,0,1)
+        exppanel.position.set(0,0,panel_z)
         scene.add(exppanel)
         window.addEventListener("mousedown",(e)=>{
             if(e.button == 2){
@@ -731,18 +718,8 @@ async function ExpPanel(model_num){
  */
 //sleep
 function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve,ms))
-}
-//preload
-async function Preload(){
-    init_model(0)
-    init_material(Material_num-1)
-    for (let i = 0; i < hdr_files.length;i++){
-        init_HDR(i)
-        await sleep(30)
-    }
-    scene.remove(object_obj)
-}
+    return new Promise(resolve => setTimeout(resolve,ms));
+};
 
 //test trial
 var testcontinue = true
@@ -853,11 +830,9 @@ async function OneTrial(){
 }
 function trialloop(){
     mousex2 = mouse_pl.x
-
     handle.position.x = ( mousex2 - mousex1 ) * slider_vel
     handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
-
-    renderer.xr.getSession().requestAnimationFrame(trialloop)
+    requestAnimationFrame(trialloop)
 }
 
 //Exp Flow
@@ -866,9 +841,7 @@ async function mainload(){
     await modelload()
     await hdrload()
     await Data_make()
-    await Preload()
     scene.remove(loadpanel)
-    await VRPanel()
     OneSession()
 }
 mainload()
@@ -904,7 +877,7 @@ function exportToCsv(filename, rows) {
     //CSVファイルをBlobにしてダウンロード
     var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' })
     var link = document.createElement("a")
-    if (link.download !== undefined) { // feature detection
+    if (link.download !== undefined) {
         // Browsers that support HTML5 download attribute
         var url = URL.createObjectURL(blob)
         link.setAttribute("href", url)
@@ -923,44 +896,74 @@ function exportToCsv(filename, rows) {
 //widowresize
 function onWindowResize(){
     // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
 
     // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.position.set(0,0,dist(fov))
-    camera.updateProjectionMatrix()
-
+    camera.aspect = sizes.width / sizes.height;
+    //camera.position.set(0,0,dist(fov));
+    camera.updateProjectionMatrix();
+    
     // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+};
+window.addEventListener('resize', onWindowResize);
+
+//fullscreen
+function WindowFullscreen(){
+    if(!document.fullscreenElement){
+        canvas.requestFullscreen()
+    }else{
+        document.exitFullscreen()
+    }
 }
 /**Function */
 
 /**
  * eventlister
  */
-//resize
-window.addEventListener('resize', onWindowResize)
-//change loaded
+//keydown
 document.addEventListener("keydown",(e)=>{
-    //hdr
     //press Q
     if(e.keyCode == 81 && index_master > 0){
         index_master -=1;
         init_HDR(index_master);
-    }
+    };
     //press E
     if(e.keyCode == 69 && index_master < hdr_files.length-1){
         index_master +=1;
-        init_HDR(index_master)
-    }
-})
-//mouse
+        init_HDR(index_master);
+    };
+    //press A
+    if(e.keyCode == 65){
+        WindowFullscreen();
+    };
+    //press esc
+    if (e.keyCode == 27){
+        document.exitPointerLock();
+    };
+});
+
+//mouse move
 window.addEventListener('mousemove',e =>{
     //pointer lock api
-    mouse_pl.x += e.movementX/position_ratio
-    mouse_pl.y += e.movementY/position_ratio
-    
-})
+    mouse_pl.x += e.movementX/position_ratio;
+    mouse_pl.y += e.movementY/position_ratio;
+});
+
+// pointerlock
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    if (document.body.requestPointerLock) {
+        document.body.requestPointerLock();
+    }
+});
+document.addEventListener('pointerlockchange',()=>{
+    if(document.pointerLockElement == document.body){
+        console.log("pointer locked");
+    } else {
+        console.log("pointer unlocked");
+    };
+});
 /**eventlistner */

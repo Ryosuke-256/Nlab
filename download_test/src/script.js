@@ -11,7 +11,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-
 /**
  * initializing
  */
@@ -23,7 +22,6 @@ const hdr_images_path = [
     '5.hdr','125.hdr',
 ]
 */
-/**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -32,16 +30,23 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
-*/
-
+/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
     '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
 ]
+ */
 
-
-const hdr_files = []
+const model_base_path = 'models/normal\\'
+const model_path = [
+    'sphere.obj',
+    'bunny.obj',
+    'dragon.obj',
+    'boardA.obj',
+    'boardB.obj',
+    'boardC.obj',
+]
 
 //base
 let canvas, scene, camera, renderer, controls,composer
@@ -53,9 +58,6 @@ const sizes = {width: windowsize,height: windowsize}
 
 //mouse follow
 let pointlight1, cursor1_mesh
-
-//animate object
-var object_obj = null
 
 //camera
 let fov
@@ -72,8 +74,9 @@ const mouse_window_normal =new THREE.Vector2()
 let dlcount = 0
 
 //loadchange
-let index_master = 0
+let index_HDR = 0
 let index_material = 0;
+let index_model = 0;
 
 //material
 let material_list
@@ -179,7 +182,7 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
 material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
-let materialname_list = ['cu_0.025','cu_0.129','pla_0.075','pla_0.225']
+let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
 
 
 /**
@@ -267,68 +270,133 @@ toneMappingFolder.add( params, 'exposure', 0.1, 10 ).onChange( (val)=>{
 /**GUI */
 
 /**
- * models
+ * load
  */
-
-//obj loader
-const objLoader = new OBJLoader()
-objLoader.load(
-    "./models/normal/bunny.obj",
-    (obj) =>{
-        object_obj = obj.children[0] //children[0]はいらないときもあるので要確認
-
-        const coe = 0.34
-        object_obj.scale.set(coe,coe,coe)
-        object_obj.position.set(0,0.05,0)
-        init_material(index_material)
-        object_obj.castShadow = true
-        scene.add(object_obj)
-        console.log(object_obj)
-    },(xhr)=>{
-        console.log((xhr.loaded/xhr.total*100)+'% loaded')
-    },(error)=>{
-        console.log('An error happened',error)
-    }
-)
-/**Model */
-
-/**
- * Background and Lighting
- */
-//背景
-const hdr_url = []
-/**
- * 最適load
-//HDRloadmanager
-const loadingManager = new THREE.LoadingManager(()=>{
-    console.log("Finished loading");
-    init_master(index_master)
-},(itemUrl,itemsLoaded,itemsTotal)=>{
-    console.log("Files loaded:" + itemsLoaded + "/" + itemsTotal)
-})
-//loadeverything
-const loader1 = new RGBELoader(loadingManager)
-
-async function hdrloader(){
-    hdr_images_path.forEach(element => {
-        const imagepath = base_path + element
-        loader1.load(
-            imagepath,
-            (texture)=>{
-                hdr_files.push(texture)
-                hdr_url.push(element)
-            }
-        )
+//model loading
+let object_obj = null
+const model_files = []
+let model_url = []
+async function modelload(){
+    return new Promise((resolve)=>{
+        //Modelloadmanager
+        const ModelloadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished Model loading")
+            console.log(model_url)
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
+        })
+        //loadeverything
+        const model_loader = new OBJLoader(ModelloadingManager)
+        
+        modelloader(model_loader)
     })
 }
-*/
+async function modelloader(loader){
+    for (let i = 0; i < model_path.length; i++) {
+        const element = model_path[i]
+        const modelpath = model_base_path + element
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                modelpath,
+                (obj) => {
+                    model_files.push(obj.children[0])
+                    model_url.push(element)
+                    resolve()
+                },(xhr)=>{
+                },
+                (err) => reject(err)
+            )
+        })
+    }
+}
+//model load
+function init_model(index){
+    if(object_obj != null){
+        scene.remove(object_obj)
+    }
+    object_obj = model_files[index]
+    console.log(object_obj);
+    const coe = 0.34;
+    object_obj.scale.set(coe,coe,coe);
+    object_obj.position.set(0,0,0)
+    init_material(index_material)
+    object_obj.castShadow = true
+    scene.add(object_obj)
+}
 
-/** 順番通りload */
+//hdr loading
+const hdr_files = []
+let hdr_url = []
+async function hdrload(){
+    return new Promise((resolve)=>{
+        //HDRloadmanager
+        const loadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished HDR loading");
+            //init_HDR(index_HDR)
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("HDR loaded:" + itemsLoaded + "/" + hdr_images_path.length)
+        })
+        //loadeverything
+        const loader1 = new RGBELoader(loadingManager)
+        
+        hdrloader(loader1)
+    })
+}
+async function hdrloader(loader){
+    for (let i = 0; i < hdr_images_path.length; i++) {
+        const element = hdr_images_path[i]
+        const imagepath = base_path + element
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                imagepath,
+                (texture) => {
+                    hdr_files.push(texture)
+                    hdr_url.push(element)
+                    resolve()
+                },
+                undefined,
+                (err) => reject(err)
+            )
+        })
+    }
+}
+//init_HDR
+function init_HDR(index){
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
+
+    console.log(hdr_url[index])
+    
+    const myElement = document.getElementById('hdr_name');
+    myElement.textContent = hdr_url[index];
+}
+//material load
+function init_material(index){
+    object_obj.material = material_list[index]
+
+    const myElement = document.getElementById('mat_name');
+    myElement.textContent = materialname_list[index];
+}
+//load
+async function mainload(){
+    await modelload()
+    await hdrload()
+    init_model(index_model);
+    init_HDR(index_HDR);
+}
+mainload()
+/** 順番通りload 
 async function hdrloader() {
     //HDRloadmanager
     const loadingManager = new THREE.LoadingManager(()=>{
         console.log("Finished loading")
-        init_master(index_master)
+        init_HDR(index_HDR)
     },(itemUrl,itemsLoaded,itemsTotal)=>{
         console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
     })
@@ -352,29 +420,9 @@ async function hdrloader() {
         })
     }
 }
-
 hdrloader()
-
-// HDRファイルのロード
-//init_master
-function init_master(index){
-    hdr_files[index].encoding = THREE.RGBEEncoding
-    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
-    scene.background = hdr_files[index]
-    scene.environment = hdr_files[index]
-
-    console.log(hdr_url[index])
-    
-    const myElement = document.getElementById('hdr_name');
-    myElement.textContent = hdr_url[index];
-}
-
-//点光源
-pointlight1 = new THREE.PointLight(0xffffff,10,0,1)
-pointlight1.position.set(0,0,0)
-pointlight1.castShadow = true
-//scene.add(pointlight1)
-/**Background and Lighting */
+*/
+/**load */
 
 /**
  * Additional
@@ -390,6 +438,7 @@ const mattextNode = document.createTextNode('mat_name');
 matParagraph.appendChild(mattextNode);
 matParagraph.setAttribute('id', 'mat_name');
 document.body.appendChild(matParagraph);
+
 /**Additional */
 /**Base */
 
@@ -497,15 +546,6 @@ composer.addPass(outputPass)
 /**
  * Function
  */
-//material load
-function init_material(index){
-    object_obj.material = material_list[index]
-
-    const myElement = document.getElementById('mat_name');
-    myElement.textContent = materialname_list[index];
-}
-
-
 //widowresize
 function onWindowResize(){
     // Update sizes
@@ -581,14 +621,14 @@ document.addEventListener("keydown",(e)=>{
 document.addEventListener("keydown",(e)=>{
     //hdr
     //press ←
-    if(e.keyCode == 37 && index_master > 0){
-        index_master -=1;
-        init_master(index_master);
+    if(e.keyCode == 37 && index_HDR > 0){
+        index_HDR -=1;
+        init_HDR(index_HDR);
     }
     //press →
-    if(e.keyCode == 39 && index_master < hdr_files.length-1){
-        index_master +=1;
-        init_master(index_master)
+    if(e.keyCode == 39 && index_HDR < hdr_files.length-1){
+        index_HDR +=1;
+        init_HDR(index_HDR)
     }
 
     //materials
@@ -601,6 +641,18 @@ document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 89 && index_material < material_list.length-1){
         index_material += 1
         init_material(index_material)
+    }
+
+    //models
+    //press Q
+    if(e.keyCode == 81 && index_model > 0){
+        index_model -=1;
+        init_model(index_model);
+    }
+    //press E
+    if(e.keyCode == 69 && index_model < model_path.length-1){
+        index_model +=1;
+        init_model(index_model);
     }
 })
 
@@ -643,24 +695,25 @@ async function loopwithdelay(){
     const alldownloadlink = document.getElementById("alldownload");
     //hdr change
     for (i=0; i < hdr_images_path.length; i++){
-        init_master(i)
+        init_HDR(i)
         //material change
         for (j=0; j < 1; j++){
-            init_material(j);
+            let downloadIndex = (index_material + j) % materialname_list.length;
+            init_material(downloadIndex);
             //renderer.render(scene, camera)
             composer.render()
             //download
-
             imgData_2 = renderer.domElement.toDataURL();
             alldownloadlink.href = imgData_2;
             let hdr_path = hdr_images_path[i].replace(".hdr","")
-            alldownloadlink.download = "bunny_" + materialname_list[j] + "_" + hdr_path + ".png"
+            let modelname = model_url[index_model].replace(/\.obj/g,"")
+            alldownloadlink.download = modelname + "_" + materialname_list[downloadIndex] + "_" + hdr_path + ".png"
             alldownloadlink.click();
             await sleep(100);
-            console.log("downloaded hdr : " + hdr_path + "  material : " + materialname_list[j])
+            console.log("downloaded hdr : " + hdr_path + "  material : " + materialname_list[downloadIndex])
         }
     }
-    init_master(index_master);
+    init_HDR(index_HDR);
     init_material(index_material);
 }
 
