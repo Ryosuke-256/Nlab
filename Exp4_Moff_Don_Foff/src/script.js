@@ -73,11 +73,12 @@ console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
 //imagefiles
 const base_path = 'image\\'
 
+/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr',
 ]
+ */
 
-/**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -86,7 +87,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
-*/
+
 
 /**
 const hdr_images_path = [
@@ -101,8 +102,8 @@ const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
     'bunny.obj',
-    //'dragon.obj',
-    //'boardA.obj',
+    'dragon.obj',
+    'boardA.obj',
     'boardB.obj',
     'boardC.obj',
 ]

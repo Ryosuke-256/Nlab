@@ -15,13 +15,18 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
  * initializing
  */
 //imagefiles
-const base_path = 'image\\'
+//const base_path = 'image\\2K\\'
+const base_path = 'image\\Compare\\'
 
+const hdr_images_path = [
+    '5_2k.hdr','5_4k.hdr','5_8k.hdr','5_16k.hdr',
+]
 /**
 const hdr_images_path = [
     '5.hdr','125.hdr',
 ]
 */
+/**
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -30,6 +35,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
+*/
 /**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
@@ -53,7 +59,8 @@ let canvas, scene, camera, renderer, controls,composer
 
 //size
 //const sizes = {width: window.innerWidth,height: window.innerHeight}
-const windowsize = 256
+const cameraScale = 2;
+const windowsize = 256 * cameraScale;
 const sizes = {width: windowsize,height: windowsize}
 
 //mouse follow
@@ -93,9 +100,9 @@ canvas = document.querySelector('canvas.webgl')
 scene = new THREE.Scene()
 
 //camera
-fov = 40
+fov = 10
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
-camera.position.set(0,0,dist(fov))
+camera.position.set(0,0,dist(fov) / cameraScale)
 scene.add(camera)
 //camera distance
 function dist (fov) {
@@ -184,6 +191,7 @@ const default_1 = new THREE.MeshPhysicalMaterial({
 material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
 
+/** Object */
 
 /**
  * GUI
@@ -364,6 +372,7 @@ async function hdrloader(loader){
         })
     }
 }
+
 //init_HDR
 function init_HDR(index){
     hdr_files[index].encoding = THREE.RGBEEncoding
@@ -598,47 +607,47 @@ window.addEventListener("dblclick",WindowFullscreen)
 //number key to camera 1 to 6
 document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 49) {
-        camera.position.set(0,0,dist(fov))
+        camera.position.set(0,0,dist(fov) / cameraScale)
     }
     if(e.keyCode == 50) {
-        camera.position.set(dist(fov),0,0)
+        camera.position.set(dist(fov) / cameraScale,0,0)
     }
     if(e.keyCode == 51) {
-        camera.position.set(0,0,-dist(fov))
+        camera.position.set(0,0,-dist(fov) / cameraScale)
     }
     if(e.keyCode == 52) {
-        camera.position.set(-dist(fov),0,0)
+        camera.position.set(-dist(fov) / cameraScale,0,0)
     }
     if(e.keyCode == 53) {
-        camera.position.set(0,dist(fov),0)
+        camera.position.set(0,dist(fov) / cameraScale,0)
     }
     if(e.keyCode == 54) {
-        camera.position.set(0,-dist(fov),0)
+        camera.position.set(0,-dist(fov) / cameraScale,0)
     }
 })
 
 //change loaded
 document.addEventListener("keydown",(e)=>{
     //hdr
-    //press ←
-    if(e.keyCode == 37 && index_HDR > 0){
+    //press T
+    if(e.keyCode == 84 && index_HDR > 0){
         index_HDR -=1;
         init_HDR(index_HDR);
     }
-    //press →
-    if(e.keyCode == 39 && index_HDR < hdr_files.length-1){
+    //press Y
+    if(e.keyCode == 89 && index_HDR < hdr_files.length-1){
         index_HDR +=1;
         init_HDR(index_HDR)
     }
 
     //materials
-    //pressR
-    if(e.keyCode == 82 && index_material > 0){
+    //press E
+    if(e.keyCode == 69 && index_material > 0){
         index_material -=1
         init_material(index_material)
     }
-    //pressY
-    if(e.keyCode == 89 && index_material < material_list.length-1){
+    //press R
+    if(e.keyCode == 82 && index_material < material_list.length-1){
         index_material += 1
         init_material(index_material)
     }
@@ -649,8 +658,8 @@ document.addEventListener("keydown",(e)=>{
         index_model -=1;
         init_model(index_model);
     }
-    //press E
-    if(e.keyCode == 69 && index_model < model_path.length-1){
+    //press W
+    if(e.keyCode == 87 && index_model < model_path.length-1){
         index_model +=1;
         init_model(index_model);
     }
