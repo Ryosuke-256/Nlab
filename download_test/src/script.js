@@ -21,6 +21,7 @@ const base_path = 'image\\Compare\\'
 const hdr_images_path = [
     '5_2k.hdr','5_4k.hdr','5_8k.hdr','5_16k.hdr',
 ]
+
 /**
 const hdr_images_path = [
     '5.hdr','125.hdr',
@@ -35,7 +36,7 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
-*/
+ */
 /**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
