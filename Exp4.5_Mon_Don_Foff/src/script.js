@@ -26,18 +26,19 @@ const hdr_nameList = [
 ];
  */
 
+/**
 const hdr_nameList = [
     '5','19','34','39','42','43','78','80','102','105',
     '125','152','164','183','198','201','202','203','209','222',
     '226','227','230','232','243','259','272','278','281','282'
 ];
+ */
 
-/**
 const hdr_nameList = [
     '19','39','78','80','102','125','152','203','226','227',
     '230','232','243','278','281'
 ]
-*/
+
 //models
 const model_base_path = 'models/normal\\'
 const model_nameList = ['sphere','bunny','dragon','boardA','boardB','boardC'];
@@ -222,6 +223,44 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /**
  * Object
  */
+//Mask plate
+const outerWidth = 20;
+const outerHeight = 10;
+const innerWidth = 1;
+const innerHeight = 1;
+
+const outerShape = new THREE.Shape();
+outerShape.moveTo(-outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, -outerHeight / 2);
+
+const innerShape = new THREE.Shape();
+innerShape.moveTo(-innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, -innerHeight / 2);
+outerShape.holes.push(innerShape);
+
+const geometry_mask = new THREE.ShapeGeometry(outerShape);
+const material_mask = new THREE.MeshBasicMaterial({ color: 0x666666, side: THREE.DoubleSide });
+const mask = new THREE.Mesh(geometry_mask, material_mask);
+mask.position.z = 0.1; // カメラの前に配置
+scene.add(mask)
+
+//background sphere
+const BGsphere_geo = new THREE.SphereGeometry(3.5,32,16)
+const BGsphere_mat = new THREE.MeshBasicMaterial({color:0xffffff,
+    side:THREE.DoubleSide}
+)
+const BGsphere_mesh = new THREE.Mesh(BGsphere_geo,BGsphere_mat)
+BGsphere_mesh.rotation.set(0,Math.PI,0)
+BGsphere_mesh.scale.set(-1,1,1)
+//scene.add(BGsphere_mesh)
+
+
 //material setting
 const cu0025 = new THREE.MeshPhysicalMaterial({
     color:0xecacac, //いろいろ
@@ -369,6 +408,7 @@ function init_HDR(index){
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
+    init_BGsphere(BGsphere_mesh,hdr_files[index])
 }
 //material load
 function init_material(index){
@@ -388,6 +428,13 @@ function init_model(index){
     object_obj.castShadow = true
     scene.add(object_obj)
 }
+
+//BGsphere load
+function init_BGsphere(mesh,texture){
+    mesh.material.map = texture
+    mesh.material.needsUpdate = true
+}
+
 /** Loading */
 
 /**
@@ -479,36 +526,38 @@ function SliderPanel1(){
         height:0.3,width:1.3,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
+        backgroundOpacity: 0,
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
         height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
+        backgroundOpacity: 0,
     })
     const text = new ThreeMeshUI.Text({
         content:'Adjust slider & Left click',
-        fontColor:new THREE.Color(0xffffff),
+        fontColor:new THREE.Color(0x000000),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.025,width:1,offset:0.02,margin:0.06,
-        backgroundColor: new THREE.Color(0x999999),
+        height:0.015,width:1,offset:0.02,margin:0.06,
+        backgroundColor: new THREE.Color(0x777777),
         justifyContent:'center',
     });
     handle = new ThreeMeshUI.Block({
-        height:0.07,width:0.015,offset:0.01,
-        backgroundColor: new THREE.Color(0xffffff),
+        height:0.07,width:0.025,offset:0.01,
+        backgroundColor: new THREE.Color(0x000000),
         backgroundOpacity: 1
     });
     slider.add(handle)
     sliderPanel.add(slider)
     textBlock.add(text)
     sliderPanel.add(textBlock)
-    sliderPanel.position.set(0,-0.45,-1)
+    sliderPanel.position.set(0,-0.5,-3)
     sliderPanel.rotation.set(-Math.PI/12,0,0)
     sliderPanel.scale.set(0.75,0.75,0.75)
     //camera.add(sliderPanel)

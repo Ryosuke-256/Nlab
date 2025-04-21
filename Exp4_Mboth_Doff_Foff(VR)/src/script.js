@@ -18,15 +18,15 @@ const HeadTracking = false;
 
 if (HeadTracking){
     Offset_Y = 1.5;
-    Offset_Z = 6;
+    Offset_Z = 3;
 }else {
     Offset_Y = 0;
-    Offset_Z = 6;
+    Offset_Z = 3;
 }
 
 /** Setting */
 //imagefiles
-const base_path = 'image\\10degree\\'
+const base_path = 'image\\20degree\\'
 /**
 const hdr_nameList = [
     '19','39','78',
@@ -44,7 +44,7 @@ const hdr_nameList = [
     '19','39','78','80','102','125','152','203','226','227',
     '230','232','243','278','281'
 ]
-*/
+ */
 //models
 const model_nameList = ['sphere','bunny','dragon','boardA','boardB','boardC'];
 
@@ -413,29 +413,31 @@ function SliderPanel1(){
         height:0.3,width:1.3,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
+        backgroundOpacity: 0,
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
         height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
+        backgroundOpacity: 0,
     })
     const text = new ThreeMeshUI.Text({
         content:'Adjust slider & Left click',
-        fontColor:new THREE.Color(0xffffff),
+        fontColor:new THREE.Color(0x000000),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.025,width:1,offset:0.02,margin:0.06,
-        backgroundColor: new THREE.Color(0x999999),
+        height:0.015,width:1,offset:0.02,margin:0.06,
+        backgroundColor: new THREE.Color(0x777777),
         justifyContent:'center',
     });
     handle = new ThreeMeshUI.Block({
-        height:0.07,width:0.015,offset:0.01,
-        backgroundColor: new THREE.Color(0xffffff),
+        height:0.07,width:0.025,offset:0.01,
+        backgroundColor: new THREE.Color(0x000000),
         backgroundOpacity: 1
     });
     slider.add(handle)
@@ -679,7 +681,7 @@ function trialloop(){
 
 //Exp Flow
 async function mainload(){
-    let vrpanel = TempletePanel("Press [Enter VR] button",-Offset_Y,-Offset_Z);
+    let vrpanel = TempletePanel("Press \n [Enter VR] \n button",-Offset_Y,-Offset_Z);
     await VRPanel(vrpanel,parent);
     OneSession();
 }

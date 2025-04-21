@@ -8,47 +8,14 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
  * Setteing
  */
 // slider valocity
-const slider_vel = 0.25
+const slider_vel = 0.35;
 //round limit
-const roundnum = 1
+const roundnum = 1;
 //model startq
-const modelstart = 1
-//camera Offset
-let Offset_Y = 1.5;
-let Offset_Z = 3.0;
-
-//imagefiles
-const base_path = 'image\\'
-
-/**
-const hdr_nameList = [
-    '19','39','78',
-];
- */
-
-const hdr_nameList = [
-    '5','19','34','39','42','43','78','80','102','105',
-    '125','152','164','183','198','201','202','203','209','222',
-    '226','227','230','232','243','259','272','278','281','282'
-];
-
-/**
-const hdr_nameList = [
-    '19','39','78','80','102','125','152','203','226','227',
-    '230','232','243','278','281'
-]
-*/
-//models
-const model_base_path = 'models/normal\\'
-const model_nameList = ['sphere','bunny','dragon','boardA','boardB','boardC'];
-
-//materials
-const material_nameList = ['cu0025','cu0129','pla0075','pla0225'];
-
-//index
-let index_HDR = 0;
-let index_material = 0;
-let index_model = 0;
+const modelstart = 1;
+//camera adjust
+const camera_dist = 6;
+const camera_y = 0;
 
 /** Setting */
 
@@ -63,9 +30,9 @@ for (let i=0;i<experiment_name.length; i++){
     namenum += experiment_name.charCodeAt(i);
 }
 
-index_material = prompt("何回目ですか？:") - 1;
-while(index_material < 0 || index_material > 3){
-    index_material = prompt("1-4の範囲で入力してください");
+let Material_num = prompt("何回目ですか？:")
+while(Material_num < 1 || Material_num > 4){
+    Material_num = prompt("1-4の範囲で入力してください")
 }
 
 console.log("name number : "+namenum);
@@ -75,17 +42,17 @@ for (let i = changenseedlist.length - 1 ; i >=0; i--){
     changenseedlist[i] = namenum
 }
 
-for (let i = material_nameList.length-1 ; i >=0; i--){
+let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
+for (let i = materialname_list.length-1 ; i >=0; i--){
     let changenum = changenseedlist[i] % 4;
-    //console.log("/nchangenum : "+changenum)
-    let tmpStorage = material_nameList[i]
-    material_nameList[i] = material_nameList[changenum]
-    material_nameList[changenum] = tmpStorage
+    console.log("/nchangenum : "+changenum)
+    let tmpStorage = materialname_list[i]
+    materialname_list[i] = materialname_list[changenum]
+    materialname_list[changenum] = tmpStorage
 }
 
 console.log("chang list : " + changenseedlist)
-console.log(material_nameList)
-
+console.log(materialname_list)
 
 function createseededRandom(seed) { 
     return function() {
@@ -93,46 +60,83 @@ function createseededRandom(seed) {
         return seed / 233280
     }
 }
-
 function seededRandom(min,max,seed){
     const randomFunc = createseededRandom(seed); 
     return Math.floor(randomFunc() * (max - min + 1)) + min;
 }
 
 
-console.log("今回のMaterialは：" + material_nameList[index_material])
+console.log("今回のMaterialは：" + materialname_list[Material_num - 1])
 
+//imagefiles
+const base_path = 'image\\'
+
+/**
+const hdr_images_path = [
+    '19.hdr','39.hdr','78.hdr',
+];
+ */
+/**
+const hdr_images_path = [
+    '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
+    '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
+    '125.hdr','152.hdr','164.hdr','183.hdr','198.hdr',
+    '201.hdr','202.hdr','203.hdr','209.hdr','222.hdr',
+    '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
+    '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
+];
+*/
+
+const hdr_images_path = [
+    '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
+    '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
+    '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
+];
+
+
+//modelfiles
+const model_base_path = 'models/normal\\'
+const model_path = [
+    'sphere.obj',
+    'bunny.obj',
+    //'dragon.obj',
+    'boardA.obj',
+    'boardB.obj',
+    'boardC.obj',
+]
 //size
-let sizes = {width: window.innerWidth,height: window.innerHeight};
+let sizes = {width: window.innerWidth,height: window.innerHeight}
+
 //widowsize関連補正
-let position_ratio = 250;
+let position_ratio = 250
 
 //mouse
-const mouse_pl = new THREE.Vector2(0,0);
+const mouse_pl = new THREE.Vector2(0,0)
+
+//loadchange
+let index_master = 0
+let index_material = 0
 
 // Canvas
-let canvas = document.querySelector('canvas.webgl');
+let canvas = document.querySelector('canvas.webgl')
 
 // Scene
-let scene = new THREE.Scene();
+let scene = new THREE.Scene()
 
 //camera
-let fov = 40;
-let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
-//camera.position.set(10000,0,dist(fov))
-const cameraGroup = new THREE.Group();
-cameraGroup.add(camera);
-cameraGroup.position.set(0,-Offset_Y,Offset_Z)
+let fov = 40
+let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, 20)
+const cameraGroup = new THREE.Group()
+cameraGroup.add(camera)
+cameraGroup.position.set(0,camera_y,camera_dist)
 scene.add(cameraGroup)
 //camera distance
-function dist (fov) {
+function dist(fov) {
     const fovRad= (fov/2)*(Math.PI/180)
     const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
     return dist
 }
-let camera_fix = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
-camera_fix.position.set(0,-Offset_Y,Offset_Z);
-scene.add(camera_fix);
+
 /**initialization */
 
 /**
@@ -149,6 +153,7 @@ renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
 renderer.toneMapping = THREE.CustomToneMapping
 renderer.toneMappingExposure = 1.0
+renderer.domElement.toDataURL("image/png")
 
 //VR
 renderer.xr.enabled = true
@@ -161,12 +166,11 @@ function animate(){
     //update
     ThreeMeshUI.update()
 
-    // Render
+    // Render   
     renderer.render(scene, camera)
 }
 
-renderer.domElement.toDataURL("image/png")
-renderer.setAnimationLoop(animate)
+renderer.setAnimationLoop(animate);
 /**renderer */
 
 /**
@@ -220,25 +224,25 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /** ToneMap */
 
 /**
- * Object
+ * Material
  */
 //material setting
-const cu0025 = new THREE.MeshPhysicalMaterial({
+const metal_0025 = new THREE.MeshPhysicalMaterial({
     color:0xecacac, //いろいろ
     metalness:1, roughness:0.025, //Standard
 })
-const cu0129 = new THREE.MeshPhysicalMaterial({
+const metal_0129 = new THREE.MeshPhysicalMaterial({
     color:0xecacac, //いろいろ
     metalness:1, roughness:0.129, //Standard
 })
-const pla0075 = new THREE.MeshPhysicalMaterial({
+const plastic_0075 = new THREE.MeshPhysicalMaterial({
     color:0xa8a8a8, //いろいろ
     metalness:0, roughness:0, //Standard
     clearcoat:1.0,clearcoatRoughness:0.075, //クリアコート
     ior:1.5,reflectivity:0.5, // 屈折率
     specularIntensity:0 //鏡面反射
 })
-const pla0225 = new THREE.MeshPhysicalMaterial({
+const plastic_0225 = new THREE.MeshPhysicalMaterial({
     color:0xa8a8a8, //いろいろ
     metalness:0, roughness:0, //Standard
     clearcoat:1.0,clearcoatRoughness:0.225, //クリアコート
@@ -246,7 +250,7 @@ const pla0225 = new THREE.MeshPhysicalMaterial({
     specularIntensity:0 //鏡面反射
 })
 
-let material_list = [cu0025,cu0129,pla0075,pla0225]
+let material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
 for (let i = material_list.length-1 ; i >= 0; i--){
     let changenum = changenseedlist[i]%4;
     //console.log("changenum : "+changenum)
@@ -255,6 +259,9 @@ for (let i = material_list.length-1 ; i >= 0; i--){
     material_list[changenum] = tmpStorage
 }
 //console.log(material_list)
+
+let ThisMat = material_list[Material_num - 1]
+let ThisMatName = materialname_list[Material_num - 1]
 
 /**
  * Loading
@@ -268,10 +275,10 @@ async function modelload(){
         //Modelloadmanager
         const ModelloadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished Model loading")
-            //Shuffle liset
+            //Shuffle model
             //console.log(model_url)
             for (let i = model_url.length-1; i>=0; i--){
-                let changenum = (changenseedlist[i] + index_material) % model_url.length;
+                let changenum = (changenseedlist[i] + Material_num) % model_url.length;
                 let tmpStorage1 = model_url[i]
                 model_url[i] = model_url[changenum]
                 model_url[changenum] = tmpStorage1
@@ -282,7 +289,7 @@ async function modelload(){
             console.log(model_url)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
-            console.log("Model loaded:" + itemsLoaded + "/" + model_nameList.length)
+            console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
         })
         //loadeverything
         const model_loader = new OBJLoader(ModelloadingManager)
@@ -291,9 +298,9 @@ async function modelload(){
     })
 }
 async function modelloader(loader){
-    for (let i = 0; i < model_nameList.length; i++) {
-        const element = model_nameList[i]
-        const modelpath = model_base_path + element + '.obj'
+    for (let i = 0; i < model_path.length; i++) {
+        const element = model_path[i]
+        const modelpath = model_base_path + element
     
         await new Promise((resolve, reject) => {
             loader.load(
@@ -317,9 +324,10 @@ async function hdrload(){
         //HDRloadmanager
         const loadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished HDR loading");
+            //init_HDR(index_master)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
-            console.log("HDR loaded:" + itemsLoaded + "/" + hdr_nameList.length)
+            console.log("HDR loaded:" + itemsLoaded + "/" + hdr_images_path.length)
         })
         //loadeverything
         const loader1 = new RGBELoader(loadingManager)
@@ -328,9 +336,9 @@ async function hdrload(){
     })
 }
 async function hdrloader(loader){
-    for (let i = 0; i < hdr_nameList.length; i++) {
-        const element = hdr_nameList[i]
-        const imagepath = base_path + element + '.hdr'
+    for (let i = 0; i < hdr_images_path.length; i++) {
+        const element = hdr_images_path[i]
+        const imagepath = base_path + element
     
         await new Promise((resolve, reject) => {
             loader.load(
@@ -361,14 +369,17 @@ async function Data_make(){
 function OneData(id,hdr){
     this.id = id
     this.score = 0
+    this.totalscore = 0
     this.hdr = hdr
+    this.T_times = 0
 }
-//init_HDR
+//HDR load
 function init_HDR(index){
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
+    init_BGsphere(BGsphere_mesh,hdr_files[index])
 }
 //material load
 function init_material(index){
@@ -385,38 +396,73 @@ function init_model(index){
     object_obj.scale.set(coe,coe,coe)
     object_obj.position.set(0,0,0)
     init_material(index_material)
-    object_obj.castShadow = true
+    object_obj.castShadow = false
     scene.add(object_obj)
 }
+//BGsphere load
+function init_BGsphere(mesh,texture){
+    mesh.material.map = texture
+    mesh.material.needsUpdate = true
+}
+
 /** Loading */
 
 /**
- * Lighting
+ * Geometry
  */
+//Mask plate
+const outerWidth = 20;
+const outerHeight = 10;
+const innerWidth = 1;
+const innerHeight = 1;
+
+const outerShape = new THREE.Shape();
+outerShape.moveTo(-outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, outerHeight / 2);
+outerShape.lineTo(outerWidth / 2, -outerHeight / 2);
+outerShape.lineTo(-outerWidth / 2, -outerHeight / 2);
+
+const innerShape = new THREE.Shape();
+innerShape.moveTo(-innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, innerHeight / 2);
+innerShape.lineTo(innerWidth / 2, -innerHeight / 2);
+innerShape.lineTo(-innerWidth / 2, -innerHeight / 2);
+outerShape.holes.push(innerShape);
+
+const geometry_mask = new THREE.ShapeGeometry(outerShape);
+const material_mask = new THREE.MeshBasicMaterial({ color: 0x666666, side: THREE.DoubleSide });
+const mask = new THREE.Mesh(geometry_mask, material_mask);
+mask.position.z = 0.1; // カメラの前に配置
+scene.add(mask)
+
+//background sphere
+const BGsphere_geo = new THREE.SphereGeometry(3.5,32,16)
+const BGsphere_mat = new THREE.MeshBasicMaterial({color:0xffffff,
+    side:THREE.DoubleSide}
+)
+const BGsphere_mesh = new THREE.Mesh(BGsphere_geo,BGsphere_mat)
+BGsphere_mesh.rotation.set(0,Math.PI,0)
+BGsphere_mesh.scale.set(-1,1,1)
+//scene.add(BGsphere_mesh)
+
+/** Geometry*/
 
 /**
  * additional
  */
-document.addEventListener('pointerlockchange',()=>{
-    if(document.pointerLockElement == document.body){
-        console.log("pointer locked")
-    } else {
-        console.log("pointer unlocked")
-    }
-})
-document.addEventListener('keydown',(e)=>{
-    if (e.keyCode == 27){
-        document.exitPointerLock()
-    }
-})
+
 /** additional */
+
+const panel_z = 0.4
 /** 
- * Making Panel
+ * Loading Panel
  */
-//Templete Panel
-function TempletePanel(text,posY,posZ){
+let loadpanel
+function LoadPanel(){
     //container
-    const container = new ThreeMeshUI.Block({
+    loadpanel = new ThreeMeshUI.Block({
         height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
@@ -427,91 +473,69 @@ function TempletePanel(text,posY,posZ){
         textAlign:'center',
         justifyContent:'center',
     })
-    const textObj = new ThreeMeshUI.Text({
-        content:text,
+    const text = new ThreeMeshUI.Text({
+        content:'Now Loading',
         fontColor:new THREE.Color(0xffffff),
-        fontSize:0.2,
+        fontSize:0.1,
         backgroundOpacity: 0.0,
         offset:0.01
     })
-    textBlock.add(textObj)
-    container.add(textBlock)
-    container.position.set(0,posY,posZ)
-    return container;
+    textBlock.add(text)
+    loadpanel.add(textBlock)
+    loadpanel.position.set(0,camera_y,panel_z)
+    scene.add(loadpanel)
 }
-
-//VR panel
-async function VRPanel(container,parent){
-    return new Promise((resolve)=>{
-        parent.add(container);
-        renderer.xr.addEventListener('sessionstart',()=>{
-            parent.remove(container)
-            document.body.requestPointerLock()
-            resolve()
-        })
-    })
-}
-
-// Click Panel
-async function ClickPanel(container,parent){
-    return new Promise((resolve)=>{
-        parent.add(container);
-        window.addEventListener("mousedown",(e)=>{
-            if(e.button == 2){
-                parent.remove(container)
-                resolve()
-            }
-        })
-    })
-}
+/** Loading Panel */
 
 /**
  * Slider Panel
  */
 //initialization
-let sliderPanel
+let container
 let sliderValue = 0.5
 let slider,handle,resultbar
 //Sliderpanel
 function SliderPanel1(){
     //container
-    sliderPanel = new ThreeMeshUI.Block({
+    container = new ThreeMeshUI.Block({
         height:0.3,width:1.3,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
+        backgroundOpacity: 0,
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
         height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
+        backgroundOpacity: 0,
     })
     const text = new ThreeMeshUI.Text({
         content:'Adjust slider & Left click',
-        fontColor:new THREE.Color(0xffffff),
+        fontColor:new THREE.Color(0x000000),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.025,width:1,offset:0.02,margin:0.06,
-        backgroundColor: new THREE.Color(0x999999),
+        height:0.015,width:1,offset:0.02,margin:0.06,
+        backgroundColor: new THREE.Color(0x777777),
         justifyContent:'center',
     });
     handle = new ThreeMeshUI.Block({
-        height:0.07,width:0.015,offset:0.01,
-        backgroundColor: new THREE.Color(0xffffff),
+        height:0.07,width:0.025,offset:0.01,
+        backgroundColor: new THREE.Color(0x000000),
         backgroundOpacity: 1
     });
     slider.add(handle)
-    sliderPanel.add(slider)
+    container.add(slider)
     textBlock.add(text)
-    sliderPanel.add(textBlock)
-    sliderPanel.position.set(0,-0.45,-1)
-    sliderPanel.rotation.set(-Math.PI/12,0,0)
-    sliderPanel.scale.set(0.75,0.75,0.75)
-    //camera.add(sliderPanel)
+    container.add(textBlock)
+    container.position.set(0,-0.5,-3)
+    container.rotation.set(-Math.PI/12,0,0)
+    container.scale.set(0.75,0.75,0.75)
+    //camera.add(container)
 }
 function updateSlider(){
     handle.position.x = (sliderValue - 0.5) * slider.getWidth()
@@ -521,6 +545,121 @@ function updateValue(){
     sliderValue = handle.position.x / slider.getWidth() + 0.5
 }
 /**Slider Panel */
+
+/**
+ *  Finish Panel
+ */
+//initialization
+let container2
+//panel making
+function FinishPanel1(){
+    //container
+    container2 = new ThreeMeshUI.Block({
+        height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+        fontFamily: './assets/Roboto-msdf.json',
+        fontTexture: './assets/Roboto-msdf.png',
+    })
+    //text block
+    const textBlock = new ThreeMeshUI.Block({
+        height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+        textAlign:'center',
+        justifyContent:'center',
+    })
+    const text = new ThreeMeshUI.Text({
+        content:'Thank you!!',
+        fontColor:new THREE.Color(0xffffff),
+        fontSize:0.2,
+        backgroundOpacity: 0.0,
+        offset:0.01
+    })
+    textBlock.add(text)
+    container2.add(textBlock)
+    container2.position.set(0,0,panel_z)
+    scene.add(container2)
+}
+/** Finish Panel */
+
+/** 
+ * VR Button Pnale
+ */
+//initialization
+let vrPanel
+//panel making
+async function VRPanel(){
+    return new Promise((resolve)=>{
+        console.log("vrpanel start")
+        //container
+        vrPanel = new ThreeMeshUI.Block({
+            height:sizes.height*1/position_ratio,width:sizes.width*1/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.9/position_ratio,width:sizes.width*0.9/position_ratio,margin:0.04,offset:0.03,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Press [Enter VR] button',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        vrPanel.add(textBlock)
+        scene.add(vrPanel)
+        vrPanel.position.set(0,-cameraGroup.position.y,-distance)
+        renderer.xr.addEventListener('sessionstart',()=>{
+            scene.remove(vrPanel)
+            document.body.requestPointerLock()
+            resolve()
+        })
+    })
+}
+/** VR Button */
+
+/**
+ * Test Intro Panel
+ */
+//initialization
+let startpanel
+//panel making
+async function StartPanel(){
+    return new Promise((resolve)=>{
+        //container
+        startpanel = new ThreeMeshUI.Block({
+            height:sizes.height*0.8/position_ratio,width:sizes.width*0.8/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.75/position_ratio,width:sizes.width*0.75/position_ratio,margin:0.04,offset:0.03,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Right Click \n To Test Session',
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        startpanel.add(textBlock)
+        scene.add(startpanel)
+        window.addEventListener("mousedown",(e)=>{
+            if(e.button == 2){
+                scene.remove(startpanel)
+                resolve()
+            }
+        })
+        startpanel.position.set(0,0,panel_z)
+    })
+}
+/** Test Intro Panel */
 
 /**
  * Test Session Panel
@@ -547,9 +686,9 @@ function TestPanel1(){
         offset:0.01
     })
     textBlock.add(text1)
-    testpanel1.position.set(0,-0.75,0);
     testpanel1.add(textBlock)
-};
+    testpanel1.position.set(0,0.75,panel_z)
+}
 let testpanel2
 function TestPanel2(){
     //container
@@ -573,20 +712,59 @@ function TestPanel2(){
     })
     textBlock.add(text1)
     testpanel2.add(textBlock)
-    testpanel2.position.set(0,-0.75,0)
-};
+    testpanel2.position.set(0,0.75,panel_z)
+}
 //activate
-TestPanel1();
-TestPanel2();
+TestPanel1()
+TestPanel2()
 /** Test SessionPanel */
+
+/**
+ * Exp Start panel
+ */
+let exppanel
+async function ExpPanel(model_num){
+    return new Promise((resolve)=>{
+        //container
+        exppanel = new ThreeMeshUI.Block({
+            height:sizes.height*0.8/position_ratio,width:sizes.width*0.8/position_ratio,margin:0.1,
+            fontFamily: './assets/Roboto-msdf.json',
+            fontTexture: './assets/Roboto-msdf.png',
+        })
+        //text block
+        const textBlock = new ThreeMeshUI.Block({
+            height:sizes.height*0.75/position_ratio,width:sizes.width*0.75/position_ratio,margin:0.04,offset:0.05,
+            textAlign:'center',
+            justifyContent:'center',
+        })
+        const text = new ThreeMeshUI.Text({
+            content:'Right Click \n To Exp ' + model_num +'/'+ model_files.length,
+            fontColor:new THREE.Color(0xffffff),
+            fontSize:0.2,
+            backgroundOpacity: 0.0,
+            offset:0.01
+        })
+        textBlock.add(text)
+        exppanel.add(textBlock)
+        exppanel.position.set(0,0,panel_z)
+        scene.add(exppanel)
+        window.addEventListener("mousedown",(e)=>{
+            if(e.button == 2){
+                scene.remove(exppanel)
+                resolve()
+            }
+        })
+    })
+}
+/** Exp panel */
 
 /**
  * trial
  */
 //sleep
 function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve,ms))
-}
+    return new Promise(resolve => setTimeout(resolve,ms));
+};
 //preload
 async function Preload(){
     init_model(0)
@@ -597,7 +775,6 @@ async function Preload(){
     }
     scene.remove(object_obj)
 }
-
 //test trial
 var testcontinue = true
 let mousex1 = 0
@@ -644,71 +821,50 @@ async function TestTrial(){
 
 //main trial
 async function OneSession(){
-    SliderPanel1();
-    let panelY = 0;
-    let panelZ = 1;
+    SliderPanel1()
     for (let session = modelstart-1; session < model_files.length;session++){
         let ReportTable= [
-            hdr_nameList
+            hdr_images_path
         ]
-        //load data
         init_model(session)
-        init_material(index_material)
-        camera.remove(sliderPanel);
-
-        //Test Intro
-        let testIntroPanel = TempletePanel('Right Click \n To Test Session',panelY,panelZ);
-        await ClickPanel(testIntroPanel,scene);
-
-        //Test session
-        camera.add(sliderPanel);
-        await TestSession();
-        await sleep(100);
-        camera.remove(sliderPanel);
-
-        //Exp Intro
-        let expPanel = TempletePanel('Right Click \n To Exp ' + (session+1) +'/'+ model_nameList.length,
-        panelY,panelZ);
-        await ClickPanel(expPanel,scene);
-
-        //Exp session
-        camera.add(sliderPanel);
+        init_material(Material_num-1)
+        camera.remove(container)
+        await StartPanel()
+        camera.add(container)
+        await TestSession()
+        await sleep(100)
+        camera.remove(container)
+        await ExpPanel(session+1)
+        camera.add(container)
         let resulttable
         for (let round = 0;round < roundnum;round++){
             console.log("round" + round + "start")
             resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
             stimulsData.sort(() => Math.random() - 0.5)
             for (let trial = 0;trial < stimulsData.length;trial++){
-                //load HDR
                 init_HDR(stimulsData[trial].id)
-
-                //trial
                 await OneTrial()
-
-                //save one result
                 stimulsData[trial].score = resultbar
+                stimulsData[trial].totalscore = stimulsData[trial].totalscore + resultbar
                 resulttable[round][stimulsData[trial].id] = resultbar
                 await sleep(50)
             }
-            //save results
             stimulsData.sort((a, b) => a.id - b.id)
             let reporcontents = stimulsData.map(field => field.score)
             console.log(reporcontents)
             ReportTable.push(reporcontents)
         }
-        //save data
         //let ReportTable = HeaderTable.concat(resulttable)
         let modelname = model_url[session].replace(/\.obj/g,"")
-        let xlsxname = experiment_name + "_" + material_nameList[index_material] + "_" + modelname + ".csv"
+        let xlsxname = experiment_name + "_" + ThisMatName + "_" + modelname + ".csv"
         exportToCsv(xlsxname, ReportTable)
     }
     //finalization
-    console.log("Exp Finished");
-    scene.background=new THREE.Color(0x333333);
-    camera.remove(sliderPanel);
-    scene.remove(plane_mesh);
-    let finishPanel = TempletePanel('Thank you!!',panelY,panelZ);
-    scene.add(finishPanel);
+    console.log("Exp Finished")
+    scene.background=new THREE.Color(0x333333)
+    scene.remove(container)
+    scene.remove(object_obj)
+    FinishPanel1()
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
@@ -728,27 +884,20 @@ async function OneTrial(){
 }
 function trialloop(){
     mousex2 = mouse_pl.x
-
     handle.position.x = ( mousex2 - mousex1 ) * slider_vel
     handle.position.x = Math.max(-slider.getWidth()/2,Math.min(slider.getWidth()/2,handle.position.x))
-
-    renderer.xr.getSession().requestAnimationFrame(trialloop)
+    requestAnimationFrame(trialloop)
 }
 
 //Exp Flow
 async function mainload(){
-    //loading data
-    let loadpanel = TempletePanel("Now Loading",-Offset_Y,-Offset_Z);
-    scene.add(loadpanel);
+    LoadPanel()
     await modelload()
     await hdrload()
     await Data_make()
     await Preload()
     scene.remove(loadpanel)
-
-    //Exp Start
-    let vrpanel = TempletePanel("Press [Enter VR] button",-Offset_Y,-Offset_Z);
-    await VRPanel(vrpanel,scene);
+    await VRPanel()
     OneSession()
 }
 mainload()
@@ -784,7 +933,7 @@ function exportToCsv(filename, rows) {
     //CSVファイルをBlobにしてダウンロード
     var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' })
     var link = document.createElement("a")
-    if (link.download !== undefined) { // feature detection
+    if (link.download !== undefined) {
         // Browsers that support HTML5 download attribute
         var url = URL.createObjectURL(blob)
         link.setAttribute("href", url)
@@ -803,44 +952,74 @@ function exportToCsv(filename, rows) {
 //widowresize
 function onWindowResize(){
     // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
 
     // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.position.set(0,0,dist(fov))
-    camera.updateProjectionMatrix()
-
+    camera.aspect = sizes.width / sizes.height;
+    //camera.position.set(0,0,dist(fov));
+    camera.updateProjectionMatrix();
+    
     // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+};
+window.addEventListener('resize', onWindowResize);
+
+//fullscreen
+function WindowFullscreen(){
+    if(!document.fullscreenElement){
+        canvas.requestFullscreen()
+    }else{
+        document.exitFullscreen()
+    }
 }
 /**Function */
 
 /**
  * eventlister
  */
-//resize
-window.addEventListener('resize', onWindowResize)
-//change loaded
+//keydown
 document.addEventListener("keydown",(e)=>{
-    //hdr
     //press Q
-    if(e.keyCode == 81 && index_HDR > 0){
-        index_HDR -=1;
-        init_HDR(index_HDR);
-    }
+    if(e.keyCode == 81 && index_master > 0){
+        index_master -=1;
+        init_HDR(index_master);
+    };
     //press E
-    if(e.keyCode == 69 && index_HDR < hdr_files.length-1){
-        index_HDR +=1;
-        init_HDR(index_HDR)
-    }
-})
-//mouse
+    if(e.keyCode == 69 && index_master < hdr_files.length-1){
+        index_master +=1;
+        init_HDR(index_master);
+    };
+    //press A
+    if(e.keyCode == 65){
+        WindowFullscreen();
+    };
+    //press esc
+    if (e.keyCode == 27){
+        document.exitPointerLock();
+    };
+});
+
+//mouse move
 window.addEventListener('mousemove',e =>{
     //pointer lock api
-    mouse_pl.x += e.movementX/position_ratio
-    mouse_pl.y += e.movementY/position_ratio
-    
-})
+    mouse_pl.x += e.movementX/position_ratio;
+    mouse_pl.y += e.movementY/position_ratio;
+});
+
+// pointerlock
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    if (document.body.requestPointerLock) {
+        document.body.requestPointerLock();
+    }
+});
+document.addEventListener('pointerlockchange',()=>{
+    if(document.pointerLockElement == document.body){
+        console.log("pointer locked");
+    } else {
+        console.log("pointer unlocked");
+    };
+});
 /**eventlistner */

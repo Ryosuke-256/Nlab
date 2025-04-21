@@ -20,7 +20,7 @@ const hdr_images_path = [
     '5.hdr','125.hdr',
 ]
 */
-/**
+
 const hdr_images_path = [
     '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
     '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
@@ -29,20 +29,20 @@ const hdr_images_path = [
     '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
     '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
 ]
- */
 
+/**
 const hdr_images_path = [
     '19.hdr','39.hdr','78.hdr','80.hdr','102.hdr',
     '125.hdr','152.hdr','203.hdr','226.hdr','227.hdr',
     '230.hdr','232.hdr','243.hdr','278.hdr','281.hdr'
 ]
-
+ */
 
 const model_base_path = 'models/normal\\'
 const model_path = [
     'sphere.obj',
     'bunny.obj',
-    //'dragon.obj',
+    'dragon.obj',
     'boardA.obj',
     'boardB.obj',
     'boardC.obj',
@@ -94,7 +94,7 @@ canvas = document.querySelector('canvas.webgl')
 scene = new THREE.Scene()
 
 //camera
-fov = 40
+fov = 20
 camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
 camera.position.set(0,0,dist(fov) / cameraScale)
 scene.add(camera)
@@ -233,11 +233,11 @@ const default_1 = new THREE.MeshPhysicalMaterial({
     dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
     sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
 })
-material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
-let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
+//material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
+//let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
-//material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
-//let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
+material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
+let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
 
 /** Object */
 
@@ -450,37 +450,6 @@ async function mainload(){
     init_HDR(index_HDR);
 }
 mainload()
-/** 順番通りload 
-async function hdrloader() {
-    //HDRloadmanager
-    const loadingManager = new THREE.LoadingManager(()=>{
-        console.log("Finished loading")
-        init_HDR(index_HDR)
-    },(itemUrl,itemsLoaded,itemsTotal)=>{
-        console.log("Files loaded:" + itemsLoaded + "/" + hdr_images_path.length)
-    })
-    const loader1 = new RGBELoader(loadingManager)
-
-    for (let i = 0; i < hdr_images_path.length; i++) {
-        const element = hdr_images_path[i]
-        const imagepath = base_path + element
-
-        await new Promise((resolve, reject) => {
-            loader1.load(
-                imagepath,
-                (texture) => {
-                    hdr_files.push(texture)
-                    hdr_url.push(element)
-                    resolve()
-                },
-                undefined,
-                (err) => reject(err)
-            )
-        })
-    }
-}
-hdrloader()
-*/
 /**load */
 
 /**
