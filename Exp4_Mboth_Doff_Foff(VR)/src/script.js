@@ -8,7 +8,7 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 // slider valocity
 const slider_vel = 0.25;
 //round limit
-const roundnum = 1;
+const roundnum = 5;
 //model startq
 const modelstart = 1;
 //camera Offset
@@ -441,6 +441,7 @@ function SliderPanel1(){
         backgroundOpacity: 1
     });
     slider.add(handle)
+
     sliderPanel.add(slider)
     textBlock.add(text)
     sliderPanel.add(textBlock)
