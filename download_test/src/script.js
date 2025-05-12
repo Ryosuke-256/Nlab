@@ -60,9 +60,6 @@ const sizes = {width: windowsize,height: windowsize}
 //mouse follow
 let cursor1_mesh
 
-//camera
-let fov
-
 //widowsize関連補正
 let position_ratio = 250
 
@@ -94,9 +91,19 @@ canvas = document.querySelector('canvas.webgl')
 scene = new THREE.Scene()
 
 //camera
-fov = 20
-camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10)
-camera.position.set(0,0,dist(fov) / cameraScale)
+let camera_dist = 2.94
+let camera_vertical = 1.02
+function GetFOV(y,z){
+    const radians = Math.atan2(y,z);
+    const degrees = radians * (180/Math.PI);
+    console.log(degrees);
+    return degrees;
+}
+
+
+let fov = GetFOV(camera_vertical,camera_dist)
+camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, camera_dist*10)
+camera.position.set(0,0,camera_dist)
 scene.add(camera)
 //camera distance
 function dist (fov) {
@@ -483,7 +490,7 @@ function onWindowResize(){
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
-    camera.position.set(0,0,dist(fov))
+    camera.position.set(0,0,camera_dist)
     camera.updateProjectionMatrix()
 
     // Update renderer
@@ -524,22 +531,22 @@ window.addEventListener("dblclick",WindowFullscreen)
 //number key to camera 1 to 6
 document.addEventListener("keydown",(e)=>{
     if(e.keyCode == 49) {
-        camera.position.set(0,0,dist(fov) / cameraScale)
+        camera.position.set(0,0,camera_dist)
     }
     if(e.keyCode == 50) {
-        camera.position.set(dist(fov) / cameraScale,0,0)
+        camera.position.set(camera_dist,0,0)
     }
     if(e.keyCode == 51) {
-        camera.position.set(0,0,-dist(fov) / cameraScale)
+        camera.position.set(0,0,-camera_dist)
     }
     if(e.keyCode == 52) {
-        camera.position.set(-dist(fov) / cameraScale,0,0)
+        camera.position.set(-camera_dist,0,0)
     }
     if(e.keyCode == 53) {
-        camera.position.set(0,dist(fov) / cameraScale,0)
+        camera.position.set(0,camera_dist,0)
     }
     if(e.keyCode == 54) {
-        camera.position.set(0,-dist(fov) / cameraScale,0)
+        camera.position.set(0,-camera_dist,0)
     }
 })
 

@@ -9,10 +9,6 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
  */
 // slider valocity
 const slider_vel = 0.25
-//round limit
-const roundnum = 1
-//model startq
-const modelstart = 1
 //camera Offset
 let Offset_Y = 1.5;
 let Offset_Z = 3.0;
@@ -20,11 +16,11 @@ let Offset_Z = 3.0;
 //imagefiles
 const base_path = 'image\\'
 
-/**
+
 const hdr_nameList = [
     '19','39','78',
 ];
- */
+
 
 /**
 const hdr_nameList = [
@@ -34,10 +30,12 @@ const hdr_nameList = [
 ];
  */
 
+/**
 const hdr_nameList = [
     '19','39','78','80','102','125','152','203','226','227',
     '230','232','243','278','281'
 ]
+ */
 
 //models
 const model_base_path = 'models/normal\\'
@@ -56,52 +54,6 @@ let index_model = 0;
 /**
  * initializing
  */
-//name input 
-let experiment_name = prompt("名前を入力してください:");
-console.log("入力された名前は: " + experiment_name)
-let namenum = 0
-for (let i=0;i<experiment_name.length; i++){
-    namenum += experiment_name.charCodeAt(i);
-}
-
-index_material = prompt("何回目ですか？:") - 1;
-while(index_material < 0 || index_material > 3){
-    index_material = prompt("1-4の範囲で入力してください");
-}
-
-console.log("name number : "+namenum);
-let changenseedlist = [0,0,0,0,0,0]
-for (let i = changenseedlist.length - 1 ; i >=0; i--){
-    namenum = Math.floor(seededRandom(1,24*100,namenum))
-    changenseedlist[i] = namenum
-}
-
-for (let i = material_nameList.length-1 ; i >=0; i--){
-    let changenum = changenseedlist[i] % 4;
-    //console.log("/nchangenum : "+changenum)
-    let tmpStorage = material_nameList[i]
-    material_nameList[i] = material_nameList[changenum]
-    material_nameList[changenum] = tmpStorage
-}
-
-console.log("chang list : " + changenseedlist)
-console.log(material_nameList)
-
-
-function createseededRandom(seed) { 
-    return function() {
-        seed = (seed * 9301 + 49297) % 233280
-        return seed / 233280
-    }
-}
-
-function seededRandom(min,max,seed){
-    const randomFunc = createseededRandom(seed); 
-    return Math.floor(randomFunc() * (max - min + 1)) + min;
-}
-
-
-console.log("今回のMaterialは：" + material_nameList[index_material])
 
 //size
 let sizes = {width: window.innerWidth,height: window.innerHeight};
@@ -143,7 +95,6 @@ let renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
 })
-//renderer = new THREE.WebGLRenderer()
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.outputEncoding = THREE.sRGBEncoding
@@ -154,6 +105,13 @@ renderer.toneMappingExposure = 1.0
 //VR
 renderer.xr.enabled = true
 document.body.appendChild( VRButton.createButton( renderer ))
+
+let xrCamera_0
+renderer.xr.addEventListener('sessionstart',()=>{
+    renderer.render( scene, camera );
+    xrCamera_0 = renderer.xr.getCamera();
+    console.log(xrCamera_0);
+})
 
 function animate(){
     //second
@@ -224,10 +182,10 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
  * Object
  */
 //Mask plate
-const outerWidth = 20;
-const outerHeight = 10;
-const innerWidth = 1;
-const innerHeight = 1;
+let outerWidth = 20;
+let outerHeight = 10;
+let innerWidth = 1;
+let innerHeight = 1;
 
 const outerShape = new THREE.Shape();
 outerShape.moveTo(-outerWidth / 2, -outerHeight / 2);
@@ -249,6 +207,23 @@ const material_mask = new THREE.MeshBasicMaterial({ color: 0x666666, side: THREE
 const mask = new THREE.Mesh(geometry_mask, material_mask);
 mask.position.z = 0; // カメラの前に配置
 scene.add(mask)
+
+document.addEventListener("keydown",(e)=>{
+    //press ←
+    if(e.keyCode == 37){
+        mask.scale.x -= 0.01;
+        mask.scale.y -= 0.01;
+    }
+    //press →
+    if(e.keyCode == 39){
+        mask.scale.x += 0.01;
+        mask.scale.y += 0.01;
+    }
+    //press ↓
+    if(e.keyCode == 40){
+        console.log(mask.scale);
+    }
+})
 
 //background sphere
 const BGsphere_geo = new THREE.SphereGeometry(3.5,32,16)
@@ -285,14 +260,8 @@ const pla0225 = new THREE.MeshPhysicalMaterial({
     specularIntensity:0 //鏡面反射
 })
 
+
 let material_list = [cu0025,cu0129,pla0075,pla0225]
-for (let i = material_list.length-1 ; i >= 0; i--){
-    let changenum = changenseedlist[i]%4;
-    //console.log("changenum : "+changenum)
-    let tmpStorage = material_list[i]
-    material_list[i] = material_list[changenum]
-    material_list[changenum] = tmpStorage
-}
 //console.log(material_list)
 
 /**
@@ -307,18 +276,6 @@ async function modelload(){
         //Modelloadmanager
         const ModelloadingManager = new THREE.LoadingManager(()=>{
             console.log("Finished Model loading")
-            //Shuffle liset
-            //console.log(model_url)
-            for (let i = model_url.length-1; i>=0; i--){
-                let changenum = (changenseedlist[i] + index_material) % model_url.length;
-                let tmpStorage1 = model_url[i]
-                model_url[i] = model_url[changenum]
-                model_url[changenum] = tmpStorage1
-                let tmpStorage2 = model_files[i]
-                model_files[i] = model_files[changenum]
-                model_files[changenum] = tmpStorage2
-            }
-            console.log(model_url)
             resolve()
         },(itemUrl,itemsLoaded,itemsTotal)=>{
             console.log("Model loaded:" + itemsLoaded + "/" + model_nameList.length)
@@ -408,7 +365,6 @@ function init_HDR(index){
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
-    init_BGsphere(BGsphere_mesh,hdr_files[index])
 }
 //material load
 function init_material(index){
@@ -427,12 +383,6 @@ function init_model(index){
     init_material(index_material)
     object_obj.castShadow = true
     scene.add(object_obj)
-}
-
-//BGsphere load
-function init_BGsphere(mesh,texture){
-    mesh.material.map = texture
-    mesh.material.needsUpdate = true
 }
 
 /** Loading */
@@ -499,19 +449,6 @@ async function VRPanel(container,parent){
     })
 }
 
-// Click Panel
-async function ClickPanel(container,parent){
-    return new Promise((resolve)=>{
-        parent.add(container);
-        window.addEventListener("mousedown",(e)=>{
-            if(e.button == 2){
-                parent.remove(container)
-                resolve()
-            }
-        })
-    })
-}
-
 /**
  * Slider Panel
  */
@@ -572,64 +509,6 @@ function updateValue(){
 /**Slider Panel */
 
 /**
- * Test Session Panel
- */
-let testpanel1
-function TestPanel1(){
-    //container
-    testpanel1 = new ThreeMeshUI.Block({
-        height:0.3,width:1.3,margin:0.1,
-        fontFamily: './assets/Roboto-msdf.json',
-        fontTexture: './assets/Roboto-msdf.png',
-    })
-    //text block
-    const textBlock = new ThreeMeshUI.Block({
-        height:0.12,width:1.05,margin:0.04,offset:0.03,
-        textAlign:'center',
-        justifyContent:'center',
-    })
-    const text1 = new ThreeMeshUI.Text({
-        content:'This is Test Session',
-        fontColor:new THREE.Color(0xffffff),
-        fontSize:0.1,
-        backgroundOpacity: 0.0,
-        offset:0.01
-    })
-    textBlock.add(text1)
-    testpanel1.position.set(0,-0.75,0);
-    testpanel1.add(textBlock)
-};
-let testpanel2
-function TestPanel2(){
-    //container
-    testpanel2 = new ThreeMeshUI.Block({
-        height:0.5,width:2.0,margin:0.1,
-        fontFamily: './assets/Roboto-msdf.json',
-        fontTexture: './assets/Roboto-msdf.png',
-    })
-    //text block
-    const textBlock = new ThreeMeshUI.Block({
-        height:0.4,width:1.5,margin:0.04,offset:0.03,
-        textAlign:'center',
-        justifyContent:'center',
-    })
-    const text1 = new ThreeMeshUI.Text({
-        content:'Right Click to finish test',
-        fontColor:new THREE.Color(0xffffff),
-        fontSize:0.2,
-        backgroundOpacity: 0.0,
-        offset:0.01
-    })
-    textBlock.add(text1)
-    testpanel2.add(textBlock)
-    testpanel2.position.set(0,-0.75,0)
-};
-//activate
-TestPanel1();
-TestPanel2();
-/** Test SessionPanel */
-
-/**
  * trial
  */
 //sleep
@@ -647,28 +526,25 @@ async function Preload(){
     scene.remove(object_obj)
 }
 
-//test trial
-var testcontinue = true
+//debugSession
+var debugcontinue = true
 let mousex1 = 0
 let mousex2 = 0
-let testcount = 0
-async function TestSession(){
-    testcontinue = true
-    testcount = 0
-    while(testcontinue){ 
-        if(testcount < hdr_files.length){
-            scene.add(testpanel1)
-        }else{
-            scene.add(testpanel2)
-        }
-        init_HDR(stimulsData[testcount % hdr_files.length].id)
-        await TestTrial()
-        testcount += 1
-        scene.remove(testpanel1)
-        scene.remove(testpanel2)
+let debugcount = 0;
+async function DebugSession(){
+    SliderPanel1();
+    camera.remove(sliderPanel);
+    camera.add(sliderPanel);
+    init_model(index_model)
+    init_material(index_material)
+    debugcontinue = true
+    while(debugcontinue){ 
+        init_HDR(stimulsData[debugcount % hdr_files.length].id)
+        await DebugTrial()
+        debugcount += 1;
     }
 }
-async function TestTrial(){
+async function DebugTrial(){
     return new Promise((resolve)=>{
         mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
         trialloop()
@@ -681,98 +557,13 @@ async function TestTrial(){
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
-            if(e.button == 2 && testcount >= hdr_files.length){
-                testcontinue = false
+            if(e.button == 2 && debugcount >= hdr_files.length){
+                debugcontinue = false
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
         }
         document.addEventListener("mousedown",TrialFunction)
-    })
-}
-
-//main trial
-async function OneSession(){
-    SliderPanel1();
-    let panelY = 0;
-    let panelZ = 1;
-    for (let session = modelstart-1; session < model_files.length;session++){
-        let ReportTable= [
-            hdr_nameList
-        ]
-        //load data
-        init_model(session)
-        init_material(index_material)
-        camera.remove(sliderPanel);
-
-        //Test Intro
-        let testIntroPanel = TempletePanel('Right Click \n To Test Session',panelY,panelZ);
-        await ClickPanel(testIntroPanel,scene);
-
-        //Test session
-        camera.add(sliderPanel);
-        await TestSession();
-        await sleep(100);
-        camera.remove(sliderPanel);
-
-        //Exp Intro
-        let expPanel = TempletePanel('Right Click \n To Exp ' + (session+1) +'/'+ model_nameList.length,
-        panelY,panelZ);
-        await ClickPanel(expPanel,scene);
-
-        //Exp session
-        camera.add(sliderPanel);
-        let resulttable
-        for (let round = 0;round < roundnum;round++){
-            console.log("round" + round + "start")
-            resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
-            stimulsData.sort(() => Math.random() - 0.5)
-            for (let trial = 0;trial < stimulsData.length;trial++){
-                //load HDR
-                init_HDR(stimulsData[trial].id)
-
-                //trial
-                await OneTrial()
-
-                //save one result
-                stimulsData[trial].score = resultbar
-                resulttable[round][stimulsData[trial].id] = resultbar
-                await sleep(50)
-            }
-            //save results
-            stimulsData.sort((a, b) => a.id - b.id)
-            let reporcontents = stimulsData.map(field => field.score)
-            console.log(reporcontents)
-            ReportTable.push(reporcontents)
-        }
-        //save data
-        //let ReportTable = HeaderTable.concat(resulttable)
-        let modelname = model_url[session].replace(/\.obj/g,"")
-        let xlsxname = experiment_name + "_" + material_nameList[index_material] + "_" + modelname + ".csv"
-        exportToCsv(xlsxname, ReportTable)
-    }
-    //finalization
-    console.log("Exp Finished");
-    scene.background=new THREE.Color(0x333333);
-    camera.remove(sliderPanel);
-    scene.remove(plane_mesh);
-    let finishPanel = TempletePanel('Thank you!!',panelY,panelZ);
-    scene.add(finishPanel);
-}
-async function OneTrial(){
-    return new Promise((resolve)=>{
-        mousex1 = mouse_pl.x + (Math.random() - 0.5)*3
-        trialloop()
-        document.addEventListener("mousedown",TrialFunction)
-        function TrialFunction(e){
-            if(e.button == 0){
-                updateValue()
-                console.log(sliderValue)
-                resultbar = sliderValue
-                document.removeEventListener("mousedown",TrialFunction)
-                resolve()
-            }
-        }
     })
 }
 function trialloop(){
@@ -784,7 +575,7 @@ function trialloop(){
     renderer.xr.getSession().requestAnimationFrame(trialloop)
 }
 
-//Exp Flow
+//Flow
 async function mainload(){
     //loading data
     let loadpanel = TempletePanel("Now Loading",-Offset_Y,-Offset_Z);
@@ -798,53 +589,10 @@ async function mainload(){
     //Exp Start
     let vrpanel = TempletePanel("Press [Enter VR] button",-Offset_Y,-Offset_Z);
     await VRPanel(vrpanel,scene);
-    OneSession()
+    DebugSession();
 }
 mainload()
 /**trial */
-
-/**
- * Write Out
- */
-//csv出力
-function exportToCsv(filename, rows) {
-    //CSVの各行を処理する
-    var processRow = function (row) {
-        var finalVal = ''
-        for (var j = 0; j < row.length; j++) {
-            var innerValue = row[j] === null ? '' : row[j].toString()
-            if (row[j] instanceof Date) {
-                innerValue = row[j].toLocaleString()
-            }
-            var result = innerValue.replace(/"/g, '""')
-            if (result.search(/("|,|\n)/g) >= 0)
-                result = '"' + result + '"'
-            if (j > 0)
-                finalVal += ','
-            finalVal += result
-        }
-        return finalVal + '\n'
-    };
-    //CSVファイル全体を生成する
-    var csvFile = ''
-    for (var i = 0; i < rows.length; i++) {
-        csvFile += processRow(rows[i])
-    }
-    //CSVファイルをBlobにしてダウンロード
-    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' })
-    var link = document.createElement("a")
-    if (link.download !== undefined) { // feature detection
-        // Browsers that support HTML5 download attribute
-        var url = URL.createObjectURL(blob)
-        link.setAttribute("href", url)
-        link.setAttribute("download", filename)
-        link.style.visibility = 'hidden'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-    }
-}
-/**Write Out */
 
 /**
  * Function
@@ -874,15 +622,39 @@ window.addEventListener('resize', onWindowResize)
 //change loaded
 document.addEventListener("keydown",(e)=>{
     //hdr
-    //press Q
-    if(e.keyCode == 81 && index_HDR > 0){
+    //press T
+    if(e.keyCode == 84 && index_HDR > 0){
         index_HDR -=1;
         init_HDR(index_HDR);
     }
-    //press E
-    if(e.keyCode == 69 && index_HDR < hdr_files.length-1){
+    //press Y
+    if(e.keyCode == 89 && index_HDR < hdr_files.length-1){
         index_HDR +=1;
         init_HDR(index_HDR)
+    }
+
+    //materials
+    //press E
+    if(e.keyCode == 69 && index_material > 0){
+        index_material -=1
+        init_material(index_material)
+    }
+    //press R
+    if(e.keyCode == 82 && index_material < material_list.length-1){
+        index_material += 1
+        init_material(index_material)
+    }
+
+    //models
+    //press Q
+    if(e.keyCode == 81 && index_model > 0){
+        index_model -=1;
+        init_model(index_model);
+    }
+    //press W
+    if(e.keyCode == 87 && index_model < model_files.length-1){
+        index_model +=1;
+        init_model(index_model);
     }
 })
 //mouse
