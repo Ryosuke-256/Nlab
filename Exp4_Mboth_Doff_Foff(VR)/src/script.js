@@ -26,7 +26,7 @@ if (HeadTracking){
 
 /** Setting */
 //imagefiles
-const base_path = 'image\\20degree\\'
+const base_path = 'image\\19degree\\'
 /**
 const hdr_nameList = [
     '19','39','78',
@@ -255,7 +255,7 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /**
  * Geometry
  */
-const plane_geometry = new THREE.PlaneGeometry(1,1);
+const plane_geometry = new THREE.PlaneGeometry(1.02,1.02);
 const plane_material = new THREE.MeshBasicMaterial({color : 0xffffff,side: THREE.DoubleSide});
 const plane_mesh = new THREE.Mesh(plane_geometry,plane_material);
 if (HeadTracking){
