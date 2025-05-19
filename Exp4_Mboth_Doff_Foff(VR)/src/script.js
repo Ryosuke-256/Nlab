@@ -10,7 +10,7 @@ const slider_vel = 0.25;
 //round limit
 const roundnum = 5;
 //model startq
-const modelstart = 1;
+const modelstart = 4;
 //camera Offset
 let Offset_Y,Offset_Z;
 //Head Tracking ON/OFF,
