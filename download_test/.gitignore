@@ -1,5 +1,6 @@
 #static remove
 static/
+results/
 
 # Logs
 logs
