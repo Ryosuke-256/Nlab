@@ -12,9 +12,9 @@ const slider_vel = 0.25
 //camera distance
 const distance = 3
 //round limit
-const roundnum = 5
+const roundnum = 1
 //model startq
-const modelstart = 1
+const modelstart = 6
 
 /** Setting */
 
