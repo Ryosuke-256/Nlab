@@ -203,3 +203,44 @@ React memo
 ・npx create-react-app filenameでディレクトリ作成
 ・defaultでは npm run startでdebug
 ・App.jsで機能を作ってindex.jsで作ったappを使うイメージ
+
+
+PIXI memo
+・Pixi.jsから画像をloadするには
+await PIXI.Assets.load('https://pixijs.com/assets/URL')
+
+・オブジェクトの親子関係
+グローバル座標とローカル座標も気にかける
+toGlobal() : ローカル座標からグローバル座標に変換
+
+・SVG画像をサポートしてる
+ラスターとしてload
+const svgTexture = await Assets.load('image.svg');
+const mySprite = new Sprite(svgTexture);
+ベクターとしてload
+const svgTexture = await Assets.load('path/image.svg',{resolution:4});
+const mySprite = new Sprite(svgTexture);
+PixiOriginalでload
+const myGraphics = new Graphics(svgContext);
+
+・Render layerを使おう!
+
+・awaitが必要な処理
+await app.init({});
+await PIXI.Assets.load();
+await PIXI.Assets.loadBundle();
+
+・関数解説
+・anchor(x,y);
+Spriteのanchorpointを設定する。引数は割合のため、0.5にすると中心になる。
+
+
+・Graphicsについて
+・宣言型で描く
+let circleContext = new GraphicsContext()
+  .circle(100, 100, 50)
+  .fill('red')
+・GraphicsContext
+一回Graphicsで宣言しておくと、同じプロパティを持つGraphicsなら詳細を宣言しなくても使えるという機能
+さらにGraphics(before graphics)でもいい
+
