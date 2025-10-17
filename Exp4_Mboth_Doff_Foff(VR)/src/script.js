@@ -3,14 +3,14 @@ import ThreeMeshUI from 'three-mesh-ui';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 
 /**
- * Setteing
+ * Setteing chinchinkayui...
  */
 // slider valocity
 const slider_vel = 0.25;
 //round limit
 const roundnum = 5;
 //model startq
-const modelstart = 6;
+const modelstart = 1;
 //camera Offset
 let Offset_Y,Offset_Z;
 //Head Tracking ON/OFF,
