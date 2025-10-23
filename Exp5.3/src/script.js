@@ -804,7 +804,7 @@ async function OneSession(object_mesh){
                 init_HDR(object_data.stimulsData[trial].id);
 
                 //Head move
-                await headTrigger.wait(0.15);
+                //await headTrigger.wait(0.15);
 
                 //trial
                 await OneTrial()
