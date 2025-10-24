@@ -10,11 +10,11 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 // slider valocity
 const slider_vel = 0.25;
 //round limit
-const roundnum = 5;
+const roundnum = 2;
 //model startq
 const modelstart = 1;
 //camera Offset
-let Offset_Y = 1.1;
+let Offset_Y = 1.0;
 let Offset_Z = 0.5;
 //rotation angle 
 
@@ -41,10 +41,10 @@ const hdr_nameList = [
 */
 //models
 const basePath_geometry = 'models/normal\\';
-const nameList_geometry = ['bunny','boardA','boardC'];
+const nameList_geometry = ['sphere','bunny','dragon','boardA','boardB','boardC'];
 
 //materials
-const nameList_material = ['cu0025','pla0075'];
+const nameList_material = ['cu0025','cu0129','pla0075','pla0225'];
 
 //Sound
 const Path_sound = 'sound/Sound_B.mp3';
@@ -131,6 +131,9 @@ function dist (fov) {
     const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
     return dist
 }
+let camera_fix = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
+camera_fix.position.set(0,-Offset_Y,Offset_Z);
+scene.add(camera_fix);
 /**initialization */
 
 /**
@@ -153,19 +156,17 @@ renderer.xr.enabled = true;
 document.body.appendChild( VRButton.createButton( renderer ));
 
 class HeadMovementTrigger {
-    constructor(camera,soundUrl) {
+    constructor(camera,audioContext) {
         this.camera = camera;
         this.isWaiting = false;
         this.startPosition = new THREE.Vector3(); 
         this.threshold = 0.1;          
         this.resolveWaiting = null; 
 
-        if (soundUrl) {
-            this.sound = new Audio(soundUrl);
-            this.sound.preload = 'auto'; // 事前に読み込んでおく
-        } else {
-            this.sound = null;
-        }
+        this.audioContext = audioContext;
+        this.audioBuffer = null;
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.connect(this.audioContext.destination);
     }
 
     /**
@@ -212,21 +213,51 @@ class HeadMovementTrigger {
         });
     }
 
-    playSound() {
-        if (this.sound) {
-            // 一瞬で再生が終わる短い音の場合、再生位置を最初に戻す
-            this.sound.currentTime = 0; 
-            this.sound.play().catch(e => console.error("音声の再生に失敗しました:", e));
+    async loadSound(soundUrl) {
+        try {
+            const response = await fetch(soundUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+            console.log("音声の読み込み完了:", soundUrl);
+        } catch (e) {
+            console.error("音声の読み込みに失敗しました:", e);
         }
     }
-    setVolume(volume) {
-        if (this.sound) {
-            this.sound.volume = Math.max(0.0, Math.min(1.0, volume));
+
+    playSound() {
+        if (!this.audioBuffer) {
+            console.warn("音声データがまだ読み込まれていません。");
+            return;
         }
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
+        const source = this.audioContext.createBufferSource();
+        source.buffer = this.audioBuffer;
+        source.connect(this.gainNode);
+        source.start(0);
+    }
+
+    setVolume(volume) {
+        const safeVolume = Math.max(0, volume); 
+        // GainNodeの値を設定（1.0以上もOK）
+        this.gainNode.gain.setValueAtTime(safeVolume, this.audioContext.currentTime);
     }
 }
 
-const headTrigger = new HeadMovementTrigger(camera, Path_sound);
+let headTrigger;
+async function setupAndRunExperiment(){
+    const audioContext = new AudioContext();
+    headTrigger = new HeadMovementTrigger(camera,audioContext);
+    headTrigger.setVolume(1.0);
+    try {
+        await headTrigger.loadSound(Path_sound);
+    } catch (e) {
+        console.error("セットアップ失敗:", e);
+        return;
+    }
+}
 
 function animate(){
     //second
@@ -362,7 +393,6 @@ class OneData{
         this.score = new Array(arrayLength);
         this.hdr = hdr;
         this.index = Array.from({length:arrayLength},(_,i) => i);
-        this.tmpscore = 0;
     };
     PickandRemoveElement(){
         const randomIndex = Math.floor(Math.random() * this.index.length);
@@ -413,7 +443,7 @@ class stimulu_Object{
             ior:1.5,reflectivity:0.5, // 屈折率
             specularIntensity:0 //鏡面反射
         })
-        this.material_list = [this.cu0025,this.pla0075]
+        this.material_list = [this.cu0025,this.cu0129,this.pla0075,this.pla0225]
         for (let i = this.material_list.length-1 ; i >= 0; i--){
             let changenum = this.changeSeedList[i]%4;
             //console.log("changenum : "+changenum)
@@ -804,21 +834,22 @@ async function OneSession(object_mesh){
                 init_HDR(object_data.stimulsData[trial].id);
 
                 //Head move
-                await headTrigger.wait(0.15);
+                await headTrigger.wait(0.1);
+                //Sound
+
 
                 //trial
                 await OneTrial()
 
                 //save one result
-                object_data.stimulsData[trial].InsertElement(selectIndex,resultbar);
-                object_data.stimulsData[trial].tmpscore = resultbar;
+                object_data.stimulsData[trial].InsertElement(selectIndex,resultbar)
                 resulttable[round][object_data.stimulsData[trial].id] = resultbar
                 
                 await sleep(50)
             }
             //save results
             object_data.stimulsData.sort((a, b) => a.id - b.id)
-            let reporcontents = object_data.stimulsData.map(field => field.tmpscore)
+            let reporcontents = object_data.stimulsData.map(field => field.score)
             console.log(reporcontents)
             ReportTable.push(reporcontents)
         }
@@ -869,6 +900,7 @@ async function mainload(){
     //loading data
     let loadpanel = TempletePanel("Now Loading",-Offset_Y,-Offset_Z);
     scene.add(loadpanel);
+    setupAndRunExperiment();
     const object_stimulu = new stimulu_Object(changeseedlist,basePath_geometry);
     await object_stimulu.modelload()
     await hdrload()
