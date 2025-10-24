@@ -14,7 +14,7 @@ const roundnum = 5;
 //model startq
 const modelstart = 1;
 //camera Offset
-let Offset_Y = 1.1;
+let Offset_Y = 1.5;
 let Offset_Z = 0.5;
 //rotation angle 
 
@@ -123,7 +123,7 @@ let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, 
 //camera.position.set(10000,0,dist(fov))
 const cameraGroup = new THREE.Group();
 cameraGroup.add(camera);
-cameraGroup.position.set(0,-Offset_Y,3.0)
+cameraGroup.position.set(0,-1.0,3.0)
 scene.add(cameraGroup)
 //camera distance
 function dist (fov) {
@@ -183,7 +183,7 @@ class HeadMovementTrigger {
         const distance = currentPosition.distanceTo(this.startPosition);
 
         if (distance > this.threshold) {
-            console.log(`頭の動きを検知 (移動距離: ${distance.toFixed(3)})`);
+            console.log(`移動距離: ${distance.toFixed(3)}`);
             this.isWaiting = false;
 
             this.playSound();
@@ -808,6 +808,7 @@ async function OneSession(object_mesh){
 
                 //trial
                 await OneTrial()
+                console.log(`HDR: ${object_data.stimulsData[trial].hdr},score: ${sliderValue.toFixed(3)}`)
 
                 //save one result
                 object_data.stimulsData[trial].InsertElement(selectIndex,resultbar);
@@ -845,7 +846,6 @@ async function OneTrial(){
         function TrialFunction(e){
             if(e.button == 0){
                 updateValue()
-                console.log(sliderValue)
                 resultbar = sliderValue
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
