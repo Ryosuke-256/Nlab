@@ -12,9 +12,9 @@ const slider_vel = 0.25;
 //round limit
 const roundnum = 5;
 //model startq
-const modelstart = 1;
+const modelstart = 2;
 //camera Offset
-let Offset_Y = 1.1;
+let Offset_Y = 2.2;
 let Offset_Z = 0.5;
 //rotation angle 
 
@@ -79,7 +79,7 @@ for (let i = changeseedlist.length - 1 ; i >=0; i--){
 }
 
 for (let i = nameList_material.length-1 ; i >=0; i--){
-    let changenum = changeseedlist[i] % 4;
+    let changenum = changeseedlist[i] % 2;
     //console.log("/nchangenum : "+changenum)
     let tmpStorage = nameList_material[i]
     nameList_material[i] = nameList_material[changenum]
@@ -123,7 +123,7 @@ let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, 
 //camera.position.set(10000,0,dist(fov))
 const cameraGroup = new THREE.Group();
 cameraGroup.add(camera);
-cameraGroup.position.set(0,-Offset_Y,3.0)
+cameraGroup.position.set(0,-1.0,3.0)
 scene.add(cameraGroup)
 //camera distance
 function dist (fov) {
@@ -183,7 +183,7 @@ class HeadMovementTrigger {
         const distance = currentPosition.distanceTo(this.startPosition);
 
         if (distance > this.threshold) {
-            console.log(`頭の動きを検知 (移動距離: ${distance.toFixed(3)})`);
+            console.log(`移動距離: ${distance.toFixed(3)}`);
             this.isWaiting = false;
 
             this.playSound();
@@ -415,7 +415,7 @@ class stimulu_Object{
         })
         this.material_list = [this.cu0025,this.pla0075]
         for (let i = this.material_list.length-1 ; i >= 0; i--){
-            let changenum = this.changeSeedList[i]%4;
+            let changenum = this.changeSeedList[i]%2;
             //console.log("changenum : "+changenum)
             let tmpStorage = this.material_list[i]
             this.material_list[i] = this.material_list[changenum]
@@ -808,6 +808,7 @@ async function OneSession(object_mesh){
 
                 //trial
                 await OneTrial()
+                console.log(`HDR: ${object_data.stimulsData[trial].hdr},score: ${sliderValue.toFixed(3)}`)
 
                 //save one result
                 object_data.stimulsData[trial].InsertElement(selectIndex,resultbar);
@@ -832,7 +833,7 @@ async function OneSession(object_mesh){
     console.log("Exp Finished");
     scene.background=new THREE.Color(0x333333);
     camera.remove(sliderPanel);
-    scene.remove(plane_mesh);
+    scene.remove(object_mesh);
     let finishPanel = TempletePanel('Thank you!!',panelY,panelZ);
     finishPanel.scale.set(0.2,0.2,0.2);
     scene.add(finishPanel);
@@ -845,7 +846,6 @@ async function OneTrial(){
         function TrialFunction(e){
             if(e.button == 0){
                 updateValue()
-                console.log(sliderValue)
                 resultbar = sliderValue
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
@@ -879,15 +879,11 @@ async function mainload(){
     document.addEventListener("keydown",(e)=>{
         //press ↑
         if(e.keyCode == 38){
-            object_stimulu.mesh.scale.x += 0.05;
-            object_stimulu.mesh.scale.y += 0.05;
-            object_stimulu.mesh.scale.z += 0.05;
+            cameraGroup.position.y += 0.05;
         };
         // press ↓
         if(e.keyCode == 40){
-            object_stimulu.mesh.scale.x -= 0.05;
-            object_stimulu.mesh.scale.y -= 0.05;
-            object_stimulu.mesh.scale.z -= 0.05;
+            cameraGroup.position.y -= 0.05;
         };
         // press →
         if(e.keyCode == 39){

@@ -12,9 +12,9 @@ const slider_vel = 0.25;
 //round limit
 const roundnum = 5;
 //model startq
-const modelstart = 1;
+const modelstart = 2;
 //camera Offset
-let Offset_Y = 1.5;
+let Offset_Y = 2.2;
 let Offset_Z = 0.5;
 //rotation angle 
 
@@ -79,7 +79,7 @@ for (let i = changeseedlist.length - 1 ; i >=0; i--){
 }
 
 for (let i = nameList_material.length-1 ; i >=0; i--){
-    let changenum = changeseedlist[i] % 4;
+    let changenum = changeseedlist[i] % 2;
     //console.log("/nchangenum : "+changenum)
     let tmpStorage = nameList_material[i]
     nameList_material[i] = nameList_material[changenum]
@@ -415,7 +415,7 @@ class stimulu_Object{
         })
         this.material_list = [this.cu0025,this.pla0075]
         for (let i = this.material_list.length-1 ; i >= 0; i--){
-            let changenum = this.changeSeedList[i]%4;
+            let changenum = this.changeSeedList[i]%2;
             //console.log("changenum : "+changenum)
             let tmpStorage = this.material_list[i]
             this.material_list[i] = this.material_list[changenum]
@@ -833,7 +833,7 @@ async function OneSession(object_mesh){
     console.log("Exp Finished");
     scene.background=new THREE.Color(0x333333);
     camera.remove(sliderPanel);
-    scene.remove(plane_mesh);
+    scene.remove(object_mesh);
     let finishPanel = TempletePanel('Thank you!!',panelY,panelZ);
     finishPanel.scale.set(0.2,0.2,0.2);
     scene.add(finishPanel);
@@ -879,15 +879,11 @@ async function mainload(){
     document.addEventListener("keydown",(e)=>{
         //press ↑
         if(e.keyCode == 38){
-            object_stimulu.mesh.scale.x += 0.05;
-            object_stimulu.mesh.scale.y += 0.05;
-            object_stimulu.mesh.scale.z += 0.05;
+            cameraGroup.position.y += 0.05;
         };
         // press ↓
         if(e.keyCode == 40){
-            object_stimulu.mesh.scale.x -= 0.05;
-            object_stimulu.mesh.scale.y -= 0.05;
-            object_stimulu.mesh.scale.z -= 0.05;
+            cameraGroup.position.y -= 0.05;
         };
         // press →
         if(e.keyCode == 39){
