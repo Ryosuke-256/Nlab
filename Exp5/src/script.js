@@ -1,32 +1,27 @@
 import * as THREE from 'three'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import ThreeMeshUI from 'three-mesh-ui';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 
 /**
- * Setteing chinchinkayui...
+ * Setteing
  */
 // slider valocity
 const slider_vel = 0.25;
 //round limit
-const roundnum = 5;
+const roundnum = 2;
 //model startq
 const modelstart = 1;
 //camera Offset
-let Offset_Y,Offset_Z;
-//Head Tracking ON/OFF,
-const HeadTracking = false;
+let Offset_Y = 1.5;
+let Offset_Z = 3.0;
+//rotation angle 
+let angle_rotation = 70;
 
-if (HeadTracking){
-    Offset_Y = 1.5;
-    Offset_Z = 3;
-}else {
-    Offset_Y = 0;
-    Offset_Z = 3;
-}
-
-/** Setting */
 //imagefiles
-const base_path = 'image\\19degree\\'
+const basePath_HDR = 'image\\'
+
 /**
 const hdr_nameList = [
     '19','39','78',
@@ -44,17 +39,20 @@ const hdr_nameList = [
     '19','39','78','80','102','125','152','203','226','227',
     '230','232','243','278','281'
 ]
- */
+*/
 //models
-const model_nameList = ['sphere','bunny','dragon','boardA','boardB','boardC'];
+const basePath_geometry = 'models/normal\\';
+const nameList_geometry = ['sphere','bunny','dragon','boardA','boardB','boardC'];
 
 //materials
-const material_nameList = ['cu0025','cu0129','pla0075','pla0225'];
+const nameList_material = ['cu0025','cu0129','pla0075','pla0225'];
 
 //index
 let index_HDR = 0;
 let index_material = 0;
 let index_model = 0;
+/** Setting */
+
 /**
  * initializing
  */
@@ -66,37 +64,28 @@ for (let i=0;i<experiment_name.length; i++){
     namenum += experiment_name.charCodeAt(i);
 }
 
-index_material = prompt("何回目ですか？:") - 1
+index_material = prompt("何回目ですか？:") - 1;
 while(index_material < 0 || index_material > 3){
-    index_material = prompt("1-4の範囲で入力してください")
+    index_material = prompt("1-4の範囲で入力してください");
 }
 
 console.log("name number : "+namenum);
-let changenseedlist = [0,0,0,0,0,0]
-for (let i = changenseedlist.length - 1 ; i >=0; i--){
+let changeseedlist = [0,0,0,0,0,0]
+for (let i = changeseedlist.length - 1 ; i >=0; i--){
     namenum = Math.floor(seededRandom(1,24*100,namenum))
-    changenseedlist[i] = namenum
+    changeseedlist[i] = namenum
 }
-console.log("chang list : " + changenseedlist)
 
-// random order material
-for (let i = material_nameList.length-1 ; i >=0; i--){
-    let changenum = changenseedlist[i] % 4;
+for (let i = nameList_material.length-1 ; i >=0; i--){
+    let changenum = changeseedlist[i] % 4;
     //console.log("/nchangenum : "+changenum)
-    let tmpStorage = material_nameList[i]
-    material_nameList[i] = material_nameList[changenum]
-    material_nameList[changenum] = tmpStorage
+    let tmpStorage = nameList_material[i]
+    nameList_material[i] = nameList_material[changenum]
+    nameList_material[changenum] = tmpStorage
 }
-console.log(material_nameList);
 
-// random order model
-for (let i = model_nameList.length-1; i>=0; i--){
-    let changenum = (changenseedlist[i] + index_material) % model_nameList.length;
-    let tmpStorage1 = model_nameList[i]
-    model_nameList[i] = model_nameList[changenum]
-    model_nameList[changenum] = tmpStorage1
-}
-console.log(model_nameList);
+console.log("chang list : " + changeseedlist)
+console.log(nameList_material)
 
 function createseededRandom(seed) { 
     return function() {
@@ -110,8 +99,7 @@ function seededRandom(min,max,seed){
     return Math.floor(randomFunc() * (max - min + 1)) + min;
 }
 
-console.log("今回のMaterialは：" + material_nameList[index_material])
-
+console.log("今回のMaterialは：" + nameList_material[index_material])
 
 //size
 let sizes = {width: window.innerWidth,height: window.innerHeight};
@@ -126,11 +114,11 @@ let canvas = document.querySelector('canvas.webgl');
 
 // Scene
 let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x888888);
 
 //camera
 let fov = 40;
 let camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
+//camera.position.set(10000,0,dist(fov))
 const cameraGroup = new THREE.Group();
 cameraGroup.add(camera);
 cameraGroup.position.set(0,-Offset_Y,Offset_Z)
@@ -141,14 +129,9 @@ function dist (fov) {
     const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
     return dist
 }
-
-//parent
-let parent;
-if (HeadTracking){
-    parent = scene;
-}else {
-    parent = camera;
-}
+let camera_fix = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, dist(fov)*10);
+camera_fix.position.set(0,-Offset_Y,Offset_Z);
+scene.add(camera_fix);
 /**initialization */
 
 /**
@@ -163,7 +146,7 @@ renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.shadowMap.enabled = true
-renderer.toneMapping = THREE.NoToneMapping
+renderer.toneMapping = THREE.CustomToneMapping
 renderer.toneMappingExposure = 1.0
 
 //VR
@@ -176,23 +159,6 @@ function animate(){
 
     //update
     ThreeMeshUI.update()
-
-    //XR
-    /**
-    if (!HeadTracking){
-        let xrCamera = renderer.xr.getCamera();
-
-        xrCamera.cameras[0].position.set(0,Offset_Y,Offset_Z);
-        xrCamera.cameras[0].rotation.set(0,0,0);
-        xrCamera.cameras[0].updateMatrix();
-        xrCamera.cameras[0].updateMatrixWorld();
-    
-        xrCamera.cameras[1].position.set(0,Offset_Y,Offset_Z);
-        xrCamera.cameras[1].rotation.set(0,0,0);
-        xrCamera.cameras[1].updateMatrix();
-        xrCamera.cameras[1].updateMatrixWorld();
-    }
-     */
 
     // Render
     renderer.render(scene, camera)
@@ -253,97 +219,235 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /** ToneMap */
 
 /**
- * Geometry
- */
-const plane_geometry = new THREE.PlaneGeometry(1.02,1.02);
-const plane_material = new THREE.MeshBasicMaterial({color : 0xffffff,side: THREE.DoubleSide});
-const plane_mesh = new THREE.Mesh(plane_geometry,plane_material);
-if (HeadTracking){
-    plane_mesh.position.set(0,0,0);
-}else {
-    plane_mesh.position.set(0,0,-Offset_Z);
-}
-parent.add(plane_mesh);
-
-/** Geometry */
-
-/**
  * Loading
  */
-function OneData(id) {
-    this.id = id;
-    this.score = 0;
+//hdr loading
+const hdr_files = []
+let hdr_url = []
+async function hdrload(){
+    return new Promise((resolve)=>{
+        //HDRloadmanager
+        const loadingManager = new THREE.LoadingManager(()=>{
+            console.log("Finished HDR loading");
+            resolve()
+        },(itemUrl,itemsLoaded,itemsTotal)=>{
+            console.log("HDR loaded:" + itemsLoaded + "/" + hdr_nameList.length)
+        })
+        //loadeverything
+        const loader1 = new RGBELoader(loadingManager)
+        
+        hdrloader(loader1)
+    })
+}
+async function hdrloader(loader){
+    for (let i = 0; i < hdr_nameList.length; i++) {
+        const element = hdr_nameList[i]
+        const imagepath = basePath_HDR + element + '.hdr'
+    
+        await new Promise((resolve, reject) => {
+            loader.load(
+                imagepath,
+                (texture) => {
+                    hdr_files.push(texture)
+                    hdr_url.push(element)
+                    resolve()
+                },
+                undefined,
+                (err) => reject(err)
+            )
+        })
+    }
+}
+// DataMaking
+class data_Object{
+    constructor(hdr_url,arraylength){
+        this.stimulsData = [];
+        this.url_Hdr = hdr_url;
+        this.arrayLength = arraylength;
+    };
+    async make_Data(){
+        return new Promise((resolve)=>{
+            for (let i = 0; i < this.url_Hdr.length; i++){
+                const hdr_name = this.url_Hdr[i]
+                let onedata = new OneData(i,hdr_name,this.arrayLength)
+                this.stimulsData.push(onedata)
+            }
+            resolve()
+        })
+    }
 };
 
-let imagesData, imagesURL, stimulsData;
-
-// Image load
-async function loadImages(path, nameList) {
-    return new Promise((resolve) => {
-        const loadingManager = new THREE.LoadingManager(() => {
-            console.log("Finished Image loading");
-            resolve();
-        }, (itemUrl, itemsLoaded, itemsTotal) => {
-            console.log("Image loaded: " + itemsLoaded + "/" + nameList.length);
-        });
-
-        const textureLoader = new THREE.TextureLoader(loadingManager);
-        pngLoader(textureLoader, path, nameList);
-    });
-}
-async function pngLoader(loader, path, nameList) {
-    imagesData = [];
-    imagesURL = [];
-    for (let i = 0; i < nameList.length; i++) {
-        const element = nameList[i];
-        let loadingPath = path + element + '.png';
-
-        loader.load(
-            loadingPath,
-            (texture) => {
-                texture.encoding = THREE.sRGBEncoding;
-                imagesData.push(texture);
-                imagesURL.push(element);
-            },
-            undefined,
-            (err) => reject(err)
-        );
+class OneData{
+    constructor(id,hdr,arrayLength){
+        this.id = id;
+        this.score = new Array(arrayLength);
+        this.hdr = hdr;
+        this.angle = new Array(arrayLength);
+        this.index = Array.from({length:arrayLength},(_,i) => i);
+    };
+    PickandRemoveElement(){
+        const randomIndex = Math.floor(Math.random() * this.index.length);
+        const pickedElement = this.index.splice(randomIndex,1);
+        return pickedElement[0];
+    };
+    InsertElement(index,score,angle){
+        this.score[index] = score;
+        this.angle[index] = angle;
+    };
+    DecideAngle(index,angle){
+        let maxAngle = Math.floor((angle*2)/this.score.length * (index + 1));
+        let minAngle = Math.ceil((angle*2)/this.score.length * index);
+        let differAngle = Math.floor((angle*2)/this.score.length);
+        let randomAngle = Math.floor(Math.random() * differAngle)
+        return -angle + minAngle + randomAngle
     };
 };
 
-// DataMaking
-async function makeDatas(){
-    stimulsData = [];
-    return new Promise((resolve)=>{
-        for (let i = 0; i < imagesURL.length; i++){
-            let onedata = new OneData(i)
-            stimulsData.push(onedata)
-        }
-        resolve()
-    })
+//init_HDR
+function init_HDR(index){
+    hdr_files[index].encoding = THREE.RGBEEncoding
+    hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
+    scene.background = hdr_files[index]
+    scene.environment = hdr_files[index]
 }
 
-// roundStart
-async function sessionStart(idx_model,idx_material){
-    let imageName = model_nameList[idx_model] + '_' + material_nameList[idx_material] + '_';
-    let imagePath = base_path + material_nameList[idx_material] + '\\' + model_nameList[idx_model] + '\\' + imageName;
+class stimulu_Object{
+    constructor(changeSeedList,path_geometry){
+        this.mesh = null
+        this.geometry_files = []
+        this.geometry_url = []
+        this.changeSeedList = changeSeedList
+        this.path_geometry = path_geometry
 
-    await loadImages(imagePath,hdr_nameList);
-    await makeDatas();
-};
+        //material make
+        this.cu0025 = new THREE.MeshPhysicalMaterial({
+            color:0xecacac, //いろいろ
+            metalness:1, roughness:0.025, //Standard
+        })
+        this.cu0129 = new THREE.MeshPhysicalMaterial({
+            color:0xecacac, //いろいろ
+            metalness:1, roughness:0.129, //Standard
+        })
+        this.pla0075 = new THREE.MeshPhysicalMaterial({
+            color:0xa8a8a8, //いろいろ
+            metalness:0, roughness:0, //Standard
+            clearcoat:1.0,clearcoatRoughness:0.075, //クリアコート
+            ior:1.5,reflectivity:0.5, // 屈折率
+            specularIntensity:0 //鏡面反射
+        })
+        this.pla0225 = new THREE.MeshPhysicalMaterial({
+            color:0xa8a8a8, //いろいろ
+            metalness:0, roughness:0, //Standard
+            clearcoat:1.0,clearcoatRoughness:0.225, //クリアコート
+            ior:1.5,reflectivity:0.5, // 屈折率
+            specularIntensity:0 //鏡面反射
+        })
+        this.material_list = [this.cu0025,this.cu0129,this.pla0075,this.pla0225]
+        for (let i = this.material_list.length-1 ; i >= 0; i--){
+            let changenum = this.changeSeedList[i]%4;
+            //console.log("changenum : "+changenum)
+            let tmpStorage = this.material_list[i]
+            this.material_list[i] = this.material_list[changenum]
+            this.material_list[changenum] = tmpStorage
+        }
+    }
 
-// update mesh texture
-function init_ObjTexture(mesh,texture){
-    mesh.material.map = texture
-    mesh.material.needsUpdate = true
+    async modelload(){
+        return new Promise((resolve)=>{
+            //Modelloadmanager
+            const ModelloadingManager = new THREE.LoadingManager(()=>{
+                console.log("Finished Model loading")
+                //Shuffle list
+                //console.log(this.geometry_url)
+                for (let i = this.geometry_url.length-1; i>=0; i--){
+                    let changenum = (this.changeSeedList[i] + index_material) % this.geometry_url.length;
+                    let tmpStorage1 = this.geometry_url[i]
+                    this.geometry_url[i] = this.geometry_url[changenum]
+                    this.geometry_url[changenum] = tmpStorage1
+                    let tmpStorage2 = this.geometry_files[i]
+                    this.geometry_files[i] = this.geometry_files[changenum]
+                    this.geometry_files[changenum] = tmpStorage2
+                }
+                console.log(this.geometry_url)
+                resolve()
+            },(itemUrl,itemsLoaded,itemsTotal)=>{
+                console.log("Model loaded:" + itemsLoaded + "/" + nameList_geometry.length)
+            })
+            //loadeverything
+            const model_loader = new OBJLoader(ModelloadingManager)
+            
+            this.modelloader(model_loader)
+        })
+    }
+    async modelloader(loader){
+        for (let i = 0; i < nameList_geometry.length; i++) {
+            const element = nameList_geometry[i]
+            const modelpath = this.path_geometry + element + '.obj'
+        
+            await new Promise((resolve, reject) => {
+                loader.load(
+                    modelpath,
+                    (obj) => {
+                        this.geometry_files.push(obj.children[0])
+                        this.geometry_url.push(element)
+                        resolve()
+                    },(xhr)=>{
+                    },
+                    (err) => reject(err)
+                )
+            })
+        }
+    }
+    //material load
+    init_material(index_material){
+        this.mesh.material = this.material_list[index_material]
+        this.mesh.material.needsUpdate = true
+    }
+    //model load
+    init_mesh(index_shape,index_material){
+        if(this.mesh != null){
+            scene.remove(this.mesh)
+        }
+        this.mesh = this.geometry_files[index_shape]
+        const coe = 0.34
+        this.mesh.scale.set(coe,coe,coe)
+        this.mesh.position.set(0,0,0)
+        this.init_material(index_material)
+        this.mesh.castShadow = true
+        scene.add(this.mesh)
+    }
+    //transform
+    rotate_mesh(positionXYZ_center,angle,distance){
+        const angle_radian = angle/180 * Math.PI;
+        this.mesh.position.set(
+            positionXYZ_center[0] - distance * Math.sin(angle_radian),
+            positionXYZ_center[1],
+            positionXYZ_center[2] - distance*Math.cos(angle_radian)
+        )
+    };
 }
 /** Loading */
 
 /**
+ * Lighting
+ */
+
+/**
  * additional
  */
+document.addEventListener('pointerlockchange',()=>{
+    if(document.pointerLockElement == document.body){
+        console.log("pointer locked")
+    } else {
+        console.log("pointer unlocked")
+    }
+})
+document.addEventListener('keydown',(e)=>{
+    if (e.keyCode == 27){
+        document.exitPointerLock()
+    }
+})
 /** additional */
-
 /** 
  * Making Panel
  */
@@ -413,35 +517,32 @@ function SliderPanel1(){
         height:0.3,width:1.3,margin:0.1,
         fontFamily: './assets/Roboto-msdf.json',
         fontTexture: './assets/Roboto-msdf.png',
-        backgroundOpacity: 0,
     })
     //text block
     const textBlock = new ThreeMeshUI.Block({
         height:0.12,width:0.95,margin:0,offset:0.03,
         textAlign:'center',
         justifyContent:'center',
-        backgroundOpacity: 0,
     })
     const text = new ThreeMeshUI.Text({
         content:'Adjust slider & Left click',
-        fontColor:new THREE.Color(0x000000),
+        fontColor:new THREE.Color(0xffffff),
         fontSize:0.075,
         backgroundOpacity: 0.0,
         offset:0.01
     })
     //slider
     slider = new ThreeMeshUI.Block({
-        height:0.015,width:1,offset:0.02,margin:0.06,
-        backgroundColor: new THREE.Color(0x777777),
+        height:0.025,width:1,offset:0.02,margin:0.06,
+        backgroundColor: new THREE.Color(0x999999),
         justifyContent:'center',
     });
     handle = new ThreeMeshUI.Block({
-        height:0.07,width:0.025,offset:0.01,
-        backgroundColor: new THREE.Color(0x000000),
+        height:0.07,width:0.015,offset:0.01,
+        backgroundColor: new THREE.Color(0xffffff),
         backgroundOpacity: 1
     });
     slider.add(handle)
-
     sliderPanel.add(slider)
     textBlock.add(text)
     sliderPanel.add(textBlock)
@@ -484,6 +585,7 @@ function TestPanel1(){
         offset:0.01
     })
     textBlock.add(text1)
+    testpanel1.position.set(0,-0.75,0);
     testpanel1.add(textBlock)
 };
 let testpanel2
@@ -514,15 +616,7 @@ function TestPanel2(){
 //activate
 TestPanel1();
 TestPanel2();
-if (HeadTracking){
-    testpanel1.position.set(0,-0.75,0);
-    testpanel2.position.set(0,-0.75,0);
-}else{
-    testpanel1.position.set(0,-0.75,-Offset_Z);
-    testpanel2.position.set(0,-0.75,-Offset_Z);
-};
 /** Test SessionPanel */
-
 
 /**
  * trial
@@ -531,26 +625,42 @@ if (HeadTracking){
 function sleep(ms){
     return new Promise(resolve => setTimeout(resolve,ms))
 }
+//preload
+async function Preload(object_mesh){
+    object_mesh.init_mesh(0,index_material)
+    for (let i = 0; i < hdr_files.length;i++){
+        init_HDR(i)
+        await sleep(30)
+    }
+    scene.remove(object_mesh.mesh)
+}
+
 //test trial
 var testcontinue = true
 let mousex1 = 0
 let mousex2 = 0
 let testcount = 0
-async function TestSession(){
+async function TestSession(object_mesh,object_data){
     testcontinue = true
     testcount = 0
     while(testcontinue){ 
-        if(testcount < hdr_nameList.length){
-            parent.add(testpanel1)
+        if(testcount < hdr_files.length){
+            scene.add(testpanel1)
         }else{
-            parent.add(testpanel2)
+            scene.add(testpanel2)
         }
-        let nowTexture = imagesData[testcount % hdr_nameList.length]; 
-        init_ObjTexture(plane_mesh,nowTexture);
+        //transform mesh
+        let positon_center = [cameraGroup.position.x,0,cameraGroup.position.z];
+        let angle_degree = (Math.random() - 0.5) * 2 * angle_rotation;
+        let distance = Offset_Z;
+        object_mesh.rotate_mesh(positon_center,angle_degree,distance);
+
+        //change HDR
+        init_HDR(object_data.stimulsData[testcount % hdr_files.length].id)
         await TestTrial()
         testcount += 1
-        parent.remove(testpanel1)
-        parent.remove(testpanel2)
+        scene.remove(testpanel1)
+        scene.remove(testpanel2)
     }
 }
 async function TestTrial(){
@@ -566,7 +676,7 @@ async function TestTrial(){
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
             }
-            if(e.button == 2 && testcount >= imagesData.length){
+            if(e.button == 2 && testcount >= hdr_files.length){
                 testcontinue = false
                 document.removeEventListener("mousedown",TrialFunction)
                 resolve()
@@ -577,83 +687,88 @@ async function TestTrial(){
 }
 
 //main trial
-async function OneSession(){
+async function OneSession(object_mesh){
     SliderPanel1();
-    let panelY,panelZ;
-    if (HeadTracking){
-        panelY = 0;
-        panelZ = 1;
-    }else{
-        panelY = -Offset_Y;
-        panelZ = -Offset_Z
-    };
-    for (let session = modelstart-1; session < model_nameList.length;session++){
+    let panelY = 0;
+    let panelZ = 1;
+    for (let session = modelstart-1; session < object_mesh.geometry_files.length;session++){
+        //make data object
+        let object_data = new data_Object(hdr_url,roundnum);
+        object_data.make_Data();
+        
         let ReportTable= [
             hdr_nameList
-        ];
-        //loading data
-        let loadpanel = TempletePanel("Now Loading",panelY,panelZ);
-        parent.add(loadpanel);
-        await sessionStart(session,index_material);
-        parent.remove(loadpanel);
+        ]
+        //load data
+        object_mesh.init_mesh(session,index_material)
         camera.remove(sliderPanel);
 
         //Test Intro
         let testIntroPanel = TempletePanel('Right Click \n To Test Session',panelY,panelZ);
-        
-        await ClickPanel(testIntroPanel,parent);
+        await ClickPanel(testIntroPanel,scene);
 
         //Test session
         camera.add(sliderPanel);
-        await TestSession();
+        await TestSession(object_mesh,object_data);
         await sleep(100);
         camera.remove(sliderPanel);
 
         //Exp Intro
-        let expPanel = TempletePanel('Right Click \n To Exp ' + (session+1) +'/'+ model_nameList.length,
+        let expPanel = TempletePanel('Right Click \n To Exp ' + (session+1) +'/'+ nameList_geometry.length,
         panelY,panelZ);
-        await ClickPanel(expPanel,parent);
+        await ClickPanel(expPanel,scene);
 
         //Exp session
         camera.add(sliderPanel);
-        let resulttable;
+        let resulttable
         for (let round = 0;round < roundnum;round++){
             console.log("round" + round + "start")
-            resulttable = Array(roundnum).fill().map(() => Array(stimulsData.length).fill(0))
-            stimulsData.sort(() => Math.random() - 0.5)
-            for (let trial = 0;trial < stimulsData.length;trial++){
-                // load texture
-                let nowTexture = imagesData[stimulsData[trial].id];
-                init_ObjTexture(plane_mesh,nowTexture);
+            resulttable = Array(roundnum).fill().map(() => Array(object_data.stimulsData.length).fill(0))
+            object_data.stimulsData.sort(() => Math.random() - 0.5)
+            for (let trial = 0;trial < object_data.stimulsData.length;trial++){
+                //decide angle
+                let selectIndex = object_data.stimulsData[trial].PickandRemoveElement();
+                let angle_degree = object_data.stimulsData[trial].DecideAngle(selectIndex,angle_rotation);
+                console.log(selectIndex);
+                console.log(angle_degree);
+                
+                //transform object
+                let positon_center = [cameraGroup.position.x,0,cameraGroup.position.z];
+                //let angle_degree = (Math.random() - 0.5) * 2 * angle_rotation;
+                let distance = Offset_Z;
+                object_mesh.rotate_mesh(positon_center,angle_degree,distance);
 
-                // tral
+                //load HDR
+                init_HDR(object_data.stimulsData[trial].id);
+
+                //trial
                 await OneTrial()
 
-                // save results
-                stimulsData[trial].score = resultbar
-                resulttable[round][stimulsData[trial].id] = resultbar
+                //save one result
+                object_data.stimulsData[trial].InsertElement(selectIndex,resultbar,angle_degree)
+                resulttable[round][object_data.stimulsData[trial].id] = resultbar
+                
                 await sleep(50)
             }
-            // save results
-            stimulsData.sort((a, b) => a.id - b.id)
-            let reporcontents = stimulsData.map(field => field.score)
+            //save results
+            object_data.stimulsData.sort((a, b) => a.id - b.id)
+            let reporcontents = object_data.stimulsData.map(field => field.score)
             console.log(reporcontents)
             ReportTable.push(reporcontents)
         }
-        // save data
+        //save data
         //let ReportTable = HeaderTable.concat(resulttable)
-        let modelName = model_nameList[session];
-        let materialName = material_nameList[index_material]
-        let xlsxname = experiment_name + "_" + materialName + "_" + modelName + ".csv"
-        exportToCsv(xlsxname, ReportTable)
+        let geometyrName = object_mesh.geometry_url[session].replace(/\.obj/g,"")
+        let xlsxName = experiment_name + "_" + nameList_material[index_material] + "_" + geometyrName + ".csv"
+        exportToCsv(xlsxName, ReportTable)
     }
     //finalization
     console.log("Exp Finished");
     scene.background=new THREE.Color(0x333333);
     camera.remove(sliderPanel);
-    parent.remove(plane_mesh);
+    scene.remove(plane_mesh);
     let finishPanel = TempletePanel('Thank you!!',panelY,panelZ);
-    parent.add(finishPanel);
+    scene.add(finishPanel);
 }
 async function OneTrial(){
     return new Promise((resolve)=>{
@@ -682,18 +797,28 @@ function trialloop(){
 
 //Exp Flow
 async function mainload(){
-    let vrpanel = TempletePanel("Press \n [Enter VR] \n button",-Offset_Y,-Offset_Z);
-    await VRPanel(vrpanel,parent);
-    OneSession();
+    //loading data
+    let loadpanel = TempletePanel("Now Loading",-Offset_Y,-Offset_Z);
+    scene.add(loadpanel);
+    const object_stimulu = new stimulu_Object(changeseedlist,basePath_geometry);
+    await object_stimulu.modelload()
+    await hdrload()
+    await Preload(object_stimulu)
+    scene.remove(loadpanel)
+
+    //Exp Start
+    let vrpanel = TempletePanel("Press [Enter VR] button",-Offset_Y,-Offset_Z);
+    await VRPanel(vrpanel,scene);
+    OneSession(object_stimulu)
 }
-mainload();
+mainload()
 /**trial */
 
 /**
  * Write Out
  */
 //csv出力
-function exportToCsv(filename, table) {
+function exportToCsv(filename, rows) {
     //CSVの各行を処理する
     var processRow = function (row) {
         var finalVal = ''
@@ -713,8 +838,8 @@ function exportToCsv(filename, table) {
     };
     //CSVファイル全体を生成する
     var csvFile = ''
-    for (var i = 0; i < table.length; i++) {
-        csvFile += processRow(table[i])
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processRow(rows[i])
     }
     //CSVファイルをBlobにしてダウンロード
     var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' })
@@ -757,8 +882,7 @@ function onWindowResize(){
  */
 //resize
 window.addEventListener('resize', onWindowResize)
-
-//keyboard listener
+//change loaded
 document.addEventListener("keydown",(e)=>{
     //hdr
     //press Q
@@ -771,21 +895,7 @@ document.addEventListener("keydown",(e)=>{
         index_HDR +=1;
         init_HDR(index_HDR)
     }
-    // press Esc
-    if (e.keyCode == 27){
-        document.exitPointerLock()
-    }
 })
-
-// pointerlock
-document.addEventListener('pointerlockchange',()=>{
-    if(document.pointerLockElement == document.body){
-        console.log("pointer locked")
-    } else {
-        console.log("pointer unlocked")
-    }
-})
-
 //mouse
 window.addEventListener('mousemove',e =>{
     //pointer lock api
