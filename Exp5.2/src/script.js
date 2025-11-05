@@ -14,7 +14,7 @@ const roundnum = 5;
 //model startq
 const modelstart = 1;
 //camera Offset
-let Offset_Y = 2.5;
+let Offset_Y = 1.5;
 let Offset_Z = 0.5;
 //rotation angle 
 
@@ -892,6 +892,10 @@ async function mainload(){
         // press ←
         if(e.keyCode == 37){
             cameraGroup.position.z -= 0.5;
+        };
+        // press P
+        if(e.keyCode == 80){
+            document.body.requestPointerLock();
         };
     })
 

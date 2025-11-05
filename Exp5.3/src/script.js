@@ -14,7 +14,7 @@ const roundnum = 5;
 //model startq
 const modelstart = 2;
 //camera Offset
-let Offset_Y = 2.2;
+let Offset_Y = 1.5;
 let Offset_Z = 0.5;
 //rotation angle 
 
