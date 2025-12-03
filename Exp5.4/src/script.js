@@ -9,25 +9,27 @@ class ExperimentConfig {
     constructor() {
         // Constants
         this.slider_vel = 0.25;
-        this.roundnum = 1;
+        this.roundnum = 5;
         this.modelstart = 1;
         this.basePath_HDR = 'image\\';
         this.basePath_geometry = 'models/normal\\';
 
-        /**
+
         this.hdr_nameList = [
             '5', '19', '34', '39', '42', '43', '78', '80', '102', '105',
             '125', '152', '164', '183', '198', '201', '202', '203', '209', '222',
             '226', '227', '230', '232', '243', '259', '272', '278', '281', '282'
         ];
-        */
 
+
+        /**
         this.hdr_nameList = [
             '5', '19', '34'
         ];
+        */
 
-        this.nameList_geometry = ['bunny', 'boardA', 'boardC'];
-        this.nameList_material = ['cu0025', 'pla0075'];
+        this.nameList_geometry = ['bunny', 'boardA'];
+        this.nameList_material = ['pla0075'];
 
         // State
         this.Offset_Y = 1.1;
@@ -62,7 +64,7 @@ class ExperimentConfig {
         }
 
         for (let i = this.nameList_material.length - 1; i >= 0; i--) {
-            let changenum = this.changeseedlist[i] % 4;
+            let changenum = this.changeseedlist[i] % this.nameList_material.length;
             let tmpStorage = this.nameList_material[i];
             this.nameList_material[i] = this.nameList_material[changenum];
             this.nameList_material[changenum] = tmpStorage;
@@ -433,14 +435,13 @@ class StimulusManager {
     }
 
     initMaterials() {
-        const cu0025 = new THREE.MeshPhysicalMaterial({ color: 0xecacac, metalness: 1, roughness: 0.025 });
         const pla0075 = new THREE.MeshPhysicalMaterial({ color: 0xa8a8a8, metalness: 0, roughness: 0, clearcoat: 1.0, clearcoatRoughness: 0.075, ior: 1.5, reflectivity: 0.5, specularIntensity: 0 });
 
-        this.materials = [cu0025, pla0075];
+        this.materials = [pla0075];
 
         // Shuffle materials based on seed
         for (let i = this.materials.length - 1; i >= 0; i--) {
-            let changenum = this.config.changeseedlist[i] % 4;
+            let changenum = this.config.changeseedlist[i] % this.materials.length;
             let tmpStorage = this.materials[i];
             this.materials[i] = this.materials[changenum];
             this.materials[changenum] = tmpStorage;
@@ -469,6 +470,7 @@ class StimulusManager {
             let tmp1 = this.geometry_url[i]; this.geometry_url[i] = this.geometry_url[changenum]; this.geometry_url[changenum] = tmp1;
             let tmp2 = this.geometry_files[i]; this.geometry_files[i] = this.geometry_files[changenum]; this.geometry_files[changenum] = tmp2;
         }
+        console.log(this.geometry_url)
     }
 
     async loadHDRs() {
