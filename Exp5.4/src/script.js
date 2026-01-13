@@ -10,7 +10,7 @@ class ExperimentConfig {
         // Constants
         this.slider_vel = 0.25;
         this.roundnum = 5;
-        this.modelstart = 2;
+        this.modelstart = 1;
         this.basePath_HDR = 'image\\';
         this.basePath_geometry = 'models/normal\\';
 
