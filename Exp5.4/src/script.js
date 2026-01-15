@@ -9,10 +9,11 @@ class ExperimentConfig {
     constructor() {
         // Constants
         this.slider_vel = 0.25;
-        this.roundnum = 1;
-        this.modelstart = 1;
+        this.roundnum = 5;
+        this.modelstart = 2;
         this.basePath_HDR = 'image\\';
         this.basePath_geometry = 'models/normal\\';
+
 
         this.hdr_nameList = [
             '5', '19', '34', '39', '42', '43', '78', '80', '102', '105',
@@ -20,8 +21,15 @@ class ExperimentConfig {
             '226', '227', '230', '232', '243', '259', '272', '278', '281', '282'
         ];
 
-        this.nameList_geometry = ['bunny', 'boardA', 'boardC'];
-        this.nameList_material = ['cu0025', 'pla0075'];
+
+        /**
+        this.hdr_nameList = [
+            '5', '19', '34'
+        ];
+        */
+
+        this.nameList_geometry = ['bunny', 'boardA'];
+        this.nameList_material = ['pla0075'];
 
         // State
         this.Offset_Y = 1.1;
@@ -56,7 +64,7 @@ class ExperimentConfig {
         }
 
         for (let i = this.nameList_material.length - 1; i >= 0; i--) {
-            let changenum = this.changeseedlist[i] % 4;
+            let changenum = this.changeseedlist[i] % this.nameList_material.length;
             let tmpStorage = this.nameList_material[i];
             this.nameList_material[i] = this.nameList_material[changenum];
             this.nameList_material[changenum] = tmpStorage;
@@ -174,6 +182,16 @@ class UIManager {
                 }
             };
             window.addEventListener("mousedown", clickHandler);
+        });
+    }
+
+    async showAutoClosePanel(container, parent, duration = 1000) {
+        return new Promise((resolve) => {
+            parent.add(container);
+            setTimeout(() => {
+                parent.remove(container);
+                resolve();
+            }, duration);
         });
     }
 
@@ -417,14 +435,13 @@ class StimulusManager {
     }
 
     initMaterials() {
-        const cu0025 = new THREE.MeshPhysicalMaterial({ color: 0xecacac, metalness: 1, roughness: 0.025 });
         const pla0075 = new THREE.MeshPhysicalMaterial({ color: 0xa8a8a8, metalness: 0, roughness: 0, clearcoat: 1.0, clearcoatRoughness: 0.075, ior: 1.5, reflectivity: 0.5, specularIntensity: 0 });
 
-        this.materials = [cu0025, pla0075];
+        this.materials = [pla0075];
 
         // Shuffle materials based on seed
         for (let i = this.materials.length - 1; i >= 0; i--) {
-            let changenum = this.config.changeseedlist[i] % 4;
+            let changenum = this.config.changeseedlist[i] % this.materials.length;
             let tmpStorage = this.materials[i];
             this.materials[i] = this.materials[changenum];
             this.materials[changenum] = tmpStorage;
@@ -453,6 +470,7 @@ class StimulusManager {
             let tmp1 = this.geometry_url[i]; this.geometry_url[i] = this.geometry_url[changenum]; this.geometry_url[changenum] = tmp1;
             let tmp2 = this.geometry_files[i]; this.geometry_files[i] = this.geometry_files[changenum]; this.geometry_files[changenum] = tmp2;
         }
+        console.log(this.geometry_url)
     }
 
     async loadHDRs() {
@@ -534,6 +552,7 @@ class ExperimentManager {
         this.setupEventListeners();
 
         this.renderer.setAnimationLoop(() => this.animate());
+        this.testcontinue = true;
     }
 
     setupToneMapping() {
@@ -679,16 +698,24 @@ class ExperimentManager {
 
                     if (isHead) {
                         this.audioManager.playHead();
-                        const panel = this.uiManager.createMiniPanel('Move your head !\nRight Click', 0, 0.1, 0.3);
-                        await this.uiManager.showClickPanel(panel, this.scene);
+                        const panel = this.uiManager.createMiniPanel('Move your head !', 0, 0.1, 0.3);
+                        await this.uiManager.showAutoClosePanel(panel, this.scene);
                     } else {
                         this.audioManager.playNoHead();
-                        const panel = this.uiManager.createMiniPanel('Don\'t Move !\nRight Click', 0, 0.1, 0.3);
-                        await this.uiManager.showClickPanel(panel, this.scene);
+                        const panel = this.uiManager.createMiniPanel('Don\'t Move !', 0, 0.1, 0.3);
+                        await this.uiManager.showAutoClosePanel(panel, this.scene);
                     }
 
+                    // Attach mesh to appropriate parent based on condition
                     if (isHead) {
+                        // Head condition: mesh stays in world space
+                        this.scene.attach(this.stimulusManager.mesh);
+                        this.stimulusManager.mesh.position.set(0, 0, 0);
+                        this.stimulusManager.mesh.rotation.set(0, 0, 0);
                         await this.headTracker.wait(0.15);
+                    } else {
+                        // NoHead condition: mesh fixed to camera (no parallax)
+                        this.camera.attach(this.stimulusManager.mesh);
                     }
 
                     await this.runOneTrial();
@@ -698,6 +725,7 @@ class ExperimentManager {
                     console.log(`HDR: ${currentStimulus.hdr}, score: ${this.uiManager.sliderValue.toFixed(3)}`);
 
                     await new Promise(r => setTimeout(r, 50));
+                    this.scene.attach(this.stimulusManager.mesh);
                 }
 
                 let scoresHead = [];
@@ -726,29 +754,52 @@ class ExperimentManager {
     }
 
     async runTestSession() {
-        let testcontinue = true;
+        this.testcontinue = true;
         let testcount = 0;
 
-        while (testcontinue) {
-            let panel;
-            if (testcount < this.stimulusManager.hdr_files.length) {
-                panel = this.uiManager.createMiniPanel('This is Test Session', -0.2, 0, 0.4);
-            } else {
-                panel = this.uiManager.createMiniPanel('Right Click to finish test', 0.2, 0, 0.4);
-            }
-            this.scene.add(panel);
+        while (this.testcontinue) {
+            // Determine condition: even = Head, odd = NoHead
+            let isHead = (testcount % 2 === 0);
+
+            await this.headTracker.waitForReset(this.scene, this.uiManager);
 
             // Use dummy data for test
             this.stimulusManager.setHDR(this.scene, testcount % this.stimulusManager.hdr_files.length);
 
+            let finishPanel = null;
+
+            if (testcount < this.stimulusManager.hdr_files.length) {
+                if (isHead) {
+                    this.audioManager.playHead();
+                    const panel = this.uiManager.createMiniPanel('Test: Move your head !', 0, 0.1, 0.3);
+                    await this.uiManager.showAutoClosePanel(panel, this.scene);
+                } else {
+                    this.audioManager.playNoHead();
+                    const panel = this.uiManager.createMiniPanel('Test: Don\'t Move !', 0, 0.1, 0.3);
+                    await this.uiManager.showAutoClosePanel(panel, this.scene);
+                }
+            } else {
+                finishPanel = this.uiManager.createMiniPanel('Right Click to finish test', 0.2, 0, 0.4);
+                this.scene.add(finishPanel);
+            }
+
+            // Attach mesh based on condition (same as main session)
+            if (isHead) {
+                this.scene.attach(this.stimulusManager.mesh);
+                this.stimulusManager.mesh.position.set(0, 0, 0);
+                this.stimulusManager.mesh.rotation.set(0, 0, 0);
+                await this.headTracker.wait(0.15);
+            } else {
+                this.camera.attach(this.stimulusManager.mesh);
+            }
+
             await this.runTestTrial(testcount);
 
-            testcount++;
-            this.scene.remove(panel);
-
-            if (testcount >= this.stimulusManager.hdr_files.length && this.lastButton == 2) {
-                testcontinue = false;
+            if (finishPanel) {
+                this.scene.remove(finishPanel);
             }
+
+            testcount++;
         }
     }
 
@@ -783,13 +834,13 @@ class ExperimentManager {
                     this.uiManager.updateSlider();
                     this.trialRunning = false;
                     document.removeEventListener("mousedown", trialFunction);
-                    resolve();
+                    resolve(false);
                 }
                 if (e.button == 2 && testcount >= this.stimulusManager.hdr_files.length) {
-                    this.lastButton = 2;
                     this.trialRunning = false;
+                    this.testcontinue = false;
                     document.removeEventListener("mousedown", trialFunction);
-                    resolve();
+                    resolve(true);
                 }
             };
             document.addEventListener("mousedown", trialFunction);
