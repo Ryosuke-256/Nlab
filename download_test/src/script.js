@@ -8,7 +8,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
  * initializing
  */
 //imagefiles
-const base_path = 'image\\2K\\'
+const base_path = 'image\\4K\\'
 //const base_path = 'image\\Compare\\'
 /**
 const hdr_images_path = [
@@ -20,14 +20,24 @@ const hdr_images_path = [
     '5.hdr','125.hdr',
 ]
 */
+/**
+const hdr_images_path = [
+    '5.hdr', '19.hdr', '34.hdr', '39.hdr', '42.hdr',
+    '43.hdr', '78.hdr', '80.hdr', '102.hdr', '105.hdr',
+    '125.hdr', '152.hdr', '164.hdr', '183.hdr', '198.hdr',
+    '201.hdr', '202.hdr', '203.hdr', '209.hdr', '222.hdr',
+    '226.hdr', '227.hdr', '230.hdr', '232.hdr', '243.hdr',
+    '259.hdr', '272.hdr', '278.hdr', '281.hdr', '282.hdr'
+]
+ */
 
 const hdr_images_path = [
-    '5.hdr','19.hdr','34.hdr','39.hdr','42.hdr',
-    '43.hdr','78.hdr','80.hdr','102.hdr','105.hdr',
-    '125.hdr','152.hdr','164.hdr','183.hdr','198.hdr',
-    '201.hdr','202.hdr','203.hdr','209.hdr','222.hdr',
-    '226.hdr','227.hdr','230.hdr','232.hdr','243.hdr',
-    '259.hdr','272.hdr','278.hdr','281.hdr','282.hdr'
+    '5_4k.hdr', '19_4k.hdr', '34_4k.hdr', '39_4k.hdr', '42_4k.hdr',
+    '43_4k.hdr', '78_4k.hdr', '80_4k.hdr', '102_4k.hdr', '105_4k.hdr',
+    '125_4k.hdr', '152_4k.hdr', '164_4k.hdr', '183_4k.hdr', '198_4k.hdr',
+    '201_4k.hdr', '202_4k.hdr', '203_4k.hdr', '209_4k.hdr', '222_4k.hdr',
+    '226_4k.hdr', '227_4k.hdr', '230_4k.hdr', '232_4k.hdr', '243_4k.hdr',
+    '259_4k.hdr', '272_4k.hdr', '278_4k.hdr', '281_4k.hdr', '282_4k.hdr'
 ]
 
 /**
@@ -55,7 +65,7 @@ let canvas, scene, camera, renderer, controls
 //const sizes = {width: window.innerWidth,height: window.innerHeight}
 const cameraScale = 2;
 const windowsize = 256 * cameraScale;
-const sizes = {width: windowsize,height: windowsize}
+const sizes = { width: windowsize, height: windowsize }
 
 //mouse follow
 let cursor1_mesh
@@ -66,7 +76,7 @@ let position_ratio = 250
 //mouse
 const mouse_webGL = new THREE.Vector2()
 const mouse_webGL_normal = new THREE.Vector2()
-const mouse_window_normal =new THREE.Vector2()
+const mouse_window_normal = new THREE.Vector2()
 
 //downlodcount
 let dlcount = 0
@@ -90,27 +100,35 @@ canvas = document.querySelector('canvas.webgl')
 // Scene
 scene = new THREE.Scene()
 
-//camera
+//カメラの距離
+//先にカメラの距離を決める
+
 let camera_dist = 2.94
 let camera_vertical = 1.02
-function GetFOV(y,z){
-    const radians = Math.atan2(y,z);
-    const degrees = radians * (180/Math.PI);
+function GetFOV(y, z) {
+    const radians = Math.atan2(y, z);
+    const degrees = radians * (180 / Math.PI);
     console.log(degrees);
     return degrees;
 }
+let fov = GetFOV(camera_vertical, camera_dist)
 
-
-let fov = GetFOV(camera_vertical,camera_dist)
-camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, camera_dist*10)
-camera.position.set(0,0,camera_dist)
-scene.add(camera)
-//camera distance
-function dist (fov) {
-    const fovRad= (fov/2)*(Math.PI/180)
-    const dist = ((sizes.height/position_ratio)/2)/Math.tan(fovRad)
+/**
+//先にFOVを決めて、それに基づいてカメラの距離を決める
+function dist(fov) {
+    const fovRad = (fov / 2) * (Math.PI / 180)
+    const dist = ((sizes.height / position_ratio) / 2) / Math.tan(fovRad)
     return dist
 }
+let fov = 20;
+let camera_dist = dist(fov);
+ */
+
+//camera
+camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.01, camera_dist * 10)
+camera.position.set(0, 0, camera_dist)
+scene.add(camera)
+
 /**
  * Renderer
  */
@@ -183,68 +201,68 @@ THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars
 /** ToneMap */
 
 //controlssss
-controls = new OrbitControls( camera, canvas)
+controls = new OrbitControls(camera, canvas)
 
 /**
  * Object
  */
 //cursor
 cursor1_mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.01,10,10),
-    new THREE.MeshBasicMaterial({color:0x000000}))
-cursor1_mesh.position.set(0,0,0)
+    new THREE.SphereGeometry(0.01, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0x000000 }))
+cursor1_mesh.position.set(0, 0, 0)
 //scene.add(cursor1_mesh)
 
 //material setting
 const custom_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
+    color: 0xff0000, thickness: 0, flatShading: false, //いろいろ
+    metalness: 0, roughness: 1, //Standard
+    emissive: 0x000000, emissiveIntensity: 1.0, //発光
+    anisotropy: 0, attenuationDistance: 10000, //異方性 (金属)
+    clearcoat: 0, clearcoatRoughness: 0, //クリアコート
+    iridescence: 0.0, iridescenceIOR: 1.3, iridescenceThicknessRange: [100, 400], //虹彩効果
+    transmission: 0, //透明度 (非金属)
+    dispersion: 0, ior: 1.5, reflectivity: 0.5, // 反射率 (非金属)
+    sheen: 0, sheenRoughness: 1, specularIntensity: 1, //光沢 (非金属)
 })
 const metal_0025 = new THREE.MeshPhysicalMaterial({
-    color:0xecacac, //いろいろ
-    metalness:1, roughness:0.025, //Standard
+    color: 0xecacac, //いろいろ
+    metalness: 1, roughness: 0.025, //Standard
 })
 const metal_0129 = new THREE.MeshPhysicalMaterial({
-    color:0xecacac, //いろいろ
-    metalness:1, roughness:0.129, //Standard
+    color: 0xecacac, //いろいろ
+    metalness: 1, roughness: 0.129, //Standard
 })
 const plastic_0075 = new THREE.MeshPhysicalMaterial({
-    color:0xa8a8a8, //いろいろ
-    metalness:0, roughness:0, //Standard
-    clearcoat:1.0,clearcoatRoughness:0.075, //クリアコート
-    ior:1.5,reflectivity:0.5, // 屈折率
-    specularIntensity:0 //鏡面反射
+    color: 0xa8a8a8, //いろいろ
+    metalness: 0, roughness: 0, //Standard
+    clearcoat: 1.0, clearcoatRoughness: 0.075, //クリアコート
+    ior: 1.5, reflectivity: 0.5, // 屈折率
+    specularIntensity: 0 //鏡面反射
 })
 const plastic_0225 = new THREE.MeshPhysicalMaterial({
-    color:0xa8a8a8, //いろいろ
-    metalness:0, roughness:0, //Standard
-    clearcoat:1.0,clearcoatRoughness:0.225, //クリアコート
-    ior:1.5,reflectivity:0.5, // 屈折率
-    specularIntensity:0 //鏡面反射
+    color: 0xa8a8a8, //いろいろ
+    metalness: 0, roughness: 0, //Standard
+    clearcoat: 1.0, clearcoatRoughness: 0.225, //クリアコート
+    ior: 1.5, reflectivity: 0.5, // 屈折率
+    specularIntensity: 0 //鏡面反射
 })
 const default_1 = new THREE.MeshPhysicalMaterial({
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:0,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1 //光沢 (非金属)
+    color: 0xff0000, thickness: 0, flatShading: false, //いろいろ
+    metalness: 0, roughness: 1, //Standard
+    emissive: 0x000000, emissiveIntensity: 1.0, //発光
+    anisotropy: 0, attenuationDistance: 10000, //異方性 (金属)
+    clearcoat: 0, clearcoatRoughness: 0, //クリアコート
+    iridescence: 0.0, iridescenceIOR: 1.3, iridescenceThicknessRange: [100, 400], //虹彩効果
+    transmission: 0, //透明度 (非金属)
+    dispersion: 0, ior: 1.5, reflectivity: 0.5, // 反射率 (非金属)
+    sheen: 0, sheenRoughness: 1, specularIntensity: 1 //光沢 (非金属)
 })
 //material_list = [custom_1,metal_0025,metal_0129,plastic_0075,plastic_0225,default_1]
 //let materialname_list = ['custom_1','metal_0025','metal_0129','plastic_0075','plastic_0225','default_1']
 
-material_list = [metal_0025,metal_0129,plastic_0075,plastic_0225]
-let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
+material_list = [metal_0025, metal_0129, plastic_0075, plastic_0225]
+let materialname_list = ['cu0025', 'cu0129', 'pla0075', 'pla0225']
 
 /** Object */
 
@@ -252,81 +270,81 @@ let materialname_list = ['cu0025','cu0129','pla0075','pla0225']
  * GUI
  */
 const params = {
-    color:0xff0000,thickness:0,flatShading:false, //いろいろ
-    metalness:0, roughness:1, //Standard
-    emissive : 0x000000, emissiveIntensity :1.0, //発光
-    anisotropy:0,attenuationDistance:10000, //異方性 (金属)
-    clearcoat:0,clearcoatRoughness:0, //クリアコート
-    iridescence:0.0, iridescenceIOR:1.3,iridescenceThicknessRange:[100,400], //虹彩効果
-    transmission:0, //透明度 (非金属)
-    dispersion:false,ior:1.5,reflectivity:0.5, // 反射率 (非金属)
-    sheen:0,sheenRoughness:1,specularIntensity:1, //光沢 (非金属)
-    exposure:1,
+    color: 0xff0000, thickness: 0, flatShading: false, //いろいろ
+    metalness: 0, roughness: 1, //Standard
+    emissive: 0x000000, emissiveIntensity: 1.0, //発光
+    anisotropy: 0, attenuationDistance: 10000, //異方性 (金属)
+    clearcoat: 0, clearcoatRoughness: 0, //クリアコート
+    iridescence: 0.0, iridescenceIOR: 1.3, iridescenceThicknessRange: [100, 400], //虹彩効果
+    transmission: 0, //透明度 (非金属)
+    dispersion: false, ior: 1.5, reflectivity: 0.5, // 反射率 (非金属)
+    sheen: 0, sheenRoughness: 1, specularIntensity: 1, //光沢 (非金属)
+    exposure: 1,
 }
 const gui = new GUI()
-gui.addColor( params, 'color' )
-.onChange( () =>{
-    custom_1.color.set( params.color )
-})
-gui.add( params, 'metalness',0,1,0.1)
-.onChange( () =>{
-    custom_1.metalness = params.metalness
-})
-gui.add( params, 'roughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.roughness = params.roughness
-})
-gui.add( params, 'anisotropy',0,1,0.1)
-.onChange(()=>{
-    custom_1.anisotropy = params.anisotropy
-})
-gui.add( params, 'attenuationDistance',0,10000,10)
-.onChange(()=>{
-    custom_1.attenuationDistance = params.attenuationDistance
-})
-gui.add( params, 'emissiveIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.emissiveIntensity = params.emissiveIntensity
-})
-gui.add( params, 'clearcoat',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoat = params.clearcoat
-})
-gui.add( params, 'clearcoatRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.clearcoatRoughness = params.clearcoatRoughness
-})
+gui.addColor(params, 'color')
+    .onChange(() => {
+        custom_1.color.set(params.color)
+    })
+gui.add(params, 'metalness', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.metalness = params.metalness
+    })
+gui.add(params, 'roughness', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.roughness = params.roughness
+    })
+gui.add(params, 'anisotropy', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.anisotropy = params.anisotropy
+    })
+gui.add(params, 'attenuationDistance', 0, 10000, 10)
+    .onChange(() => {
+        custom_1.attenuationDistance = params.attenuationDistance
+    })
+gui.add(params, 'emissiveIntensity', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.emissiveIntensity = params.emissiveIntensity
+    })
+gui.add(params, 'clearcoat', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.clearcoat = params.clearcoat
+    })
+gui.add(params, 'clearcoatRoughness', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.clearcoatRoughness = params.clearcoatRoughness
+    })
 
-gui.add( params, 'dispersion' )
-.onChange( () =>{
-    if (params.dispersion){
-        custom_1.dispersion = 1
-    }else{
-        custom_1.dispersion = 0
-    }
-})
+gui.add(params, 'dispersion')
+    .onChange(() => {
+        if (params.dispersion) {
+            custom_1.dispersion = 1
+        } else {
+            custom_1.dispersion = 0
+        }
+    })
 
-gui.add( params, 'ior',1,2.3,0.1 )
-.onChange( () =>{
-    custom_1.ior = params.ior
-})
-gui.add( params, 'reflectivity',0,1,0.1)
-.onChange( () =>{
-    custom_1.reflectivity = params.reflectivity
-})
-gui.add( params, 'sheen',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheen = params.sheen
-})
-gui.add( params, 'sheenRoughness',0,1,0.1)
-.onChange( () =>{
-    custom_1.sheenRoughness = params.sheenRoughness
-})
-gui.add( params, 'specularIntensity',0,1,0.1)
-.onChange( () =>{
-    custom_1.specularIntensity = params.specularIntensity
-})
-const toneMappingFolder = gui.addFolder( 'tone mapping' );
+gui.add(params, 'ior', 1, 2.3, 0.1)
+    .onChange(() => {
+        custom_1.ior = params.ior
+    })
+gui.add(params, 'reflectivity', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.reflectivity = params.reflectivity
+    })
+gui.add(params, 'sheen', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.sheen = params.sheen
+    })
+gui.add(params, 'sheenRoughness', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.sheenRoughness = params.sheenRoughness
+    })
+gui.add(params, 'specularIntensity', 0, 1, 0.1)
+    .onChange(() => {
+        custom_1.specularIntensity = params.specularIntensity
+    })
+const toneMappingFolder = gui.addFolder('tone mapping');
 /**
 toneMappingFolder.add( params, 'exposure', 0.1, 10 ).onChange( (val)=>{
     reinhardTMPass.uniforms.exposure.value = val
@@ -341,27 +359,27 @@ toneMappingFolder.add( params, 'exposure', 0.1, 10 ).onChange( (val)=>{
 let object_obj = null
 const model_files = []
 let model_url = []
-async function modelload(){
-    return new Promise((resolve)=>{
+async function modelload() {
+    return new Promise((resolve) => {
         //Modelloadmanager
-        const ModelloadingManager = new THREE.LoadingManager(()=>{
+        const ModelloadingManager = new THREE.LoadingManager(() => {
             console.log("Finished Model loading")
             console.log(model_url)
             resolve()
-        },(itemUrl,itemsLoaded,itemsTotal)=>{
+        }, (itemUrl, itemsLoaded, itemsTotal) => {
             console.log("Model loaded:" + itemsLoaded + "/" + model_path.length)
         })
         //loadeverything
         const model_loader = new OBJLoader(ModelloadingManager)
-        
+
         modelloader(model_loader)
     })
 }
-async function modelloader(loader){
+async function modelloader(loader) {
     for (let i = 0; i < model_path.length; i++) {
         const element = model_path[i]
         const modelpath = model_base_path + element
-    
+
         await new Promise((resolve, reject) => {
             loader.load(
                 modelpath,
@@ -369,7 +387,7 @@ async function modelloader(loader){
                     model_files.push(obj.children[0])
                     model_url.push(element)
                     resolve()
-                },(xhr)=>{
+                }, (xhr) => {
                 },
                 (err) => reject(err)
             )
@@ -377,15 +395,15 @@ async function modelloader(loader){
     }
 }
 //model load
-function init_model(index){
-    if(object_obj != null){
+function init_model(index) {
+    if (object_obj != null) {
         scene.remove(object_obj)
     }
     object_obj = model_files[index]
     console.log(object_obj);
     const coe = 0.34;
-    object_obj.scale.set(coe,coe,coe);
-    object_obj.position.set(0,0,0)
+    object_obj.scale.set(coe, coe, coe);
+    object_obj.position.set(0, 0, 0)
     init_material(index_material)
     object_obj.castShadow = true
     scene.add(object_obj)
@@ -394,27 +412,27 @@ function init_model(index){
 //hdr loading
 const hdr_files = []
 let hdr_url = []
-async function hdrload(){
-    return new Promise((resolve)=>{
+async function hdrload() {
+    return new Promise((resolve) => {
         //HDRloadmanager
-        const loadingManager = new THREE.LoadingManager(()=>{
+        const loadingManager = new THREE.LoadingManager(() => {
             console.log("Finished HDR loading");
             //init_HDR(index_HDR)
             resolve()
-        },(itemUrl,itemsLoaded,itemsTotal)=>{
+        }, (itemUrl, itemsLoaded, itemsTotal) => {
             console.log("HDR loaded:" + itemsLoaded + "/" + hdr_images_path.length)
         })
         //loadeverything
         const loader1 = new RGBELoader(loadingManager)
-        
+
         hdrloader(loader1)
     })
 }
-async function hdrloader(loader){
+async function hdrloader(loader) {
     for (let i = 0; i < hdr_images_path.length; i++) {
         const element = hdr_images_path[i]
         const imagepath = base_path + element
-    
+
         await new Promise((resolve, reject) => {
             loader.load(
                 imagepath,
@@ -431,26 +449,26 @@ async function hdrloader(loader){
 }
 
 //init_HDR
-function init_HDR(index){
+function init_HDR(index) {
     hdr_files[index].encoding = THREE.RGBEEncoding
     hdr_files[index].mapping = THREE.EquirectangularReflectionMapping
     scene.background = hdr_files[index]
     scene.environment = hdr_files[index]
 
     console.log(hdr_url[index])
-    
+
     const myElement = document.getElementById('hdr_name');
     myElement.textContent = hdr_url[index];
 }
 //material load
-function init_material(index){
+function init_material(index) {
     object_obj.material = material_list[index]
 
     const myElement = document.getElementById('mat_name');
     myElement.textContent = materialname_list[index];
 }
 //load
-async function mainload(){
+async function mainload() {
     await modelload()
     await hdrload()
     init_model(index_model);
@@ -481,7 +499,7 @@ document.body.appendChild(matParagraph);
  * Function
  */
 //widowresize
-function onWindowResize(){
+function onWindowResize() {
     // Update sizes
     //sizes.width = window.innerWidth
     //sizes.height = window.innerHeight
@@ -490,7 +508,7 @@ function onWindowResize(){
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
-    camera.position.set(0,0,camera_dist)
+    camera.position.set(0, 0, camera_dist)
     camera.updateProjectionMatrix()
 
     // Update renderer
@@ -499,21 +517,21 @@ function onWindowResize(){
 }
 
 //windowfullscreeen
-function WindowFullscreen(){
-    if(!document.fullscreenElement){
+function WindowFullscreen() {
+    if (!document.fullscreenElement) {
         canvas.requestFullscreen()
-    }else{
+    } else {
         document.exitFullscreen()
     }
 }
 
-function animate(){
+function animate() {
     controls.update()
     // Render
     renderer.render(scene, camera)
 
     //second
-    const sec = performance.now()/1000
+    const sec = performance.now() / 1000
 }
 /**Function */
 
@@ -526,118 +544,118 @@ function animate(){
 window.addEventListener('resize', onWindowResize)
 
 //fullscreen
-window.addEventListener("dblclick",WindowFullscreen)
+window.addEventListener("dblclick", WindowFullscreen)
 
 //number key to camera 1 to 6
-document.addEventListener("keydown",(e)=>{
-    if(e.keyCode == 49) {
-        camera.position.set(0,0,camera_dist)
+document.addEventListener("keydown", (e) => {
+    if (e.keyCode == 49) {
+        camera.position.set(0, 0, camera_dist)
     }
-    if(e.keyCode == 50) {
-        camera.position.set(camera_dist,0,0)
+    if (e.keyCode == 50) {
+        camera.position.set(camera_dist, 0, 0)
     }
-    if(e.keyCode == 51) {
-        camera.position.set(0,0,-camera_dist)
+    if (e.keyCode == 51) {
+        camera.position.set(0, 0, -camera_dist)
     }
-    if(e.keyCode == 52) {
-        camera.position.set(-camera_dist,0,0)
+    if (e.keyCode == 52) {
+        camera.position.set(-camera_dist, 0, 0)
     }
-    if(e.keyCode == 53) {
-        camera.position.set(0,camera_dist,0)
+    if (e.keyCode == 53) {
+        camera.position.set(0, camera_dist, 0)
     }
-    if(e.keyCode == 54) {
-        camera.position.set(0,-camera_dist,0)
+    if (e.keyCode == 54) {
+        camera.position.set(0, -camera_dist, 0)
     }
 })
 
 //change loaded
-document.addEventListener("keydown",(e)=>{
+document.addEventListener("keydown", (e) => {
     //hdr
     //press T
-    if(e.keyCode == 84 && index_HDR > 0){
-        index_HDR -=1;
+    if (e.keyCode == 84 && index_HDR > 0) {
+        index_HDR -= 1;
         init_HDR(index_HDR);
     }
     //press Y
-    if(e.keyCode == 89 && index_HDR < hdr_files.length-1){
-        index_HDR +=1;
+    if (e.keyCode == 89 && index_HDR < hdr_files.length - 1) {
+        index_HDR += 1;
         init_HDR(index_HDR)
     }
 
     //materials
     //press E
-    if(e.keyCode == 69 && index_material > 0){
-        index_material -=1
+    if (e.keyCode == 69 && index_material > 0) {
+        index_material -= 1
         init_material(index_material)
     }
     //press R
-    if(e.keyCode == 82 && index_material < material_list.length-1){
+    if (e.keyCode == 82 && index_material < material_list.length - 1) {
         index_material += 1
         init_material(index_material)
     }
 
     //models
     //press Q
-    if(e.keyCode == 81 && index_model > 0){
-        index_model -=1;
+    if (e.keyCode == 81 && index_model > 0) {
+        index_model -= 1;
         init_model(index_model);
     }
     //press W
-    if(e.keyCode == 87 && index_model < model_path.length-1){
-        index_model +=1;
+    if (e.keyCode == 87 && index_model < model_path.length - 1) {
+        index_model += 1;
         init_model(index_model);
     }
 })
 
 //donwload push P
-document.addEventListener("keydown",(e) =>{
-    if(e.keyCode == 80) {
+document.addEventListener("keydown", (e) => {
+    if (e.keyCode == 80) {
         var imgData, imgNode;
         //Listen to 'P' key
-        if(e.which !== 80) return;
+        if (e.which !== 80) return;
         try {
             renderer.render(scene, camera)
 
             imgData = renderer.domElement.toDataURL();
         }
-        catch(e) {
+        catch (e) {
             console.log("Browser does not support taking screenshot of 3d context");
             return;
         }
         const downloadlink = document.getElementById("downloadlink");
         downloadlink.href = imgData;
-        downloadlink.download= "downloadfile_" + dlcount + ".png";
+        downloadlink.download = "downloadfile_" + dlcount + ".png";
         downloadlink.click();
         imgNode = document.createElement("img");
         imgNode.src = imgData;
         document.body.appendChild(imgNode);
-        dlcount +=1;
+        dlcount += 1;
     }
 
 })
 
 //alldownload push L
-function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve,ms))
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function loopwithdelay(){
+async function loopwithdelay() {
     var imgData_2;
-    let i,j
+    let i, j
     const alldownloadlink = document.getElementById("alldownload");
     //hdr change
-    for (i=0; i < hdr_images_path.length; i++){
+    for (i = 0; i < hdr_images_path.length; i++) {
         init_HDR(i)
         //material change
-        for (j=0; j < 1; j++){
+        for (j = 0; j < 1; j++) {
             let downloadIndex = (index_material + j) % materialname_list.length;
             init_material(downloadIndex);
             renderer.render(scene, camera)
             //download
             imgData_2 = renderer.domElement.toDataURL();
             alldownloadlink.href = imgData_2;
-            let hdr_path = hdr_images_path[i].replace(".hdr","")
-            let modelname = model_url[index_model].replace(/\.obj/g,"")
+            let hdr_path = hdr_images_path[i].replace(".hdr", "")
+            let modelname = model_url[index_model].replace(/\.obj/g, "")
             alldownloadlink.download = modelname + "_" + materialname_list[downloadIndex] + "_" + hdr_path + ".png"
             alldownloadlink.click();
             await sleep(100);
@@ -648,25 +666,24 @@ async function loopwithdelay(){
     init_material(index_material);
 }
 
-document.addEventListener("keydown",(e=>{
-    if(e.keyCode == 76){
+document.addEventListener("keydown", (e => {
+    if (e.keyCode == 76) {
         loopwithdelay();
     }
 }))
 
 //mouse
-window.addEventListener('mousemove',e =>
-    {
-        //WebGLマウス座標
-        mouse_webGL.x=(e.clientX-(sizes.width/2))/position_ratio
-        mouse_webGL.y=(-e.clientY+(sizes.height/2))/position_ratio
-    
-        //WebGLマウス座標の正規化
-        mouse_webGL_normal.x=(mouse_webGL.x*2/sizes.width)/position_ratio
-        mouse_webGL_normal.y=(mouse_webGL.y*2/sizes.height)/position_ratio
-    
-        //Windowマウス座標の正規化
-        mouse_window_normal.x=(e.clientX/sizes.width)*2/position_ratio-1
-        mouse_window_normal.y=-(e.clientY/sizes.height)*2/position_ratio+1
+window.addEventListener('mousemove', e => {
+    //WebGLマウス座標
+    mouse_webGL.x = (e.clientX - (sizes.width / 2)) / position_ratio
+    mouse_webGL.y = (-e.clientY + (sizes.height / 2)) / position_ratio
+
+    //WebGLマウス座標の正規化
+    mouse_webGL_normal.x = (mouse_webGL.x * 2 / sizes.width) / position_ratio
+    mouse_webGL_normal.y = (mouse_webGL.y * 2 / sizes.height) / position_ratio
+
+    //Windowマウス座標の正規化
+    mouse_window_normal.x = (e.clientX / sizes.width) * 2 / position_ratio - 1
+    mouse_window_normal.y = -(e.clientY / sizes.height) * 2 / position_ratio + 1
 })
 /**eventlistner */
