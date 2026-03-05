@@ -26,7 +26,7 @@ if (HeadTracking){
 
 /** Setting */
 //imagefiles
-const base_path = 'image\\19degree\\'
+const base_path = 'image\\20degree\\'
 /**
 const hdr_nameList = [
     '19','39','78',
